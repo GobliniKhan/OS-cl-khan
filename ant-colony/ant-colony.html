@@ -16,7 +16,7 @@
     --cream: #e9dcc0;
     --stone: #7d6f60;
     --royal: #b48ae0;       /* queen pheromone + command */
-    --alarm: #e0533d;       /* alarm pheromone + Death */
+    --alarm: #e0533d;       /* alarm pheromone + natural events */
     --display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", sans-serif;
     --body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
     --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
@@ -38,7 +38,7 @@
   .brief { padding: 16px 16px 14px; display: grid; gap: 12px; }
   .mind { padding: 12px 14px; display: grid; gap: 10px; border-color: rgba(224, 83, 61, 0.4); }
   .mind .ch { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-  .mind .k { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--alarm); }
+  .mind .k { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--moss); }
   .mind h2 { margin: 2px 0 0; font-family: var(--display); font-size: 19px; font-weight: 700; line-height: 1.1; }
   .pill { font-family: var(--mono); font-size: 11px; padding: 3px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
   .pill.hunt { color: #ffc2b8; border-color: rgba(224, 83, 61, 0.65); background: rgba(224, 83, 61, 0.16); }
@@ -78,9 +78,17 @@
   .status b { color: var(--royal); }
   .status span { color: var(--muted); }
   .tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--line); }
-  .tabs button { flex: 1; border: 0; border-radius: 6px 6px 0 0; background: transparent; padding: 6px 2px; font-size: 11.5px; color: var(--muted); }
+  .tabs button { flex: 1; border: 0; border-radius: 6px 6px 0 0; background: transparent; padding: 6px 0; font-size: 11px; color: var(--muted); }
   .tabs button[aria-selected="true"] { color: var(--fg); background: rgba(180, 138, 224, 0.14); box-shadow: inset 0 -2px 0 var(--royal); }
   .tabpanel { display: grid; gap: 10px; }
+  .genes { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+  .genes li { display: grid; gap: 3px; font-size: 11.5px; }
+  .genes .tier { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.08em; padding-top: 4px; }
+  .genes .top { display: flex; justify-content: space-between; gap: 6px; }
+  .genes .top b { font-family: var(--mono); font-weight: 600; color: var(--fg); }
+  .genes .gd { color: var(--muted); line-height: 1.35; }
+  .notables { display: flex; flex-wrap: wrap; gap: 4px; }
+  .notables button { font-size: 11.5px; padding: 4px 7px; }
   .small { margin: 0; font-size: 11.5px; color: var(--muted); line-height: 1.4; }
   .small b { color: var(--fg); font-family: var(--mono); font-weight: 600; }
   .meter { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
@@ -215,19 +223,20 @@
     </div>
   </section>
 
-  <section class="hud mind" aria-label="Predator and colony mind">
+  <section class="hud mind" aria-label="Natural events and colony mind">
     <div class="ch">
-      <div><span class="k">Natural predator</span><h2>Death</h2></div>
-      <span class="pill" id="deathState">Away</span>
+      <div><span class="k">Closed ecosystem</span><h2 id="evName">Calm</h2></div>
+      <span class="pill" id="evState">Calm weather</span>
     </div>
-    <div class="hpbar" title="Death's strength"><span id="deathHp" style="width:100%"></span></div>
+    <div class="hpbar" title="How far the current event has run"><span id="evBar" style="width:0%"></span></div>
     <dl class="stats mini">
-      <div><dt>Taken by Death</dt><dd id="sKilled">0</dd></div>
+      <div><dt>Lost to nature</dt><dd id="sKilled">0</dd></div>
       <div><dt>Died of age</dt><dd id="sAged">0</dd></div>
-      <div><dt>Defenders</dt><dd id="sDef">0</dd></div>
+      <div><dt>Responders</dt><dd id="sDef">0</dd></div>
       <div><dt>Bodies waiting</dt><dd id="sBodies">0</dd></div>
     </dl>
-    <p class="watch" id="mindLine">The colony mind is always on: alarm response, defence, trail avoidance, undertaking and recruitment.</p>
+    <p class="small" id="cycleLine">—</p>
+    <p class="watch" id="mindLine">The colony mind is always on. Ants shelter from weather, flee rising water, dig out collapses, isolate the sick, bury the dead and recruit to good food.</p>
     <ol class="log" id="mindLog"></ol>
   </section>
   </div>
@@ -270,10 +279,11 @@
       <button id="visitQueen">Visit</button>
     </div>
     <div class="tabs" role="tablist">
-      <button role="tab" data-tab="cmd" aria-selected="true">Command</button>
+      <button role="tab" data-tab="cmd" aria-selected="true">Rule</button>
       <button role="tab" data-tab="pol" aria-selected="false">Politics</button>
-      <button role="tab" data-tab="ml" aria-selected="false">Learning</button>
-      <button role="tab" data-tab="chr" aria-selected="false">Chronicle</button>
+      <button role="tab" data-tab="ml" aria-selected="false">Learn</button>
+      <button role="tab" data-tab="chr" aria-selected="false">History</button>
+      <button role="tab" data-tab="gen" aria-selected="false">Genes</button>
     </div>
     <div class="tabpanel" id="tab-cmd" role="tabpanel">
       <p class="watch" id="watchLine">The queen rules on her own. You can watch, but not command.</p>
@@ -307,6 +317,11 @@
       <p class="small" id="chrStatus">—</p>
       <div class="codons" id="codons"></div>
       <ol class="log" id="chrLog"></ol>
+    </div>
+    <div class="tabpanel" id="tab-gen" role="tabpanel" hidden>
+      <p class="small" id="genStatus">—</p>
+      <div class="notables" id="notables"></div>
+      <ol class="genes" id="geneList"></ol>
     </div>
   </section>
   </div>
@@ -362,7 +377,8 @@
   controls.maxDistance = 60;
   controls.update();
 
-  scene.add(new THREE.HemisphereLight(0xffe9c8, 0x2a1a10, 0.5));
+  const hemi = new THREE.HemisphereLight(0xffe9c8, 0x2a1a10, 0.5);
+  scene.add(hemi);
   const sun = new THREE.DirectionalLight(0xffe2bb, 0.62);
   sun.position.set(8, 20, 6);
   scene.add(sun);
@@ -404,11 +420,11 @@
     while (q.length) {
       const n = q.shift();
       if (n === to) break;
-      for (const { to: m, e } of adj[n]) if (!(m in prev)) { prev[m] = { n, e }; q.push(m); }
+      for (const { to: m, e } of adj[n]) if (!(m in prev) && !e.blocked) { prev[m] = { n, e }; q.push(m); }
     }
     const segs = [];
     let cur = to;
-    while (prev[cur]) { const { n, e } = prev[cur]; segs.unshift({ curve: e.curve, len: e.len, rev: e.a !== n, under: true, from: n, to: cur }); cur = n; }
+    while (prev[cur]) { const { n, e } = prev[cur]; segs.unshift({ curve: e.curve, len: e.len, rev: e.a !== n, under: true, from: n, to: cur, e }); cur = n; }
     return segs;
   }
 
@@ -418,7 +434,7 @@
   const chamberMat = earthMat.clone(); chamberMat.opacity = 0.26; chamberMat.color.set(0xd09460);
   const nest = new THREE.Group(); scene.add(nest);
   const TR = 0.42, ANT_S = 1.5, UNDER = -TR + 0.085 * ANT_S;
-  for (const e of edges) nest.add(new THREE.Mesh(new THREE.TubeGeometry(e.curve, 56, TR, 10, false), earthMat));
+  for (const e of edges) { e.mesh = new THREE.Mesh(new THREE.TubeGeometry(e.curve, 56, TR, 10, false), earthMat); nest.add(e.mesh); }
   for (const k in NODES) {
     const n = NODES[k];
     if (n.r > 0) {
@@ -508,6 +524,7 @@
       grass.setColorAt(i, c.setHSL(rand(0.17, 0.25), rand(0.4, 0.6), rand(0.13, 0.24)));
     }
     scene.add(grass);
+    var grassMesh = grass;
   }
 
   // ---------- ant geometry ----------
@@ -678,11 +695,12 @@
     if (f.amount <= 0) { scene.remove(f.mesh); foods.splice(foods.indexOf(f), 1); }
     else f.mesh.scale.setScalar(0.45 + 0.55 * f.amount / f.max);
   }
-  // With the colony mind on, foragers skip trails that smell of Death and follow the strongest
-  // recruitment trails (sources other foragers keep returning from). Without it they pick blindly.
+  // With the colony mind on, foragers follow the strongest recruitment trails (sources other foragers
+  // keep returning from) and keep to the shortest trail in a drought. Without it they pick blindly.
   function pickFood() {
-    const open = foods.filter(f => (f.infinite || f.amount - f.claims > 0) && !(colony.mind && foodDanger(f)));
+    const open = foods.filter(f => f.infinite || f.amount - f.claims > 0);
     if (!open.length) return null;
+    if (colony.mind && nature.event && nature.event.type === 'heat') return open.reduce((a, b) => a.tlen < b.tlen ? a : b);
     let tot = 0;
     const w = open.map(f => (tot += colony.mind ? (f.infinite ? 40 : f.amount - f.claims) / f.tlen * (1 + f.strength) : 1));
     const r = Math.random() * tot;
@@ -697,7 +715,7 @@
     cleaner: { name: 'Midden worker', color: '#7d6f60', share: 0.08 },
     reserve: { name: 'Reserve', color: '#9aab63', share: 0.2 },
     guard: { name: 'Royal guard', color: '#b48ae0', share: 0 },
-    defender: { name: 'Defender', color: '#e0533d', share: 0 },
+    responder: { name: 'Responder', color: '#6fa8c8', share: 0 },
   };
   const DECREES = {
     balanced: { name: 'Balanced colony', note: 'work split evenly', shares: { forager: 0.42, nurse: 0.2, excavator: 0.1, cleaner: 0.08, reserve: 0.2 } },
@@ -708,7 +726,7 @@
   };
   const GUARD_N = 12;
   function shares(n, decree = colony.decree, guard = colony.guard) {
-    const d = DECREES[decree].shares, g = guard ? Math.min(GUARD_N, n) / Math.max(1, n) : 0, out = { guard: g, defender: 0 };
+    const d = DECREES[decree].shares, g = guard ? Math.min(GUARD_N, n) / Math.max(1, n) : 0, out = { guard: g, responder: 0 };
     for (const k in d) out[k] = d[k] * (1 - g);
     return out;
   }
@@ -716,7 +734,7 @@
   const day = () => Math.floor(simTime / 90) + 1;
   const colony = { store: 40, midden: 30, eggsWaiting: 3, eggsClaimed: 0, layTimer: 0, eatTimer: 0, foodTimer: 0, born: 0,
                   decree: 'balanced', guard: false, lay: 1, gov: 'queen', govT: 8, everLived: 0, unrest: 0, unrestT: 0, lowT: 0, polT: 0, recentKills: 0, nextMilestone: 200, lastVote: null, regimeName: null, eggsLaid: 0, dug: 0, orderId: 0, pulse: 0, generation: 1, maleT: 0,
-                  mind: true, mindT: 1, alarmT: 0, killed: 0, aged: 0, buried: 0 };
+                  mind: true, mindT: 1, alarmT: 0, killed: 0, aged: 0, buried: 0, nutrients: 10 };
   const brood = [];
   const ants = [];
   let nextId = 1, simTime = 0;
@@ -724,12 +742,64 @@
   const qName = () => `Queen Ysolde${ROMAN[colony.generation] ?? ' ' + colony.generation}`;
 
   function nodeSpot(k) { return NODES[k].v; }
+  // ---------- trait genes ----------
+  // Every egg rolls one gene, and sometimes a second, by rarity. Each gene is a real power with a
+  // real cost. Carriers that live to old age raise their gene's odds in the queen's line; carriers
+  // lost to nature lower them: natural selection inside the closed ecosystem.
+  const TIERS = [
+    { id: 'common', name: 'Common', color: '#b9a88f', p: 0.70 },
+    { id: 'rare', name: 'Rare', color: '#6fa8c8', p: 0.22 },
+    { id: 'mythic', name: 'Mythic', color: '#c58ad6', p: 0.07 },
+    { id: 'legendary', name: 'Legendary', color: '#f0c040', p: 0.01 },
+  ];
+  const GENES = [
+    { id: 'legs', tier: 'common', name: 'Long legs', power: 'walks 15% faster', drawback: 'lives 15% shorter', fx: { speed: 1.15, life: 0.85 } },
+    { id: 'cuticle', tier: 'common', name: 'Thick cuticle', power: 'half as likely to die in heat or cold', drawback: '10% slower', fx: { speed: 0.9, hz: { heat: 0.5, frost: 0.5 } } },
+    { id: 'antennae', tier: 'common', name: 'Keen antennae', power: 'catches the queen’s orders 1.5× as easily', drawback: 'catches blight 1.3× as easily', fx: { order: 1.5, blight: 1.3 } },
+    { id: 'mandibles', tier: 'common', name: 'Strong mandibles', power: 'carries 2 food per trip', drawback: 'eats 1.5× as much', fx: { carry: 2, upkeep: 1.5 } },
+    { id: 'swimmer', tier: 'rare', name: 'Swimmer', power: 'never drowns', drawback: 'twice as likely to freeze', fx: { hz: { storm: 0, frost: 2 } } },
+    { id: 'irongut', tier: 'rare', name: 'Iron gut', power: 'immune to fungal blight', drawback: 'lives 20% shorter', fx: { blight: 0, life: 0.8 } },
+    { id: 'pathfinder', tier: 'rare', name: 'Pathfinder', power: 'lays recruitment trails twice as strong, 10% faster', drawback: 'dries out twice as fast in drought', fx: { trail: 2, speed: 1.1, hz: { heat: 2 } } },
+    { id: 'broodkeeper', tier: 'rare', name: 'Broodkeeper', power: 'each feeding counts double for larvae', drawback: '15% slower', fx: { nurse: 2, speed: 0.85 } },
+    { id: 'voice', tier: 'mythic', name: 'Hive voice', power: 'spreads the queen’s orders 3× as fast, contagious twice as long', drawback: 'lives 40% shorter', fx: { voice: 3, life: 0.6 } },
+    { id: 'stonejaw', tier: 'mythic', name: 'Stonejaw', power: 'digs out collapses 4× as fast and survives them', drawback: '25% slower', fx: { dig: 4, crush: true, speed: 0.75 } },
+    { id: 'warden', tier: 'mythic', name: 'Fungus warden', power: 'grooming cures blight in nestmates nearby', drawback: 'eats 3× as much', fx: { warden: true, upkeep: 3 } },
+    { id: 'phoenix', tier: 'legendary', name: 'Phoenix', power: 'rises again once after dying', drawback: 'her rebirth burns 10 food from the store', fx: { revive: true } },
+    { id: 'oracle', tier: 'legendary', name: 'Oracle', power: 'the colony learns twice as fast and explores half as much', drawback: 'never works; she sits with the queen', fx: { oracle: true } },
+    { id: 'titan', tier: 'legendary', name: 'Titan', power: 'giant: carries 5 food, digs 6× as fast, cannot drown or be crushed', drawback: 'lives half as long, 20% slower, eats 4× as much', fx: { size: 1.6, carry: 5, dig: 6, crush: true, hz: { storm: 0 }, life: 0.5, speed: 0.8, upkeep: 4 } },
+  ];
+  const GENE = Object.fromEntries(GENES.map(g => [g.id, g]));
+  const TIER = Object.fromEntries(TIERS.map(t => [t.id, t]));
+  const genePool = Object.fromEntries(GENES.map(g => [g.id, 1]));   // selection weights in the queen's line
+  function rollGene(taken) {
+    let r = Math.random(), tier = TIERS[0];
+    for (const t of [...TIERS].reverse()) { if (r < t.p) { tier = t; break; } r -= t.p; }
+    const opts = GENES.filter(g => g.tier === tier.id && !taken.includes(g.id));
+    let tot = opts.reduce((t, g) => t + genePool[g.id], 0), x = Math.random() * tot;
+    for (const g of opts) if ((x -= genePool[g.id]) <= 0) return g.id;
+    return opts[0].id;
+  }
+  function traits(genes) {
+    const g = { speed: 1, life: 1, hz: { storm: 1, frost: 1, heat: 1 }, order: 1, blight: 1, carry: 1, upkeep: 1, trail: 1, nurse: 1, voice: 1, dig: 1, size: 1 };
+    for (const id of genes) {
+      const fx = GENE[id].fx;
+      for (const k in fx) {
+        if (k === 'hz') for (const h in fx.hz) g.hz[h] *= fx.hz[h];
+        else if (typeof fx[k] === 'number') g[k] = ['carry', 'size'].includes(k) ? Math.max(g[k], fx[k]) : g[k] * fx[k];
+        else g[k] = fx[k];
+      }
+    }
+    g.legend = genes.some(id => GENE[id].tier === 'legendary');
+    return g;
+  }
+  const geneTag = id => `${GENE[id].name} (${TIER[GENE[id].tier].name.toLowerCase()})`;
+
   // ---------- the colony genome ----------
   // Every ant that was, is and will be carries the same prime directive, plus CHR-1: a gene that holds
   // the colony's history as a sequence of codons, copied into each egg the queen lays.
   const PRIME_DIRECTIVE = 'Ensure the survival of the colony';
   const CODONS = { found: ['AUG', '#9aab63'], decree: ['GCA', '#b48ae0'], council: ['GGU', '#7fb0d8'], regime: ['CGA', '#e8a23a'],
-                   uprising: ['UAA', '#e0533d'], death: ['UGA', '#c0503f'], driven: ['CAU', '#f0b25a'], grow: ['AAG', '#b7c97a'], learn: ['ACG', '#e9dcc0'] };
+                   uprising: ['UAA', '#e0533d'], event: ['UGA', '#c0503f'], recover: ['CAU', '#f0b25a'], gene: ['GGA', '#f0c040'], grow: ['AAG', '#b7c97a'], learn: ['ACG', '#e9dcc0'] };
   const chronicle = [];
   function chronicleAdd(kind, text) { chronicle.push({ day: day(), kind, text }); }
   chronicleAdd('found', 'Queen Ysolde founded the colony and wrote the prime directive into every genome');
@@ -747,15 +817,15 @@
   // the survival index. The model starts with one feature and adds more as the colony grows.
   const LESSON = 30, DECS = Object.keys(DECREES);
   const SHORT = { balanced: 'Bal', gather: 'Food', brood: 'Brood', expand: 'Dig', shelter: 'Hide' };
-  const FEATURES = { food: 'food', crowd: 'crowding', threat: 'threats', brood: 'brood' };
+  const FEATURES = { food: 'food', crowd: 'crowding', threat: 'natural events', brood: 'brood' };
   const UNLOCKS = [['crowd', 170], ['threat', 200], ['brood', 240]];
   const LAY_FOR = { balanced: 1, gather: 0.5, brood: 2, expand: 0.5, shelter: 0.5 };
   const learn = { Q: {}, N: {}, lessons: 0, features: ['food'], prevKey: null, prevDecree: null, prevS: null, alpha: 0.35, gamma: 0.5,
-                  rewards: [], musterK: 8, fleeR: 5, musterFrom: 8, fleeFrom: 5 };
+                  rewards: [], rescueN: 6, heatLimit: 9 };
   function stateParts() {
     const n = ants.length, st = colony.store, young = brood.length + colony.eggsWaiting;
     return { food: st < 20 ? 'food low' : st < 70 ? 'food ok' : 'food rich', crowd: n > capacity() * 0.9 ? 'crowded' : 'roomy',
-             threat: deathHunting() || colony.alarmT > 0 ? 'threat' : 'calm', brood: young < n * 0.1 ? 'few young' : 'many young' };
+             threat: hazardActive() ? 'threat' : 'calm', brood: young < n * 0.1 ? 'few young' : 'many young' };
   }
   const stateKey = () => { const p = stateParts(); return learn.features.map(f => p[f]).join(' · '); };
   function prior(key, d) {
@@ -775,7 +845,7 @@
     }
     return learn.Q[key];
   }
-  const epsilon = () => Math.max(0.05, 0.4 * Math.pow(0.93, learn.lessons));
+  const epsilon = () => Math.max(0.05, 0.4 * Math.pow(0.93, learn.lessons)) * (ants.some(a => a.g.oracle) ? 0.5 : 1);
   const bestOf = row => DECS.reduce((b, d) => row[d] > row[b] ? d : b, DECS[0]);
 
   // ---------- politics ----------
@@ -786,7 +856,7 @@
     { id: 'forager', name: "Foragers' guild", roles: ['forager'], bias: { gather: 1, shelter: -1 } },
     { id: 'nurse', name: "Nurses' circle", roles: ['nurse'], bias: { brood: 1 } },
     { id: 'digger', name: "Diggers' union", roles: ['excavator'], bias: { expand: 1 } },
-    { id: 'militia', name: 'Militia', roles: ['guard', 'defender'], bias: { shelter: 1, gather: -0.3 } },
+    { id: 'militia', name: 'Militia', roles: ['guard', 'responder'], bias: { shelter: 1, gather: -0.3 } },
     { id: 'undertaker', name: 'Undertakers', roles: ['cleaner'], bias: { shelter: 0.4, balanced: 0.4 } },
     { id: 'reserve', name: 'Reserve assembly', roles: ['reserve'], bias: { balanced: 0.8 } },
   ];
@@ -809,6 +879,9 @@
                 here: at, onSurface: false, claim: null, life: rand(7, 12) * 90, prevRole: null, temp: false, engaged: false, lastOrder: 0, contagious: 0, flash: 0, pendingRole: null, gspot: null };
     colony.everLived++;
     a.genome = { directive: PRIME_DIRECTIVE, chronicle: chronicle.length };
+    a.genes = [rollGene([])]; if (Math.random() < 0.3) a.genes.push(rollGene(a.genes));
+    a.g = traits(a.genes); a.speed *= a.g.speed; a.life *= a.g.life;
+    for (const id of a.genes) if (GENE[id].tier === 'legendary') chronicleAdd('gene', `A legendary ${GENE[id].name} gene appeared in worker #${String(a.id).padStart(3, '0')}`);
     ants.push(a); return a;
   }
   function neededRole() {
@@ -818,7 +891,7 @@
   }
   function countRoles(eff) {
     const c = {}; for (const k in ROLES) c[k] = 0;
-    for (const a of ants) { let k = eff ? (a.pendingRole || a.role) : a.role; if (eff && k === 'defender') k = a.prevRole || 'reserve'; c[k]++; }
+    for (const a of ants) { let k = eff ? (a.pendingRole || a.role) : a.role; if (eff && k === 'responder') k = a.prevRole || 'reserve'; c[k]++; }
     return c;
   }
 
@@ -846,6 +919,11 @@
   const surf = (curve, rev, phero) => ({ curve, len: curve.getLength(), rev, under: false, phero });
 
   function planForage(a) {
+    if (colony.mind && surfaceHazard() && nature.event.type !== 'heat') {
+      say(a, `Sheltering underground from the ${EVENTS[nature.event.type].name.toLowerCase()}`);
+      if (a.at !== 'pantry') goTo(a, 'pantry');
+      linger(a, 'pantry'); return;
+    }
     if (a.at !== 'entrance') { say(a, 'Climbing to the entrance to forage'); goTo(a, 'entrance'); return; }
     const f = pickFood();
     if (!f) {
@@ -859,14 +937,14 @@
     a.segs.push(surf(f.trail, false));
     a.segs.push({ fn: x => {
       f.claims--; x.claim = null;
-      if (colony.mind) f.strength = Math.min(6, f.strength + 0.3);
-      if (f.amount > 0) { f.amount--; x.cargo = { kind: 'food', color: f.type.color, name: f.type.name }; x.task = `Carrying a ${f.type.name} home, laying pheromone`; onFoodTaken(f); }
-      else { x.task = 'Found the food gone, heading back'; }
+      if (colony.mind) f.strength = Math.min(6, f.strength + 0.3 * x.g.trail);
+      if (f.infinite ? Math.random() < vigor() : f.amount > 0) { f.amount--; x.cargo = { kind: 'food', color: f.type.color, name: f.type.name }; x.task = `Carrying a ${f.type.name} home, laying pheromone`; onFoodTaken(f); }
+      else { x.task = f.infinite ? 'The aphids gave no honeydew this time, heading back' : 'Found the food gone, heading back'; }
     } });
     a.segs.push({ wait: rand(0.2, 0.7) }, surf(f.trail, true, true));
     a.segs.push({ fn: x => { if (!x.cargo) { x.segs.length = 0; x.at = 'entrance'; } else x.task = `Taking the ${x.cargo.name} down to the food store`; } });
     goTo(a, 'pantry');
-    a.segs.push({ fn: x => { colony.store += 1; x.cargo = null; x.task = 'Resting in the food store'; } });
+    a.segs.push({ fn: x => { colony.store += x.g.carry; x.cargo = null; x.task = x.g.carry > 1 ? `Stored ${x.g.carry} loads at once` : 'Resting in the food store'; } });
     linger(a, 'pantry');
   }
   function planNurse(a) {
@@ -887,7 +965,7 @@
       goTo(a, 'pantry'); linger(a, 'pantry');
       a.segs.push({ fn: x => { if (colony.store >= 1) { colony.store -= 1; x.cargo = { kind: 'food', color: 0xd9a54a, name: 'regurgitated food' }; x.task = 'Bringing food back to the larvae'; } } });
       goTo(a, 'nursery');
-      a.segs.push({ fn: x => { x.claim = null; if (x.cargo) larva.fed++; larva.res = false; x.cargo = null; x.task = 'Feeding a larva'; } });
+      a.segs.push({ fn: x => { x.claim = null; if (x.cargo) larva.fed += x.g.nurse; larva.res = false; x.cargo = null; x.task = 'Feeding a larva'; } });
       linger(a, 'nursery');
       return;
     }
@@ -896,6 +974,7 @@
   }
   function planDig(a) {
     if (a.at !== 'winter') { say(a, 'Heading down to the dig face'); goTo(a, 'winter'); return; }
+    if (colony.mind && surfaceHazard() && nature.event.type !== 'heat') { say(a, 'Digging, but holding the soil until the weather clears'); linger(a, 'winter'); return; }
     say(a, 'Excavating the overwintering chamber'); linger(a, 'winter');
     a.segs.push({ fn: x => { x.cargo = { kind: 'soil', color: 0x7a5232, name: 'soil pellet' }; x.task = 'Hauling a soil pellet up 78 cm to the surface'; } });
     goTo(a, 'entrance');
@@ -906,17 +985,17 @@
     goTo(a, 'winter');
   }
   function planClean(a) {
-    const c = corpses.find(c => !c.claimed && collectable(c));
+    const c = corpses.filter(c => !c.claimed && collectable(c)).sort((p, q) => (q.spores | 0) - (p.spores | 0))[0];
     if (c) {
       c.claimed = true; a.claim = { k: 'corpse', c };
-      const pick = { fn: x => { x.claim = null; corpses.splice(corpses.indexOf(c), 1); x.cargo = { kind: 'corpse', color: 0x2b2522, name: 'dead sister' }; x.task = 'Carrying a dead sister to the midden'; } };
+      const pick = { fn: x => { x.claim = null; corpses.splice(corpses.indexOf(c), 1); x.cargo = { kind: 'corpse', color: c.spores ? 0x8fb35a : 0x2b2522, name: c.spores ? 'blighted body' : 'dead sister', spores: c.spores }; x.task = c.spores ? 'Carrying a blighted body to the midden before it spreads spores' : 'Carrying a dead sister to the midden'; } };
       if (c.surface) {
         say(a, 'Going out to recover a fallen sister'); goTo(a, 'entrance');
         const cv = trailCurve(c.pos.x, c.pos.z);
         a.segs.push(surf(cv, false), pick, surf(cv, true));
       } else { say(a, `Collecting a body from the ${(NODES[c.node].label || 'tunnels').toLowerCase()}`); goTo(a, c.node); a.segs.push(pick); }
       goTo(a, 'midden');
-      a.segs.push({ fn: x => { colony.midden += 1; colony.buried++; x.cargo = null; x.task = 'Laid a dead sister on the midden'; } });
+      a.segs.push({ fn: x => { colony.midden += 1; colony.buried++; colony.nutrients += 1; x.cargo = null; x.task = 'Laid a dead sister on the midden, to feed the soil'; } });
       linger(a, 'midden');
       return;
     }
@@ -948,12 +1027,15 @@
     N.r = N.r0 * g; const ry = N.r * 0.5;
     N.mesh.scale.set(N.r, ry, N.r * 0.85); N.center.set(N.v.x, N.v.y - 0.32 + ry, N.v.z); N.mesh.position.copy(N.center);
   }
-  function planDefend(a) {
-    if (!deathHunting() || !colony.mind) { a.pendingRole = a.prevRole || 'reserve'; a.prevRole = null; a.task = 'The threat has passed, back to work'; a.segs.push({ wait: 0.3 }); return; }
-    if (a.at !== 'entrance') { say(a, 'Alarm pheromone! Rushing up to fight Death'); goTo(a, 'entrance'); return; }
-    say(a, 'Charging Death with jaws open');
-    a.segs.push({ chase: true, under: false });
-    a.segs.push({ fn: x => { x.engaged = false; x.segs.unshift(surf(homeCurve(x.pos), false)); x.task = 'Returning to the nest'; } });
+  function planOracle(a) {
+    if (a.at !== 'queen') { say(a, 'The Oracle goes to sit with the queen'); goTo(a, 'queen'); return; }
+    say(a, 'Reading the colony’s memory beside the queen'); linger(a, 'queen'); a.segs.push({ wait: rand(4, 8) });
+  }
+  function planRespond(a) {
+    const ev = nature.event;
+    if (!ev || ev.type !== 'cavein' || !colony.mind) { a.pendingRole = a.prevRole || 'reserve'; a.prevRole = null; a.digging = false; a.task = 'The tunnel is clear, back to work'; a.segs.push({ wait: 0.3 }); return; }
+    if (a.at !== ev.site) { say(a, `Rushing to dig out the collapse by the ${lbl(ev.site)}`); goTo(a, ev.site); return; }
+    a.segs.push({ fn: x => { x.digging = true; x.task = 'Digging through the collapsed tunnel'; } }, { wait: rand(2, 4) });
   }
   const homeCurve = p => {
     const st = V(p.x, 0, p.z), mid = st.clone().multiplyScalar(0.5).add(V(rand(-0.3, 0.3), 0, rand(-0.3, 0.3)));
@@ -962,14 +1044,14 @@
   // After running home, finish whatever was in her mandibles.
   function deliverCargo(a) {
     const k = a.cargo && a.cargo.kind;
-    if (k === 'food') { goTo(a, 'pantry'); a.segs.push({ fn: x => { colony.store += 1; x.cargo = null; x.task = 'Made it to the food store'; } }); }
-    else if (k === 'corpse') { goTo(a, 'midden'); a.segs.push({ fn: x => { colony.midden += 1; colony.buried++; x.cargo = null; x.task = 'Laid a dead sister on the midden'; } }); }
+    if (k === 'food') { goTo(a, 'pantry'); a.segs.push({ fn: x => { colony.store += x.g.carry; x.cargo = null; x.task = 'Made it to the food store'; } }); }
+    else if (k === 'corpse') { goTo(a, 'midden'); a.segs.push({ fn: x => { colony.midden += 1; colony.buried++; colony.nutrients += 1; x.cargo = null; x.task = 'Laid a dead sister on the midden'; } }); }
     else if (k === 'soil') a.segs.push({ fn: x => { dropPellet(x.pos); colony.dug++; growWinter(); x.cargo = null; } });
   }
   function flee(a) {
     release(a);
     a.segs.length = 0; a.seg = null; a.at = 'entrance';
-    a.segs.push({ fn: x => { x.task = 'Smelled Death on the trail and ran for the nest'; } }, { ...surf(homeCurve(a.pos), false), flee: true });
+    a.segs.push({ fn: x => { x.task = nature.event && nature.event.type === 'heat' ? 'Drying out in the heat, running for the cool nest' : 'Caught in the weather, running for the nest'; } }, { ...surf(homeCurve(a.pos), false), flee: true });
     deliverCargo(a);
   }
   function release(a) {
@@ -980,7 +1062,7 @@
     else if (c.k === 'larva') c.larva.res = false;
     else if (c.k === 'corpse') c.c.claimed = false;
   }
-  const PLANS = { forager: planForage, nurse: planNurse, excavator: planDig, cleaner: planClean, reserve: planReserve, guard: planGuard, defender: planDefend };
+  const PLANS = { forager: planForage, nurse: planNurse, excavator: planDig, cleaner: planClean, reserve: planReserve, guard: planGuard, responder: planRespond };
 
   // ---------- movement ----------
   const tmpP = V(0, 0, 0), tmpT = V(0, 0, 0), side = V(0, 0, 0);
@@ -997,6 +1079,7 @@
     a.onSurface = !s.under;
   }
   function stepAnt(a, dt) {
+    a.exposure = a.onSurface ? (a.exposure || 0) + dt : Math.max(0, (a.exposure || 0) - dt * 2);
     if (a.flash > 0) a.flash -= dt * 0.5;
     if (a.contagious > 0) a.contagious -= dt;
     let guard = 0;
@@ -1006,34 +1089,26 @@
           if (a.gspot) { const c = new THREE.LineCurve3(a.gspot, NODES.queen.v.clone()); a.segs.push({ curve: c, len: Math.max(0.05, c.getLength()), rev: false, under: true, node: 'queen' }); a.gspot = null; }
           a.role = a.pendingRole; a.pendingRole = null; a.lane = (Math.random() - 0.5) * 0.36;
         }
-        PLANS[a.role](a);
+        (a.g.oracle ? planOracle : PLANS[a.role])(a);
       }
       if (!a.segs.length) a.segs.push({ wait: 0.5 });
       a.seg = a.segs.shift(); a.t = 0;
       if (a.seg.fn) { a.seg.fn(a); a.seg = null; }
+      else if (a.seg.e && a.seg.e.blocked) {   // the way ahead has collapsed: find another route
+        const from = a.seg.from; a.seg = null; release(a); a.segs.length = 0; a.at = from; a.here = from;
+        if (a.cargo && a.cargo.kind === 'egg') colony.eggsWaiting++;
+        if (a.cargo && a.cargo.kind !== 'egg') deliverCargo(a);
+        if (!a.segs.length) a.cargo = null;
+        a.task = 'Found the tunnel collapsed, taking another way';
+      }
     }
     const s = a.seg; if (!s) return;
-    if (s.chase) {
-      if (!deathHunting() || !colony.mind || a.role !== 'defender') { a.seg = null; a.engaged = false; return; }
-      // Defenders muster on the mound until enough have gathered, then charge together.
-      let tx, tz;
-      if (death.charge) { tx = death.pos.x + Math.cos(a.wob) * 0.8; tz = death.pos.z + Math.sin(a.wob) * 0.8; }
-      else { const ang = Math.atan2(death.pos.z, death.pos.x) + Math.cos(a.wob) * 0.45; tx = Math.cos(ang) * (1.9 + Math.sin(a.wob) * 0.3); tz = Math.sin(ang) * (1.9 + Math.sin(a.wob) * 0.3); }
-      const dx = tx - a.pos.x, dz = tz - a.pos.z, d = Math.hypot(dx, dz);
-      if (d > 0.05) { const st = Math.min(d, dt * a.speed * 1.3); a.pos.x += dx / d * st; a.pos.z += dz / d * st; }
-      a.engaged = death.charge && d < 0.4;
-      if (a.engaged) a.task = 'Biting Death’s legs';
-      else if (!death.charge && d < 0.4) a.task = `Mustering on the mound: ${death.muster} gathered`;
-      a.tan.set(death.pos.x - a.pos.x, 0, death.pos.z - a.pos.z).normalize();
-      a.pos.y = groundY(a.pos.x, a.pos.z) + 0.075 * ANT_S; a.onSurface = true;
-      return;
-    }
     if (s.wait !== undefined) { a.t += dt; if (a.t >= s.wait) a.seg = null; return; }
-    a.t += dt * a.speed * (s.slow || 1) / s.len;
+    a.t += dt * a.speed * (s.slow || 1) * nature.speed / s.len;
     if (a.t >= 1) { a.t = 1; a.seg = null; a.here = s.to || s.node || a.here; }
     placeOnSeg(a, s);
-    if (colony.mind && !s.under && !s.flee && a.role !== 'defender' && deathHunting() &&
-        (a.pos.x - death.pos.x) ** 2 + (a.pos.z - death.pos.z) ** 2 < learn.fleeR ** 2 && Math.hypot(a.pos.x, a.pos.z) > 2.4) { flee(a); return; }
+    if (colony.mind && !s.under && !s.flee && Math.hypot(a.pos.x, a.pos.z) > 2.4 && surfaceHazard() &&
+        (nature.event.type !== 'heat' || a.exposure > learn.heatLimit)) { flee(a); return; }
     if (s.phero && a.cargo) { a.ph -= dt; if (a.ph <= 0) { a.ph = 0.22; dropPhero(a.pos); } }
   }
 
@@ -1053,13 +1128,14 @@
     if (ants.length >= colony.nextMilestone) { chronicleAdd('grow', `The colony reached ${colony.nextMilestone} workers`); colony.nextMilestone += 50; }
     colony.eatTimer += dt;
     if (colony.eatTimer > 1) {
-      colony.eatTimer = 0; colony.store = Math.max(0, colony.store - ants.length * 0.0016);
+      colony.eatTimer = 0; colony.store = Math.max(0, colony.store - ants.reduce((t, a) => t + a.g.upkeep, 0) * 0.0016);
       for (const a of ants.filter(a => simTime - a.born > a.life)) kill(a, 'age');
     }
     for (let i = brood.length - 1; i >= 0; i--) {
       const b = brood[i];
       if (b.stage === 1 && b.fed < 3 && ants.length < 8 && !b.res) b.fed = Math.min(3, b.fed + dt / 5);
-      if (b.stage === 1 && b.fed < 3) b.age += dt * 0.15; else b.age += dt;
+      const bdt = dt * (nature.w.frost > 0.3 ? 0.3 : 1);
+      if (b.stage === 1 && b.fed < 3) b.age += bdt * 0.15; else b.age += bdt;
       if (b.stage === 0 && b.age > 10) { b.stage = 1; b.age = 0; }
       else if (b.stage === 1 && b.fed >= 3 && b.age > 8) { b.stage = 2; b.age = 0; }
       else if (b.stage === 2 && b.age > 14) {
@@ -1068,7 +1144,7 @@
       }
     }
     colony.foodTimer -= dt;
-    if (foods.filter(f => !f.infinite).length < 3 && colony.foodTimer <= 0) { spawnFood(...randomFoodSpot()); colony.foodTimer = rand(5, 10); }
+    if (foods.filter(f => !f.infinite).length < 3 && colony.foodTimer <= 0) { spawnFood(...randomFoodSpot()); colony.foodTimer = rand(5, 10) / vigor(); }
   }
 
   // ---------- aphid herd: the colony's endless food source ----------
@@ -1101,128 +1177,174 @@
     return f;
   })();
 
-  // ---------- Death: a wolf spider that hunts the meadow ----------
-  const death = { state: 'away', timer: 30, pos: V(HALF, 0, 0), heading: 0, hp: 1, goal: V(0, 0, 0), target: null, eat: 0, visitKills: 0,
-                  retaliate: 1.5, since: 0, charge: false, muster: 0, scan: 0, exit: V(0, 0, 0), speed: 0, visit: 0 };
-  const deathRig = (() => {
-    const g = new THREE.Group();
-    const mat = new THREE.MeshStandardMaterial({ color: 0x1b1512, roughness: 0.75, metalness: 0.05 });
-    const stripe = new THREE.MeshStandardMaterial({ color: 0x5a4a3c, roughness: 0.9 });
-    const blob = (sx, sy, sz, x, y, z, m) => { const b = new THREE.Mesh(new THREE.SphereGeometry(1, 18, 12), m || mat); b.scale.set(sx, sy, sz); b.position.set(x, y, z); g.add(b); };
-    blob(0.42, 0.33, 0.56, 0, 0.44, -0.5); blob(0.15, 0.05, 0.42, 0, 0.74, -0.48, stripe);
-    blob(0.3, 0.22, 0.36, 0, 0.42, 0.12); blob(0.08, 0.04, 0.28, 0, 0.62, 0.1, stripe);
-    const eyeMat = new THREE.MeshBasicMaterial({ color: 0xff3a2a });
-    for (const [x, y, z, rr] of [[-0.07, 0.52, 0.45, 0.045], [0.07, 0.52, 0.45, 0.045], [-0.13, 0.48, 0.41, 0.03], [0.13, 0.48, 0.41, 0.03], [-0.09, 0.6, 0.35, 0.035], [0.09, 0.6, 0.35, 0.035]]) {
-      const e = new THREE.Mesh(new THREE.SphereGeometry(rr, 8, 6), eyeMat); e.position.set(x, y, z); g.add(e);
-    }
-    const legGeo = new THREE.CylinderGeometry(0.035, 0.022, 1, 6), legs = [];
-    const bone = (parent, from, to) => { const dir = to.clone().sub(from), len = dir.length(), m = new THREE.Mesh(legGeo, mat); m.scale.set(1, len, 1); m.position.copy(from).addScaledVector(dir, 0.5); m.quaternion.setFromUnitVectors(UP, dir.normalize()); parent.add(m); };
-    for (const sd of [-1, 1]) for (let i = 0; i < 4; i++) {
-      const pivot = new THREE.Group(); pivot.position.set(0.2 * sd, 0.44, 0.28 - i * 0.14); g.add(pivot);
-      const fz = [0.9, 0.35, -0.25, -0.8][i], knee = V(0.5 * sd, 0.32, fz * 0.35), foot = V(0.95 * sd, -0.44, fz * 0.75);
-      bone(pivot, V(0, 0, 0), knee); bone(pivot, knee, foot);
-      for (const [a, b] of [[V(-0.04, 0.3, 0.42), V(-0.03, 0.12, 0.5)], [V(0.04, 0.3, 0.42), V(0.03, 0.12, 0.5)]]) if (i === 0 && sd === 1) bone(g, a, b);
-      legs.push({ pivot, phase: i * 1.6 + (sd > 0 ? Math.PI : 0) });
-    }
-    const glow = new THREE.PointLight(0xff3020, 0.9, 3.5, 2); glow.position.set(0, 0.9, 0.5); g.add(glow);
-    g.scale.setScalar(1.35); g.visible = false; scene.add(g);
-    return { g, legs };
-  })();
-  const deathHunting = () => death.state === 'prowl' || death.state === 'stalk' || death.state === 'feed';
-  function lurkSpot() {
-    const trails = foods.filter(f => !f.infinite || Math.random() < 0.5);
-    if (trails.length && Math.random() < 0.6) { const f = trails[Math.floor(Math.random() * trails.length)], p = f.trail.getPointAt(rand(0.45, 0.95)); return V(p.x, 0, p.z); }
-    const a = Math.random() * 6.28, rr = rand(4, 10.5); return V(Math.cos(a) * rr, 0, Math.sin(a) * rr);
+  // ---------- natural events in a closed ecosystem ----------
+  // Nothing enters or leaves the slab. The meadow has its own weather, the soil can give way, and
+  // fungus lives in it. One event runs at a time; the colony mind decides how the ants respond.
+  const EVENTS = {
+    storm: { name: 'Rainstorm', weight: 0.27, dur: [35, 60], start: () => 'A rainstorm broke; water began seeping into the upper tunnels', end: ev => `The rainstorm passed; ${ev.deaths} drowned` },
+    frost: { name: 'Cold snap', weight: 0.17, dur: [40, 60], start: () => 'A cold snap froze the meadow and slowed every ant', end: ev => `The cold snap lifted; ${ev.deaths} froze` },
+    heat: { name: 'Drought', weight: 0.2, dur: [50, 80], start: () => 'Drought: the sun baked the meadow and the aphids slowed', end: ev => `The drought broke; ${ev.deaths} dried out` },
+    cavein: { name: 'Tunnel collapse', weight: 0.17, min: 30, start: ev => `The tunnel between the ${lbl(ev.edge.a)} and the ${lbl(ev.edge.b)} collapsed`, end: ev => `The collapse was dug out after ${Math.round(ev.t)} s; ${ev.deaths} buried` },
+    blight: { name: 'Fungal blight', weight: 0.19, min: 30, start: () => 'A fungal blight took hold in the nest', end: ev => `The blight burned out; ${ev.deaths} died of it and ${ev.recovered || 0} fought it off` },
+  };
+  const CAUSE_TEXT = { storm: 'drowned in the flood', frost: 'froze on the surface', heat: 'dried out in the heat', cavein: 'was buried in a tunnel collapse', blight: 'died of fungal blight', age: 'died of old age' };
+  const lbl = k => (NODES[k].label || 'tunnel junction').toLowerCase();
+  const nature = { event: null, timer: 40, count: 0, flood: 0, speed: 1, w: { storm: 0, frost: 0, heat: 0 } };
+  const hazardActive = () => !!nature.event;
+  const surfaceHazard = () => !!nature.event && ['storm', 'frost', 'heat'].includes(nature.event.type);
+  // The closed loop: buried and decomposed ants feed the soil, the soil feeds the aphids' plant.
+  const vigor = () => Math.max(0.2, Math.min(1, 0.35 + colony.nutrients / 60) * (1 - 0.7 * nature.w.heat) * (1 - 0.5 * nature.w.frost));
+
+  const collapsedMat = new THREE.MeshStandardMaterial({ color: 0x3a2a1e, roughness: 1 });
+  function connectedWithout(e) {
+    e.blocked = true;
+    const seen = new Set(['entrance']), q = ['entrance'];
+    while (q.length) { const n = q.shift(); for (const { to, e: x } of adj[n]) if (!x.blocked && !seen.has(to)) { seen.add(to); q.push(to); } }
+    e.blocked = false;
+    return seen.size === Object.keys(NODES).length;
   }
-  function nearestPrey(p, range) {
-    let best = null, bd = range * range;
+  function startEvent() {
+    const opts = Object.keys(EVENTS).filter(k => ants.length >= (EVENTS[k].min || 0));
+    let tot = opts.reduce((t, k) => t + EVENTS[k].weight, 0), r = Math.random() * tot, type = opts[0];
+    for (const k of opts) { if ((r -= EVENTS[k].weight) <= 0) { type = k; break; } }
+    const E = EVENTS[type], ev = { type, t: 0, dur: E.dur ? rand(...E.dur) : Infinity, intensity: rand(0.65, 1), deaths: 0, outside: 0, id: ++nature.count, progress: 0 };
+    if (type === 'cavein') {
+      const cands = edges.filter(e => e.a !== 'entrance' && e.b !== 'entrance' && connectedWithout(e));
+      if (!cands.length) return;
+      const e = cands[Math.floor(Math.random() * cands.length)];
+      e.blocked = true; e.mesh.material = collapsedMat; ev.edge = e; ev.site = e.a;
+      ev.debris = new THREE.Group();
+      for (let i = 0; i < 14; i++) { const d = new THREE.Mesh(new THREE.DodecahedronGeometry(rand(0.1, 0.22), 0), collapsedMat); d.position.copy(e.curve.getPointAt(rand(0.3, 0.7))).add(V(rand(-0.3, 0.3), rand(-0.3, 0.3), rand(-0.3, 0.3))); ev.debris.add(d); }
+      scene.add(ev.debris);
+      nature.event = ev;
+      for (const a of ants.filter(a => a.seg && a.seg.e === e && !a.g.crush && Math.random() < 0.4)) kill(a, 'cavein');
+      raiseAlarm(e.curve.getPointAt(0.5));
+    } else if (type === 'blight') {
+      const pool = ants.filter(a => a.role !== 'guard');
+      if (!pool.length) return;
+      pool[Math.floor(Math.random() * pool.length)].sick = 0;
+    }
+    nature.event = ev;
+    const msg = E.start(ev);
+    chronicleAdd('event', msg); mindLog(msg, 'event', 'ev' + ev.id); toast(msg);
+  }
+  function endEvent(quiet) {
+    const ev = nature.event, E = EVENTS[ev.type];
+    if (ev.type === 'cavein') { ev.edge.blocked = false; ev.edge.mesh.material = earthMat; scene.remove(ev.debris); }
+    if (ev.type === 'blight') ants.forEach(a => { a.sick = null; a.immune = false; a.fought = false; a.exiled = false; });
+    ants.forEach(a => { a.digging = false; });
+    nature.event = null; nature.timer = rand(45, 90);
+    if (quiet) return;
+    const msg = E.end(ev);
+    chronicleAdd('recover', msg); mindLog(msg, 'win');
+    // Learned instincts: how many responders to send, and how long foragers stay out in the heat.
+    if (ev.type === 'cavein') {
+      const k0 = learn.rescueN;
+      if (ev.t > 40) learn.rescueN = Math.min(14, k0 + 2); else if (ev.t < 15) learn.rescueN = Math.max(3, k0 - 1);
+      if (learn.rescueN !== k0) chronicleAdd('learn', `The colony learned to send ${learn.rescueN} responders to a collapse (was ${k0})`);
+    }
+    if (ev.type === 'heat') {
+      const h0 = learn.heatLimit;
+      if (ev.outside >= 2) learn.heatLimit = Math.max(4, h0 - 1.5); else if (ev.outside === 0) learn.heatLimit = Math.min(14, h0 + 1);
+      if (learn.heatLimit !== h0) chronicleAdd('learn', `Foragers learned to come in from the heat after ${learn.heatLimit.toFixed(0)} s (was ${h0.toFixed(0)})`);
+    }
+  }
+  function updateNature(dt) {
+    for (const k in nature.w) nature.w[k] += ((nature.event && nature.event.type === k ? nature.event.intensity : 0) - nature.w[k]) * Math.min(1, dt / 4);
+    nature.speed = 1 - 0.55 * nature.w.frost;
+    const ev = nature.event;
+    // floodwater rises during a storm and drains after it
+    nature.flood = ev && ev.type === 'storm' ? Math.min(2.5 + 2 * ev.intensity, nature.flood + dt * 0.12) : Math.max(0, nature.flood - dt * 0.15);
+    if (!ev) { if ((nature.timer -= dt) <= 0) startEvent(); return; }
+    ev.t += dt;
+    const victims = [];
     for (const a of ants) {
-      if (!a.onSurface || Math.hypot(a.pos.x, a.pos.z) < 2.4) continue;
-      const d = (a.pos.x - p.x) ** 2 + (a.pos.z - p.z) ** 2; if (d < bd) { bd = d; best = a; }
+      const p = 1 - Math.exp(-dt * (
+        a.onSurface && ev.type === 'storm' ? 0.03 * ev.intensity * a.g.hz.storm :
+        a.onSurface && ev.type === 'frost' ? 0.04 * ev.intensity * a.g.hz.frost :
+        a.onSurface && ev.type === 'heat' && a.exposure > 12 / a.g.hz.heat ? 0.08 * ev.intensity * a.g.hz.heat :
+        !a.onSurface && nature.flood > 0.3 && a.pos.y > -nature.flood ? 0.06 * a.g.hz.storm : 0));
+      if (p > 0 && Math.random() < p) victims.push(a);
     }
-    return best;
+    for (const a of victims) { if (a.onSurface) ev.outside++; kill(a, ev.type === 'storm' || nature.flood > 0.3 ? 'storm' : ev.type); }
+    if (ev.type === 'storm') { for (const f of foods) if (!f.infinite && f.amount > 0) { f.amount = Math.max(1, f.amount - dt * 0.4 * ev.intensity); f.mesh.scale.setScalar(0.45 + 0.55 * f.amount / f.max); } }
+    if (ev.type === 'cavein') {
+      const diggers = ants.filter(a => a.digging && a.role === 'responder' && a.at === ev.site).reduce((t, a) => t + a.g.dig, 0);
+      ev.progress += dt * (0.006 + (colony.mind ? 0.012 * diggers : 0));
+      if (ev.progress >= 1) return endEvent();
+    } else if (ev.type === 'blight') {
+      const sick = ants.filter(a => a.sick != null);
+      const wardens = ants.filter(a => a.g.warden && a.sick == null);
+      for (const a of sick) {
+        if ((a.sick += dt) > 45) { kill(a, 'blight'); continue; }
+        if (wardens.some(w => w.pos.distanceToSquared(a.pos) < 1) && Math.random() < 1 - Math.exp(-0.3 * dt)) { a.sick = null; a.immune = true; ev.recovered = (ev.recovered || 0) + 1; ev.warded = (ev.warded || 0) + 1; continue; }
+        // grooming by nestmates lets some fight the fungus off and become immune
+        if (colony.mind && a.sick > 6 && !a.fought) { a.fought = true; if (Math.random() < 0.35) { a.sick = null; a.immune = true; ev.recovered = (ev.recovered || 0) + 1; } }
+      }
+      if (!ants.some(a => a.sick != null) && !corpses.some(c => c.spores && Math.hypot(c.pos.x, c.pos.z) < 6) || ev.t > 160) return endEvent();
+    } else if (ev.t >= ev.dur) return endEvent();
   }
-  function retreat(reason, fighters) {
-    const D = death, ang = Math.atan2(D.pos.z, D.pos.x);
-    D.exit.set(Math.cos(ang) * (HALF + 2), 0, Math.sin(ang) * (HALF + 2)); D.state = 'retreat'; D.target = null;
-    if (reason === 'driven') { mindLog(`${fighters} defenders drove Death away`, 'win'); chronicleAdd('driven', `${fighters} defenders drove Death away; ${D.defLost} fell in the fight`); }
-    else { mindLog(`Death left the meadow after ${D.visitKills} kill${D.visitKills === 1 ? '' : 's'}`, 'death'); chronicleAdd('death', `Death left sated after ${D.visitKills} kills`); }
-    if (!colony.mind) return;
-    // Learned instincts: tune the muster size from fight losses and the flight distance from forager losses.
-    const k0 = learn.musterK, r0 = learn.fleeR;
-    if (reason === 'driven') { if (D.defLost > 3) learn.musterK = Math.min(16, k0 + 2); else if (D.defLost <= 1) learn.musterK = Math.max(4, k0 - 1); }
-    if (D.forLost === 0) learn.fleeR = Math.max(3.5, r0 - 0.3); else if (D.forLost >= 2) learn.fleeR = Math.min(8, r0 + 0.4 * D.forLost);
-    if (learn.musterK !== k0) chronicleAdd('learn', `Defenders learned to charge once ${learn.musterK} have gathered (was ${k0})`);
-    if (Math.abs(learn.fleeR - r0) > 0.01) chronicleAdd('learn', `Foragers learned to flee Death at ${learn.fleeR.toFixed(1)} units (was ${r0.toFixed(1)})`);
-  }
-  function updateDeath(dt) {
-    const D = death;
-    if (D.state === 'away') {
-      D.timer -= dt;
-      if (D.timer <= 0) {
-        const a = Math.random() * 6.28; D.pos.set(Math.cos(a) * (HALF + 1.5), 0, Math.sin(a) * (HALF + 1.5));
-        D.state = 'prowl'; D.hp = 1; D.visitKills = 0; D.retaliate = 1.5; D.since = 0; D.visit++; D.goal.copy(lurkSpot());
-        mindLog('Death has entered the meadow', 'death'); chronicleAdd('death', 'Death entered the meadow'); D.defLost = 0; D.forLost = 0;
-      }
-      return;
-    }
-    D.since += dt;
-    let goal = null, speed = 0;
-    if (D.state === 'prowl') {
-      speed = 0.9; goal = D.goal;
-      if (Math.hypot(D.pos.x - D.goal.x, D.pos.z - D.goal.z) < 0.5) D.goal.copy(lurkSpot());
-      if ((D.scan -= dt) <= 0) { D.scan = 0.4; const prey = nearestPrey(D.pos, 4.5); if (prey) { D.target = prey; D.state = 'stalk'; } }
-      if (D.since > 160) retreat('sated');
-    } else if (D.state === 'stalk') {
-      const t = D.target;
-      if (!t || !ants.includes(t) || !t.onSurface || Math.hypot(t.pos.x, t.pos.z) < 2.4 || t.pos.distanceTo(D.pos) > 7) { D.state = 'prowl'; D.target = null; }
-      else {
-        speed = 2.05; goal = t.pos;
-        if (Math.hypot(t.pos.x - D.pos.x, t.pos.z - D.pos.z) < 0.6) { kill(t, 'death'); D.state = 'feed'; D.eat = 4; D.visitKills++; D.target = null; }
-      }
-    } else if (D.state === 'feed') {
-      if ((D.eat -= dt) <= 0) { if (D.visitKills >= 12) retreat('sated'); else D.state = 'prowl'; }
-    } else if (D.state === 'retreat') {
-      speed = 2.4; goal = D.exit;
-      if (Math.hypot(D.pos.x - D.exit.x, D.pos.z - D.exit.z) < 0.4) { D.state = 'away'; D.timer = rand(70, 110); }
-    }
-    D.speed = 0;
-    if (goal) {
-      const dx = goal.x - D.pos.x, dz = goal.z - D.pos.z, d = Math.hypot(dx, dz);
-      if (d > 0.02) {
-        const st = Math.min(d, dt * speed); D.pos.x += dx / d * st; D.pos.z += dz / d * st; D.speed = speed;
-        let dh = Math.atan2(dx, dz) - D.heading; dh = Math.atan2(Math.sin(dh), Math.cos(dh)); D.heading += dh * Math.min(1, dt * 6);
+  // Blight spreads by contact, through infected bodies, and to undertakers carrying them.
+  function spreadBlight(dt) {
+    const ev = nature.event;
+    if (!ev || ev.type !== 'blight') return;
+    // With the colony mind on, grooming slows the spread and the sick stop being contagious once they leave.
+    const rate = colony.mind ? 0.08 : 0.3, pC = 1 - Math.exp(-rate * dt), pB = 1 - Math.exp(-0.25 * dt), RR = 0.5 * 0.5;
+    for (const a of ants) {
+      if (a.sick == null || a.sick < 3 || a.exiled || (colony.mind && a.sick > 10)) continue;
+      for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) for (let dz = -1; dz <= 1; dz++) {
+        const cell = grid.get(cellKey(a.cx + dx, a.cy + dy, a.cz + dz)); if (!cell) continue;
+        for (const b of cell) if (b.sick == null && !b.immune && a.pos.distanceToSquared(b.pos) < RR && Math.random() < pC * b.g.blight) b.sick = 0;
       }
     }
-    if (D.state !== 'retreat') {
-      const rr = Math.hypot(D.pos.x, D.pos.z); if (rr < 3) { D.pos.x *= 3 / rr; D.pos.z *= 3 / rr; }
-      const lim = HALF - 0.4; if (D.since > 4) { D.pos.x = Math.max(-lim, Math.min(lim, D.pos.x)); D.pos.z = Math.max(-lim, Math.min(lim, D.pos.z)); }
-    }
-    D.pos.y = Math.abs(D.pos.x) <= HALF && Math.abs(D.pos.z) <= HALF ? groundY(D.pos.x, D.pos.z) : 0;
-    // Defenders biting her legs wear her down; she snaps back at them.
-    if (!deathHunting() || !colony.mind) D.charge = false;
-    else {
-      const all = ants.filter(a => a.role === 'defender'), ready = all.filter(a => a.seg && a.seg.chase);
-      D.muster = ready.length;
-      if (!D.charge && ready.length >= Math.min(learn.musterK, all.length) && ready.length > 0) { D.charge = true; mindLog(`${ready.length} defenders mustered and charged together`, 'alarm', 'charge' + D.visit); }
-    }
-    if (deathHunting()) {
-      const fighters = ants.filter(a => a.engaged && a.role === 'defender' && a.seg && a.seg.chase);
-      if (fighters.length) {
-        D.hp -= dt * 0.07 * fighters.length;
-        if ((D.retaliate -= dt) <= 0) { D.retaliate = 2.5; D.visitKills++; kill(fighters[Math.floor(Math.random() * fighters.length)], 'death'); }
-        if (D.hp <= 0) retreat('driven', fighters.length);
-      }
+    const spores = corpses.filter(c => c.spores);
+    for (const b of ants) {
+      if (b.sick != null || b.immune) continue;
+      if (b.cargo && b.cargo.spores && Math.random() < pB * (colony.mind ? 0.3 : 1) * b.g.blight) { b.sick = 0; continue; }
+      for (const c of spores) if (b.pos.distanceToSquared(c.pos) < 0.8 * 0.8 && Math.random() < pB * b.g.blight) { b.sick = 0; break; }
     }
   }
-  function renderDeath(t) {
-    const g = deathRig.g, D = death;
-    g.visible = D.state !== 'away';
-    if (!g.visible) return;
-    g.position.copy(D.pos); g.rotation.y = D.heading;
-    const gait = D.speed > 0 ? Math.min(1, D.speed) : 0, f = 6 + D.speed * 5;
-    for (const l of deathRig.legs) { l.pivot.rotation.y = Math.sin(t * f + l.phase) * 0.28 * gait; l.pivot.rotation.x = Math.max(0, Math.cos(t * f + l.phase)) * -0.12 * gait; }
-    if (D.state === 'feed') g.rotation.x = Math.sin(t * 9) * 0.04; else g.rotation.x = 0;
+
+  // weather visuals: rain and snow, flood water, light and ground colour
+  const PREC = 2600, prPos = new Float32Array(PREC * 3), prGeo = new THREE.BufferGeometry();
+  for (let i = 0; i < PREC; i++) prPos.set([rand(-HALF, HALF), rand(0, 12), rand(-HALF, HALF)], i * 3);
+  prGeo.setAttribute('position', new THREE.BufferAttribute(prPos, 3));
+  const precip = new THREE.Points(prGeo, new THREE.PointsMaterial({ color: 0x9fc3e6, size: 2 * renderer.getPixelRatio(), sizeAttenuation: false, transparent: true, opacity: 0, depthWrite: false }));
+  precip.frustumCulled = false; scene.add(precip);
+  const floodGeo = new THREE.BoxGeometry(HALF * 2 - 0.05, 1, HALF * 2 - 0.05); floodGeo.translate(0, -0.5, 0);
+  const floodMesh = new THREE.Mesh(floodGeo, new THREE.MeshStandardMaterial({ color: 0x3d6f9a, transparent: true, opacity: 0.3, depthWrite: false, roughness: 0.2 }));
+  floodMesh.visible = false; scene.add(floodMesh);
+  const C = { white: new THREE.Color(0xffffff), wet: new THREE.Color(0x7f8f9c), dry: new THREE.Color(0xffe3a6), frostE: new THREE.Color(0x56616d), black: new THREE.Color(0),
+              grassHeat: new THREE.Color(0xd8bf72), grassFrost: new THREE.Color(0xeaf2f8), grassWet: new THREE.Color(0x9fb0b8), sun: new THREE.Color(0xffe2bb), sunHeat: new THREE.Color(0xffb866), sunFrost: new THREE.Color(0xcfe0ff) };
+  const evLabelPos = V(0, 5, 0);
+  function renderNature(t, dt) {
+    const w = nature.w, snow = w.frost > w.storm;
+    precip.material.opacity = Math.min(0.85, Math.max(w.storm, w.frost));
+    precip.material.color.set(snow ? 0xffffff : 0x9fc3e6); precip.material.size = (snow ? 3 : 2) * renderer.getPixelRatio();
+    if (precip.material.opacity > 0.01) {
+      const v = snow ? 1.3 : 14;
+      for (let i = 0; i < PREC; i++) {
+        let y = prPos[i * 3 + 1] - v * dt;
+        if (snow) prPos[i * 3] += Math.sin(t + i) * dt * 0.3;
+        if (y < groundY(prPos[i * 3], prPos[i * 3 + 2])) y = rand(8, 12);
+        prPos[i * 3 + 1] = y;
+      }
+      prGeo.attributes.position.needsUpdate = true;
+    }
+    floodMesh.visible = nature.flood > 0.02; floodMesh.scale.y = Math.max(0.01, nature.flood);
+    hemi.intensity = 0.5 - 0.2 * w.storm + 0.1 * w.heat;
+    sun.intensity = 0.62 * (1 - 0.55 * w.storm) + 0.35 * w.heat;
+    sun.color.copy(C.sun).lerp(C.sunHeat, w.heat * 0.7).lerp(C.sunFrost, w.frost * 0.8);
+    surface.material.color.copy(C.white).lerp(C.wet, w.storm * 0.6).lerp(C.dry, w.heat * 0.6);
+    surface.material.emissive.copy(C.black).lerp(C.frostE, w.frost);
+    grassMesh.material.color.copy(C.white).lerp(C.grassWet, w.storm * 0.4).lerp(C.grassHeat, w.heat * 0.8).lerp(C.grassFrost, w.frost * 0.85);
+    farm.mesh.scale.y = 0.7 + 0.35 * vigor();
+    const ev = nature.event;
+    if (ev && ev.type === 'cavein') evLabelPos.copy(ev.edge.curve.getPointAt(0.5)).add(V(0, 0.9, 0));
+    else if (ev && ev.type === 'blight') {
+      const sick = ants.filter(a => a.sick != null);
+      if (sick.length) { evLabelPos.set(0, 0, 0); sick.forEach(a => evLabelPos.add(a.pos)); evLabelPos.multiplyScalar(1 / sick.length).add(V(0, 1.2, 0)); }
+    } else evLabelPos.set(0, 5.5, 0);
   }
 
   // ---------- death, bodies and alarm pheromone ----------
@@ -1230,14 +1352,21 @@
   const pad = id => String(id).padStart(3, '0');
   function kill(a, cause) {
     const i = ants.indexOf(a); if (i < 0) return;
+    if (a.g.revive && !a.revived) {   // the Phoenix rises once
+      a.revived = true; a.born = simTime; a.sick = null; colony.store = Math.max(0, colony.store - 10);
+      a.task = 'Rose again from death (Phoenix gene)'; a.flash = 1;
+      chronicleAdd('gene', `Phoenix #${pad(a.id)} ${CAUSE_TEXT[cause].replace('was ', '')} and rose again`); mindLog(`Phoenix #${pad(a.id)} rose again, burning 10 food`, 'gene');
+      return;
+    }
+    for (const id of a.genes) genePool[id] = Math.max(0.25, Math.min(3, genePool[id] + (cause === 'age' ? 0.04 : -0.03)));
     release(a);
     if (a.cargo && a.cargo.kind === 'corpse') corpses.push({ pos: a.pos.clone(), surface: a.onSurface, node: a.onSurface ? null : a.here, claimed: false, rot: Math.random() * 6 });
     ants.splice(i, 1);
     let pos = a.pos.clone();
     if (!a.onSurface) { const N = NODES[a.here], ang = Math.random() * 6.28, rr = (N.r ? N.r * 0.55 : 0.12) * Math.random(); pos = V(N.v.x + Math.cos(ang) * rr, N.v.y + UNDER, N.v.z + Math.sin(ang) * rr * 0.85); }
-    corpses.push({ pos, surface: a.onSurface, node: a.onSurface ? null : a.here, claimed: false, rot: Math.random() * 6 });
-    if (cause === 'death') { colony.killed++; colony.recentKills++; if (a.role === 'defender') death.defLost = (death.defLost || 0) + 1; else death.forLost = (death.forLost || 0) + 1; raiseAlarm(a.pos); } else colony.aged++;
-    if (follow === a) { stopFollow(); toast(cause === 'death' ? `#${pad(a.id)} was caught by Death.` : `#${pad(a.id)} died of old age.`); }
+    corpses.push({ pos, surface: a.onSurface, node: a.onSurface ? null : a.here, claimed: false, rot: Math.random() * 6, spores: cause === 'blight', t: simTime });
+    if (cause !== 'age') { colony.killed++; colony.recentKills++; if (nature.event) nature.event.deaths++; } else colony.aged++;
+    if (follow === a) { stopFollow(); toast(`#${pad(a.id)} ${CAUSE_TEXT[cause]}.`); }
   }
   const alarms = [];
   const AL = 900, alPos = new Float32Array(AL * 3), alCol = new Float32Array(AL * 3), alVel = new Float32Array(AL * 3), alLife = new Float32Array(AL);
@@ -1263,20 +1392,15 @@
     }
     alGeo.attributes.position.needsUpdate = alGeo.attributes.color.needsUpdate = true;
   }
-  function nearDanger(x, z, r) {
-    if (deathHunting() && Math.hypot(x - death.pos.x, z - death.pos.z) < r + 0.5) return true;
-    return alarms.some(a => a.life > 0.3 && Math.hypot(x - a.x, z - a.z) < r);
-  }
-  // Undertakers only hold back while Death herself is close to the body.
-  const collectable = c => !c.surface || !colony.mind || !deathHunting() || Math.hypot(c.pos.x - death.pos.x, c.pos.z - death.pos.z) > 4;
-  const foodDanger = f => f.samples.some(p => nearDanger(p.x, p.z, 3.2));
+  // Undertakers wait out bad weather, and leave blighted bodies that died far outside the nest.
+  const collectable = c => !(c.spores && c.surface && Math.hypot(c.pos.x, c.pos.z) > 6) && (!c.surface || !colony.mind || !surfaceHazard());
 
   // ---------- organizational intelligence ----------
-  // The colony mind is local rules adding up to group decisions: alarm pheromone mobilizes defenders,
-  // foragers avoid trails that smell of Death, reserves turn undertaker when bodies pile up, and
-  // recruitment trails steer foragers to the sources that keep paying off.
+  // The colony mind is local rules adding up to group decisions: shelter from weather, flee rising
+  // water, send responders to collapses, isolate the sick, turn reserves into undertakers when bodies
+  // pile up, and let recruitment trails steer foragers to the sources that keep paying off.
   const mindEntries = [];
-  // Entries with a key (one per Death visit or per day) are updated in place instead of repeated.
+  // Entries with a key (one per event or per day) are updated in place instead of repeated.
   function mindLog(text, kind, key) {
     const old = key && mindEntries.find(e => e.key === key);
     if (old) { old.text = text; mindEntries.splice(mindEntries.indexOf(old), 1); mindEntries.unshift(old); return; }
@@ -1284,40 +1408,61 @@
     mindEntries.unshift({ day: day(), text, kind, key }); if (mindEntries.length > 5) mindEntries.pop();
   }
   function enlist(a, role, why) {
+    if (a.g.oracle) return;
     a.prevRole = a.pendingRole || a.role; a.pendingRole = role; a.task = why;
     if (!a.onSurface && !a.claim && !a.cargo) { const s = a.seg; a.segs.length = 0; a.at = (s && (s.to || s.node)) || a.here; }
   }
   function tickMind(dt) {
     for (let i = alarms.length - 1; i >= 0; i--) if ((alarms[i].life -= dt / 30) <= 0) alarms.splice(i, 1);
+    colony.nutrients = Math.max(0, colony.nutrients - dt * colony.nutrients / 400);
+    for (let i = corpses.length - 1; i >= 0; i--) {   // bodies left outside decompose into the soil
+      const c = corpses[i];
+      if (c.spores && simTime - (c.t || 0) > 60) c.spores = false;   // the fungus has fruited and spent itself
+      if (c.surface && !c.claimed && simTime - (c.t || 0) > 120) { corpses.splice(i, 1); colony.nutrients += 0.6; }
+    }
     for (const f of foods) f.strength *= Math.exp(-dt * 0.04);
     colony.alarmT = Math.max(0, colony.alarmT - dt);
     if ((colony.mindT -= dt) > 0) return;
     colony.mindT = 1;
     if (!colony.mind) return;
-    if (deathHunting() && (colony.alarmT > 0 || Math.hypot(death.pos.x, death.pos.z) < 5.5)) {
-      const want = Math.min(26, 8 + death.visitKills * 3), cur = ants.filter(a => (a.pendingRole || a.role) === 'defender').length;
-      if (cur < want) {
-        const pool = ants.filter(a => !a.cargo && !a.claim && !a.onSurface && !['defender', 'guard'].includes(a.pendingRole || a.role))
-          .sort((p, q) => (q.role === 'reserve') - (p.role === 'reserve') || q.pos.y - p.pos.y);
-        const n = Math.min(want - cur, pool.length);
-        for (let i = 0; i < n; i++) enlist(pool[i], 'defender', 'Smelled alarm pheromone: turning defender');
-        if (n) { death.enlisted = (death.enlistVisit === death.visit ? death.enlisted : 0) + n; death.enlistVisit = death.visit; mindLog(`Alarm pheromone: ${death.enlisted} workers turned defender`, 'alarm', 'def' + death.visit); }
+    const ev = nature.event;
+    if (ev && ev.type === 'cavein') {
+      const cur = ants.filter(a => (a.pendingRole || a.role) === 'responder').length;
+      if (cur < learn.rescueN) {
+        const pool = ants.filter(a => !a.cargo && !a.claim && !a.onSurface && !['responder', 'guard'].includes(a.pendingRole || a.role) && a.sick == null)
+          .sort((p, q) => (q.role === 'excavator') - (p.role === 'excavator') || (q.role === 'reserve') - (p.role === 'reserve'));
+        const n = Math.min(learn.rescueN - cur, pool.length);
+        for (let i = 0; i < n; i++) enlist(pool[i], 'responder', 'Sensed the collapse: turning responder');
+        if (n) { ev.sent = (ev.sent || 0) + n; mindLog(`${ev.sent} responders sent to dig out the collapse`, 'alarm', 'resp' + ev.id); }
       }
+    }
+    if (nature.flood > 0.3) {   // climb down away from the rising water
+      let moved = 0;
+      for (const a of ants) {
+        if (a.onSurface || a.claim || a.cargo || a.pos.y < -nature.flood - 0.8 || a.evacuated === ev?.id) continue;
+        const s = a.seg; a.segs.length = 0; a.at = (s && (s.to || s.node)) || a.here; a.evacuated = ev?.id;
+        goTo(a, 'nursery'); a.segs.push({ fn: x => { x.task = 'Waiting below the waterline'; } }, { wait: rand(6, 12) });
+        a.task = 'Fleeing the rising water'; moved++;
+      }
+      if (moved) { ev && (ev.evac = (ev.evac || 0) + moved); if (ev) mindLog(`${ev.evac} workers fled the rising water`, 'alarm', 'evac' + ev.id); }
+    }
+    if (ev && ev.type === 'blight') {   // social immunity: the sick leave the nest to die alone
+      let left = 0;
+      for (const a of ants) {
+        if (a.sick == null || a.sick < 10 || a.exiled) continue;
+        a.exiled = true; release(a); a.cargo = null;
+        const s = a.seg; a.segs.length = 0; a.at = (s && (s.to || s.node)) || a.here;
+        const ang = Math.random() * 6.28, far = trailCurve(Math.cos(ang) * rand(8.5, 10.5), Math.sin(ang) * rand(8.5, 10.5));
+        goTo(a, 'entrance'); a.segs.push(surf(far, false), { fn: x => { x.task = 'Infected: waiting to die far from the nest'; } }, { wait: 120 });
+        a.task = 'Infected: leaving the nest so the blight cannot spread'; left++;
+      }
+      if (left) { ev.left = (ev.left || 0) + left; mindLog(`${ev.left} infected workers left the nest to die alone`, 'death', 'exile' + ev.id); }
     }
     const waiting = corpses.filter(c => !c.claimed && collectable(c)).length, temps = ants.filter(a => a.temp).length;
     if (waiting > 3 && temps < 14) {
       const pool = ants.filter(a => a.role === 'reserve' && !a.pendingRole && !a.cargo && !a.claim).slice(0, Math.min(4, waiting - 2, 14 - temps));
       pool.forEach(a => { enlist(a, 'cleaner', `Sensed ${waiting} dead nestmates: taking undertaker duty`); a.temp = true; });
       if (pool.length) { colony.undertook = (colony.undertookDay === day() ? colony.undertook : 0) + pool.length; colony.undertookDay = day(); mindLog(`${colony.undertook} reserves turned undertaker as bodies piled up`, 'death', 'und' + day()); }
-    }
-    for (const f of foods) {
-      const d = foodDanger(f);
-      if (d && !f.danger && f.warned !== death.visit) {
-        f.warned = death.visit;
-        const names = [...new Set(foods.filter(x => x.warned === death.visit).map(x => x.infinite ? 'aphid herd' : x.type.name))];
-        mindLog(`Foragers rerouted away from ${names.length} trail${names.length > 1 ? 's' : ''} near Death (${names.join(', ')})`, 'trail', 'trail' + death.visit);
-      }
-      f.danger = d;
     }
   }
 
@@ -1343,11 +1488,12 @@
     colony.pulse = 1;
   }
   function infect(a, o, from) {
-    a.lastOrder = o.id; a.contagious = CONTAGIOUS_FOR; a.flash = 1; o.infected++;
+    a.lastOrder = o.id; a.contagious = CONTAGIOUS_FOR * (a.g.voice > 1 ? 2 : 1); a.flash = 1; o.infected++;
     if (from) addSpark(from.pos, a.pos);
     const src = from ? `Caught the queen's order from #${String(from.id).padStart(3, '0')}` : 'Took the order straight from the queen';
     const n = ants.length, c = countRoles(true), sh = shares(n, o.decree, o.guard), eff = a.pendingRole || a.role;
-    if (eff === 'defender') { a.task = `${src}, but staying in the fight`; return; }
+    if (a.g.oracle) { a.task = `${src}; the Oracle stays with the queen`; return; }
+    if (eff === 'responder') { a.task = `${src}, but staying on rescue duty`; return; }
     if (c[eff] - sh[eff] * n <= 0.5) { a.task = `${src}: keep working as a ${ROLES[eff].name.toLowerCase()}`; return; }
     let best = null, gap = 0.5;
     for (const k in ROLES) { const g = sh[k] * n - c[k]; if (g > gap) { gap = g; best = k; } }
@@ -1371,7 +1517,7 @@
       if (a.contagious <= 0 || !a.lastOrder) continue;
       for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) for (let dz = -1; dz <= 1; dz++) {
         const cell = grid.get(cellKey(a.cx + dx, a.cy + dy, a.cz + dz)); if (!cell) continue;
-        for (const b of cell) if (b.lastOrder < a.lastOrder && a.pos.distanceToSquared(b.pos) < R2 && Math.random() < pCatch) infect(b, orders[a.lastOrder], a);
+        for (const b of cell) if (b.lastOrder < a.lastOrder && a.pos.distanceToSquared(b.pos) < R2 && Math.random() < pCatch * b.g.order * a.g.voice) infect(b, orders[a.lastOrder], a);
       }
     }
   }
@@ -1387,7 +1533,7 @@
     const key = stateKey(), row = qRow(key);
     if (learn.prevKey) {
       const prow = qRow(learn.prevKey), rwd = S - learn.prevS;
-      prow[learn.prevDecree] += learn.alpha * (rwd + learn.gamma * row[bestOf(row)] - prow[learn.prevDecree]);
+      prow[learn.prevDecree] += Math.min(0.85, learn.alpha * (ants.some(a => a.g.oracle) ? 2 : 1)) * (rwd + learn.gamma * row[bestOf(row)] - prow[learn.prevDecree]);
       learn.N[learn.prevKey]++; learn.lessons++;
       learn.rewards.push(rwd); if (learn.rewards.length > 12) learn.rewards.shift();
     }
@@ -1399,12 +1545,12 @@
       const v = councilVote(key, S); d = v.winner; reason = `council vote, ${v.pct}%`; kind = 'council';
     }
     if (colony.gov !== 'you') { colony.lay = LAY_FOR[d]; if (d !== colony.decree) setDecree(d, reason, kind); }
-    // The queen alone decides on her guard: posted while Death threatens, dismissed once it has passed.
-    const threatened = ants.length >= 40 && (deathHunting() || colony.recentKills > 3);
+    // The queen alone decides on her guard: posted during a blight or a collapse, dismissed once it has passed.
+    const threatened = ants.length >= 40 && !!nature.event && ['blight', 'cavein'].includes(nature.event.type);
     if (threatened !== colony.guard) {
       colony.guard = threatened;
-      issue(threatened ? 'Summon royal guard' : 'Dismiss royal guard', threatened ? 'the queen senses Death' : 'the danger has passed');
-      chronicleAdd('decree', threatened ? `${qName()} summoned her royal guard as Death threatened` : `${qName()} dismissed her royal guard`);
+      issue(threatened ? 'Summon royal guard' : 'Dismiss royal guard', threatened ? 'the queen senses danger in the nest' : 'the danger has passed');
+      chronicleAdd('decree', threatened ? `${qName()} summoned her royal guard against the ${EVENTS[nature.event.type].name.toLowerCase()}` : `${qName()} dismissed her royal guard`);
     }
     learn.prevKey = key; learn.prevDecree = colony.decree; learn.prevS = S;
     syncCommandUI();
@@ -1461,17 +1607,19 @@
   let selected = null;
   const auraMesh = new THREE.InstancedMesh(new THREE.SphereGeometry(0.12, 10, 8), new THREE.MeshBasicMaterial({ color: ROYAL, opacity: 0.3, ...additive }), MAX_ANTS);
   auraMesh.count = 0; auraMesh.frustumCulled = false; scene.add(auraMesh);
-  const GUARD_TINT = ANT_COLOR.clone().lerp(ROYAL, 0.3), DEF_TINT = ANT_COLOR.clone().lerp(new THREE.Color(0xe0533d), 0.5), antCol = new THREE.Color();
-  const corpseMesh = new THREE.InstancedMesh(antMesh.geometry, new THREE.MeshStandardMaterial({ color: 0x3a3330, roughness: 0.9 }), 260);
+  const GUARD_TINT = ANT_COLOR.clone().lerp(ROYAL, 0.3), DEF_TINT = ANT_COLOR.clone().lerp(new THREE.Color(0x6fa8c8), 0.5), SICK = new THREE.Color(0x9fbf6a), GOLD = new THREE.Color(0xf0c040), antCol = new THREE.Color();
+  const corpseMesh = new THREE.InstancedMesh(antMesh.geometry, new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.9 }), 260);
+  const CORPSE = new THREE.Color(0x3a3330), SPORE = new THREE.Color(0x8fb35a);
+  for (let i = 0; i < 260; i++) corpseMesh.setColorAt(i, CORPSE);
   corpseMesh.count = 0; corpseMesh.frustumCulled = false; scene.add(corpseMesh);
   function renderCorpses() {
     const n = Math.min(260, corpses.length);
     for (let i = 0; i < n; i++) {
       const c = corpses[i];
       dm.position.copy(c.pos); if (c.surface) dm.position.y = groundY(c.pos.x, c.pos.z) + 0.05;
-      dm.rotation.set(Math.PI, c.rot, 0); dm.scale.setScalar(ANT_S); dm.updateMatrix(); corpseMesh.setMatrixAt(i, dm.matrix);
+      dm.rotation.set(Math.PI, c.rot, 0); dm.scale.setScalar(ANT_S); dm.updateMatrix(); corpseMesh.setMatrixAt(i, dm.matrix); corpseMesh.setColorAt(i, c.spores ? SPORE : CORPSE);
     }
-    corpseMesh.count = n; corpseMesh.instanceMatrix.needsUpdate = true;
+    corpseMesh.count = n; corpseMesh.instanceMatrix.needsUpdate = true; corpseMesh.instanceColor.needsUpdate = true;
   }
   function renderAnts(time) {
     for (let i = 0; i < ants.length; i++) {
@@ -1481,7 +1629,7 @@
       dummy.lookAt(look);
       const moving = a.seg && a.seg.curve;
       dummy.rotateY(Math.sin(time * 14 + a.wob) * (moving ? 0.09 : 0.02));
-      dummy.scale.setScalar(ANT_S * (a === selected ? 1.3 : 1));
+      dummy.scale.setScalar(ANT_S * a.g.size * (a === selected ? 1.3 : 1));
       dummy.updateMatrix();
       antMesh.setMatrixAt(i, dummy.matrix);
       if (a.cargo) {
@@ -1494,7 +1642,7 @@
     for (let i = 0; i < ants.length; i++) {
       const a = ants[i];
       if (a === selected) antCol.copy(SEL_COLOR);
-      else { antCol.copy(a.role === 'guard' ? GUARD_TINT : a.role === 'defender' ? DEF_TINT : ANT_COLOR); antCol.lerp(ROYAL, Math.min(0.9, Math.max(0, a.flash) * 0.9 + Math.max(0, a.contagious) / CONTAGIOUS_FOR * 0.35)); }
+      else { antCol.copy(a.role === 'guard' ? GUARD_TINT : a.role === 'responder' ? DEF_TINT : ANT_COLOR); if (a.g.legend) antCol.lerp(GOLD, 0.5); if (a.sick != null) antCol.lerp(SICK, Math.min(0.85, 0.25 + a.sick / 40)); antCol.lerp(ROYAL, Math.min(0.9, Math.max(0, a.flash) * 0.9 + Math.max(0, a.contagious) / CONTAGIOUS_FOR * 0.35)); }
       const ar = a.contagious > 0 ? 0.4 + 0.6 * a.contagious / CONTAGIOUS_FOR + 0.5 * Math.max(0, a.flash) : 0;
       dm.position.copy(a.pos); dm.rotation.set(0, 0, 0); dm.scale.setScalar(ar); dm.updateMatrix(); auraMesh.setMatrixAt(i, dm.matrix);
       antMesh.setColorAt(i, antCol);
@@ -1539,15 +1687,13 @@
     labelsEl.appendChild(el);
     labels.push({ el, p: N.center.clone().add(V(0, k === 'entrance' ? 0.9 : N.r * 0.5 + 0.25, 0)) });
   }
-  const deathLabelPos = V(0, 0, 0);
   for (const [cls, html, p, onClick, hideIf] of [
-    ['lab danger', 'Death<em id="deathTag">prowling</em>', deathLabelPos, () => { stopFollow(); flyTo(death.pos, 8); }, () => death.state === 'away' || !g3vis()],
+    ['lab danger', '<span id="evTagName">Event</span><em id="evTag"></em>', evLabelPos, () => { stopFollow(); flyTo(evLabelPos.clone().add(V(0, -1, 0)), 9); }, () => !nature.event],
     ['lab farm', 'Aphid herd<em>endless honeydew</em>', V(FARM.x, 3.4, FARM.z), () => { stopFollow(); flyTo(V(FARM.x, 1, FARM.z), 7); }, null],
   ]) {
     const el = document.createElement('div'); el.className = cls; el.innerHTML = html; el.addEventListener('click', onClick);
     labelsEl.appendChild(el); labels.push({ el, p, hideIf });
   }
-  function g3vis() { return Math.abs(death.pos.x) < HALF + 1 && Math.abs(death.pos.z) < HALF + 1; }
   for (let d = 4; d <= DEPTH; d += 4) {
     const el = document.createElement('div'); el.className = 'tick'; el.textContent = `${d * CM_PER_UNIT} cm`;
     labelsEl.appendChild(el); labels.push({ el, p: V(-HALF - 0.5, -d, HALF), tick: true });
@@ -1651,7 +1797,7 @@
     layBtns.forEach(b => b.classList.toggle('on', +b.dataset.lay === colony.lay));
     document.querySelectorAll('[data-gov]').forEach(b => b.classList.toggle('on', b.dataset.gov === colony.gov));
     $('regimeK').textContent = regime();
-    $('guardLine').textContent = colony.guard ? `Royal guard: ${GUARD_N} workers posted at her side` : 'Royal guard: not posted. She summons it when Death threatens.';
+    $('guardLine').textContent = colony.guard ? `Royal guard: ${GUARD_N} workers posted at her side` : 'Royal guard: not posted. She summons it during blights and collapses.';
     $('watchLine').textContent = colony.gov === 'queen' ? `${qName()} rules on her own. You can watch, but not command.` : `The council of castes rules by vote. ${qName()} reigns. You can watch, but not command.`;
   }
   const tabOpen = t => !document.getElementById('tab-' + t).hidden;
@@ -1679,11 +1825,21 @@
     $('qgrid').innerHTML = `<div class="qcells qhead">${DECS.map(d => `<span title="${DECREES[d].name}">${SHORT[d]}</span>`).join('')}</div>` +
       keys.map(k => { const row = learn.Q[k], b = bestOf(row); return `<div class="qrow${k === key ? ' cur' : ''}"><span class="sl">${k} · ${learn.N[k]} lessons</span><div class="qcells">${DECS.map(d => cell(row[d], d === b)).join('')}</div></div>`; }).join('');
     $('instincts').innerHTML = [
-      `Defenders charge once <b>${learn.musterK}</b> have gathered`,
-      `Foragers flee Death at <b>${learn.fleeR.toFixed(1)}</b> units`,
+      `Responders sent to a collapse: <b>${learn.rescueN}</b>`,
+      `Foragers come in from the heat after <b>${learn.heatLimit.toFixed(0)}</b> s`,
       `Reward is the change in the survival index (now <b>${survival()}</b>) over each 30 s lesson`,
     ].map(t => `<li>${t}</li>`).join('');
   }
+  function renderGenes() {
+    const counts = {}; for (const a of ants) for (const id of a.genes) counts[id] = (counts[id] || 0) + 1;
+    $('genStatus').innerHTML = 'Each egg rolls one gene, sometimes two: common 70%, rare 22%, mythic 7%, legendary 1%. Carriers that die of old age raise their gene’s odds in the queen’s line; carriers lost to nature lower them. The bar shows each gene’s current odds.';
+    const legends = ants.filter(a => a.g.legend), key = legends.map(a => a.id).join(',');
+    if (key !== renderGenes.key) $('notables').innerHTML = (renderGenes.key = key, legends.length) ? legends.slice(0, 8).map(a => `<button data-follow="${a.id}" style="border-color:#f0c04088;color:#ffe6a0">#${pad(a.id)} ${a.genes.filter(id => GENE[id].tier === 'legendary').map(id => GENE[id].name).join(' · ')}</button>`).join('') : '<span class="small">No legendary carriers alive right now.</span>';
+    $('geneList').innerHTML = TIERS.map(t => `<li class="tier" style="color:${t.color}">${t.name} · ${Math.round(t.p * 100)}% of rolls</li>` +
+      GENES.filter(g => g.tier === t.id).map(g => `<li><div class="top"><span style="color:${t.color}">${g.name}</span><b title="Living carriers">${counts[g.id] || 0}</b></div>` +
+        `<span class="gd">+ ${g.power}<br>− ${g.drawback}</span><div class="ab" title="Selection weight ${genePool[g.id].toFixed(2)}"><span style="width:${Math.min(100, genePool[g.id] / 3 * 100)}%;background:${t.color}"></span></div></li>`).join('')).join('');
+  }
+  $('notables').addEventListener('click', e => { const b = e.target.closest('[data-follow]'); if (!b) return; const a = ants.find(x => x.id === +b.dataset.follow); if (a) startFollow(a); });
   function renderChronicle() {
     $('chrStatus').innerHTML = `Gene <b>CHR-1</b> holds <b>${chronicle.length}</b> records of colony history, one codon each. Every egg inherits a copy, and <b>${colony.everLived}</b> ants have carried it.`;
     $('codons').innerHTML = chronicle.slice(-72).map(e => { const [c, col] = CODONS[e.kind]; return `<span style="background:${col}2e;color:${col}" title="Day ${e.day}: ${e.text}">${c}</span>`; }).join('');
@@ -1697,15 +1853,20 @@
       `<li><div><span>Day ${e.day} · <strong>${e.text}</strong></span><span>${e.reason} · ${e.count} changed job</span></div>${e.id === colony.orderId ? `<b>${reach(e)}%</b>` : '<span>replaced</span>'}</li>`).join('');
   }
 
-  const DEATH_STATES = { away: 'Away', prowl: 'Prowling', stalk: 'Stalking', feed: 'Feeding', retreat: 'Retreating' };
+  const EV_COLORS = { storm: '#6fa8c8', frost: '#cfe0ff', heat: '#e8a23a', cavein: '#a07d55', blight: '#9fbf6a' };
   function renderMind() {
-    const D = death, hunting = deathHunting();
-    $('deathState').textContent = D.state === 'away' ? `Away · back in ${Math.max(0, Math.ceil(D.timer))} s` : DEATH_STATES[D.state];
-    $('deathState').classList.toggle('hunt', hunting);
-    $('deathHp').style.width = (D.state === 'away' ? 100 : Math.max(0, D.hp) * 100) + '%';
-    const tag = document.getElementById('deathTag'); if (tag) tag.textContent = DEATH_STATES[D.state].toLowerCase();
+    const ev = nature.event;
+    const sick = ev && ev.type === 'blight' ? ants.filter(a => a.sick != null).length : 0;
+    const state = !ev ? 'Calm weather' : ev.type === 'cavein' ? `Dug ${Math.round(ev.progress * 100)}%` : ev.type === 'blight' ? `${sick} infected` : `${Math.max(0, Math.ceil(ev.dur - ev.t))} s left`;
+    $('evName').textContent = ev ? EVENTS[ev.type].name : 'Calm';
+    $('evState').textContent = state; $('evState').classList.toggle('hunt', !!ev);
+    $('evBar').style.width = (!ev ? 0 : ev.type === 'cavein' ? ev.progress * 100 : ev.type === 'blight' ? Math.min(100, ev.t / 160 * 100) : Math.min(100, ev.t / ev.dur * 100)) + '%';
+    $('evBar').style.background = ev ? EV_COLORS[ev.type] : 'var(--alarm)';
+    const tagN = document.getElementById('evTagName'), tag = document.getElementById('evTag');
+    if (tagN && ev) { tagN.textContent = EVENTS[ev.type].name; tag.textContent = state.toLowerCase(); }
     $('sKilled').textContent = colony.killed; $('sAged').textContent = colony.aged;
-    $('sDef').textContent = ants.filter(a => a.role === 'defender').length; $('sBodies').textContent = corpses.length;
+    $('sDef').textContent = ants.filter(a => a.role === 'responder').length; $('sBodies').textContent = corpses.length;
+    $('cycleLine').innerHTML = `Nutrient cycle: <b>${colony.buried}</b> buried → soil <b>${Math.round(colony.nutrients)}</b> → aphid herd yielding <b>${Math.round(vigor() * 100)}%</b>`;
     $('mindLog').innerHTML = '<li class="lh"><span>Colony mind</span><span>Day</span></li>' + mindEntries.map(e => `<li><div><span>${e.text}</span></div><b>${e.day}</b></li>`).join('');
   }
   let toastT = 0;
@@ -1737,7 +1898,7 @@
     lastCard = key;
     $('cRole').textContent = ROLES[a.role].name; $('cId').textContent = '#' + String(a.id).padStart(3, '0');
     $('cTask').textContent = a.task; $('cMeta').textContent = meta;
-    $('cGene').textContent = `Genome: “${a.genome.directive}” · CHR-1 inherited ${a.genome.chronicle} of ${chronicle.length} records`;
+    $('cGene').textContent = `Genes: ${a.genes.map(geneTag).join(', ')}${a.revived ? ' · already reborn once' : ''} · Genome: “${a.genome.directive}” · CHR-1 inherited ${a.genome.chronicle} of ${chronicle.length} records`;
   }
 
   const spark = $('spark'), sctx = spark.getContext('2d'), popHist = [];
@@ -1774,6 +1935,7 @@
     if (tabOpen('pol')) renderPolitics();
     if (tabOpen('ml')) renderLearning();
     if (tabOpen('chr')) renderChronicle();
+    if (tabOpen('gen')) renderGenes();
     renderMind();
   }
 
@@ -1804,8 +1966,9 @@
       decree: 'balanced', guard: false, lay: 1, gov: 'queen', govT: 8, unrest: 0, unrestT: 0, lowT: 0, recentKills: 0, nextMilestone: 50,
       lastVote: null, alarmT: 0, layTimer: 0, foodTimer: 0, maleT: 15 });
     middenMesh.count = 0; storeMesh.count = 0; pelletMesh.count = 0; pelletIdx = 0; growWinter();
-    Object.assign(death, { state: 'away', timer: 120, target: null, charge: false, hp: 1 });
-    Object.assign(learn, { Q: {}, N: {}, lessons: 0, features: ['food'], prevKey: null, prevDecree: null, prevS: null, rewards: [], musterK: 8, fleeR: 5 });
+    if (nature.event) endEvent(true);
+    Object.assign(nature, { timer: 120, flood: 0 }); colony.nutrients = 10;
+    Object.assign(learn, { Q: {}, N: {}, lessons: 0, features: ['food'], prevKey: null, prevDecree: null, prevS: null, rewards: [], rescueN: 6, heatLimit: 9 });
     BLOCS.forEach(b => { b.approval = 0.6; b.seats = 0; b.pref = 'balanced'; });
     logEntries.length = 0; mindEntries.length = 0; popHist.length = 0; nextId = 1;
     const Q = NODES.queen.v; male.position.set(Q.x + 0.9, Q.y - 0.16, Q.z + 0.5); male.visible = true;
@@ -1849,10 +2012,10 @@
     time += dt; simTime += dt;
     if (dt > 0) {
       const sub = dt > 0.06 ? 2 : 1;
-      for (let s = 0; s < sub; s++) { for (let i = 0; i < ants.length; i++) stepAnt(ants[i], dt / sub); tickColony(dt / sub); updateDeath(dt / sub); tickMind(dt / sub); }
+      for (let s = 0; s < sub; s++) { for (let i = 0; i < ants.length; i++) stepAnt(ants[i], dt / sub); tickColony(dt / sub); updateNature(dt / sub); tickMind(dt / sub); }
       updateAlarmFx(dt);
       updatePhero(dt);
-      updateContagion(dt); updateSparks(dt); tickMale(dt, time);
+      updateContagion(dt); spreadBlight(dt); updateSparks(dt); tickMale(dt, time);
       queen.rotation.y = Math.sin(time * 0.25) * 0.6; queen.position.y = NODES.queen.v.y - 0.1 + Math.sin(time * 1.3) * 0.006;
       histT += dt; if (histT > 2 || !popHist.length) { histT = 0; popHist.push(ants.length); if (popHist.length > 120) popHist.shift(); }
     }
@@ -1861,8 +2024,7 @@
     halo.scale.setScalar(1 + 0.25 * colony.pulse);
     queenLight.intensity = 1.1 + 2.4 * colony.pulse;
     updateCloud(time); cloud.material.opacity = 0.45 + 0.5 * colony.pulse;
-    renderAnts(time); renderBrood(time); renderCorpses(); renderDeath(time);
-    deathLabelPos.copy(death.pos).add(V(0, 1.6, 0));
+    renderAnts(time); renderBrood(time); renderCorpses(); renderNature(time, paused ? 0 : rdt * speed);
     placeHeap(storeMesh, STORE_SPOTS, colony.store); placeHeap(middenMesh, MIDDEN_SPOTS, colony.midden * 0.6);
     updateCamera(rdt); controls.update();
     renderer.render(scene, camera);
