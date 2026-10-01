@@ -216,7 +216,7 @@
   </section>
 
   <div class="toast" id="toast"></div>
-  <div class="hint">Drag to orbit · scroll to zoom · <b>click the ground</b> to drop food · <b>click an ant</b> or the queen to follow</div>
+  <div class="hint">Drag to orbit · scroll to zoom · <b>click the ground</b> to drop food · <b>click an ant</b> or the queen to follow · violet ants carry her orders</div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -293,20 +293,6 @@
     (adj[b] = adj[b] || []).push({ to: a, e });
     return e;
   });
-
-  // Distance from the queen through the tunnels: her decrees spread along these.
-  const qDist = {};
-  {
-    for (const k in NODES) qDist[k] = Infinity;
-    qDist.queen = 0;
-    const open = new Set(Object.keys(NODES));
-    while (open.size) {
-      let n = null;
-      for (const k of open) if (n === null || qDist[k] < qDist[n]) n = k;
-      open.delete(n);
-      for (const { to, e } of adj[n]) qDist[to] = Math.min(qDist[to], qDist[n] + e.len);
-    }
-  }
 
   function routeSegs(from, to) {
     if (from === to) return [];
@@ -469,9 +455,35 @@
   const ROYAL = new THREE.Color(0xb48ae0), additive = { transparent: true, blending: THREE.AdditiveBlending, depthWrite: false };
   const halo = new THREE.Mesh(new THREE.TorusGeometry(1.3, 0.035, 8, 72), new THREE.MeshBasicMaterial({ color: ROYAL, opacity: 0.4, ...additive }));
   halo.rotation.x = Math.PI / 2; halo.position.copy(NODES.queen.v).add(V(0, -0.3, 0)); scene.add(halo);
-  const pulseCore = new THREE.InstancedMesh(new THREE.SphereGeometry(0.2, 12, 10), new THREE.MeshBasicMaterial({ color: ROYAL, opacity: 0.95, ...additive }), 96);
-  const pulseGlow = new THREE.InstancedMesh(new THREE.SphereGeometry(0.6, 14, 10), new THREE.MeshBasicMaterial({ color: ROYAL, opacity: 0.22, ...additive }), 96);
-  for (const m of [pulseCore, pulseGlow]) { m.count = 0; m.frustumCulled = false; scene.add(m); }
+  // The queen's command pheromone: a haze that hangs around her in the royal chamber.
+  const CLOUD_N = 240, cloudSeeds = [], cloudPos = new Float32Array(CLOUD_N * 3);
+  for (let i = 0; i < CLOUD_N; i++) cloudSeeds.push({ a: Math.random() * 6.28, r: 0.3 + Math.sqrt(Math.random()) * 1.6, y: Math.random() * 0.9, w: rand(0.15, 0.5) * (Math.random() < 0.5 ? -1 : 1), b: Math.random() * 6.28 });
+  const cloudGeo = new THREE.BufferGeometry(); cloudGeo.setAttribute('position', new THREE.BufferAttribute(cloudPos, 3));
+  const cloud = new THREE.Points(cloudGeo, new THREE.PointsMaterial({ color: ROYAL, size: 0.13, opacity: 0.55, ...additive }));
+  cloud.frustumCulled = false; scene.add(cloud);
+  function updateCloud(t) {
+    const Q = NODES.queen.v;
+    cloudSeeds.forEach((c, i) => {
+      const a = c.a + t * c.w, rr = c.r * (1 + 0.08 * Math.sin(t * 0.7 + c.b));
+      cloudPos[i * 3] = Q.x + Math.cos(a) * rr; cloudPos[i * 3 + 1] = Q.y - 0.25 + c.y + Math.sin(t + c.b) * 0.08; cloudPos[i * 3 + 2] = Q.z + Math.sin(a) * rr * 0.85;
+    });
+    cloudGeo.attributes.position.needsUpdate = true;
+  }
+  // Contact sparks: a brief violet line wherever one ant passes the order to another.
+  const SPARKS = 80, spPos = new Float32Array(SPARKS * 6), spCol = new Float32Array(SPARKS * 6), spLife = new Float32Array(SPARKS);
+  const spGeo = new THREE.BufferGeometry();
+  spGeo.setAttribute('position', new THREE.BufferAttribute(spPos, 3)); spGeo.setAttribute('color', new THREE.BufferAttribute(spCol, 3));
+  const sparks = new THREE.LineSegments(spGeo, new THREE.LineBasicMaterial({ vertexColors: true, ...additive }));
+  sparks.frustumCulled = false; scene.add(sparks);
+  let spIdx = 0;
+  function addSpark(p, q) { const i = spIdx++ % SPARKS; spPos.set([p.x, p.y + 0.06, p.z, q.x, q.y + 0.06, q.z], i * 6); spLife[i] = 1; }
+  function updateSparks(dt) {
+    for (let i = 0; i < SPARKS; i++) {
+      spLife[i] = Math.max(0, spLife[i] - dt * 1.2);
+      const l = spLife[i]; for (let k = 0; k < 2; k++) spCol.set([ROYAL.r * l * 1.4, ROYAL.g * l * 1.4, ROYAL.b * l * 1.4], i * 6 + k * 3);
+    }
+    spGeo.attributes.position.needsUpdate = spGeo.attributes.color.needsUpdate = true;
+  }
 
   // ---------- piles: brood, food store, midden, soil pellets ----------
   function pileMesh(geo, max, mat) { const m = new THREE.InstancedMesh(geo, mat || new THREE.MeshStandardMaterial({ roughness: 0.7 }), max); m.count = 0; m.frustumCulled = false; scene.add(m); return m; }
@@ -586,15 +598,15 @@
     shelter: { name: 'Shelter in place', note: 'foragers come home, the surface goes quiet', shares: { forager: 0, nurse: 0.25, excavator: 0.05, cleaner: 0.1, reserve: 0.6 } },
   };
   const GUARD_N = 12;
-  function shares(n) {
-    const d = DECREES[colony.decree].shares, g = colony.guard ? Math.min(GUARD_N, n) / Math.max(1, n) : 0, out = { guard: g };
+  function shares(n, decree = colony.decree, guard = colony.guard) {
+    const d = DECREES[decree].shares, g = guard ? Math.min(GUARD_N, n) / Math.max(1, n) : 0, out = { guard: g };
     for (const k in d) out[k] = d[k] * (1 - g);
     return out;
   }
   const capacity = () => Math.round(200 + colony.dug * 0.8);
   const day = () => Math.floor(simTime / 90) + 1;
   const colony = { store: 40, midden: 30, eggsWaiting: 3, eggsClaimed: 0, layTimer: 0, eatTimer: 0, foodTimer: 0, born: 0,
-                  decree: 'balanced', guard: false, lay: 1, auto: true, autoT: 6, eggsLaid: 0, dug: 0, waveId: 0, pulse: 0 };
+                  decree: 'balanced', guard: false, lay: 1, auto: true, autoT: 6, eggsLaid: 0, dug: 0, orderId: 0, pulse: 0 };
   const brood = [];
   const ants = [];
   let nextId = 1, simTime = 0;
@@ -603,7 +615,7 @@
   function makeAnt(at, role) {
     const a = { id: nextId++, role, at, segs: [], seg: null, t: 0, cargo: null, lane: (Math.random() - 0.5) * 0.36, speed: rand(1.25, 1.75),
                 task: 'Getting oriented', wob: Math.random() * 10, pos: nodeSpot(at).clone().add(V(0, UNDER, 0)), tan: V(1, 0, 0), ph: 0, born: simTime,
-                gd: qDist[at], here: at, onSurface: false, committed: false, lastOrder: colony.waveId, flash: 0, pendingRole: null, gspot: null };
+                here: at, onSurface: false, committed: false, lastOrder: 0, contagious: 0, flash: 0, pendingRole: null, gspot: null };
     ants.push(a); return a;
   }
   function neededRole() {
@@ -738,12 +750,10 @@
     else { a.pos.y = groundY(a.pos.x, a.pos.z) + 0.075 * ANT_S; tmpT.y = 0; }
     a.tan.copy(tmpT);
     a.onSurface = !s.under;
-    if (s.from) a.gd = qDist[s.from] + (qDist[s.to] - qDist[s.from]) * a.t;
-    else if (s.node) a.gd = qDist[s.node];
-    else if (!s.under) a.gd = qDist.entrance + Math.hypot(a.pos.x, a.pos.z);
   }
   function stepAnt(a, dt) {
     if (a.flash > 0) a.flash -= dt * 0.5;
+    if (a.contagious > 0) a.contagious -= dt;
     let guard = 0;
     while (!a.seg && guard++ < 8) {
       if (!a.segs.length) {
@@ -774,7 +784,7 @@
       if (colony.store >= 2 && ants.length + brood.length + colony.eggsWaiting < MAX_ANTS && colony.eggsWaiting < 12) { colony.eggsWaiting++; colony.eggsLaid++; colony.store -= 0.5; }
     }
     colony.autoT -= dt;
-    if (colony.auto && colony.autoT <= 0) { colony.autoT = 10; queenThinks(); }
+    if (colony.auto && colony.autoT <= 0) { colony.autoT = 30; queenThinks(); }
     colony.eatTimer += dt;
     if (colony.eatTimer > 1) { colony.eatTimer = 0; colony.store = Math.max(0, colony.store - ants.length * 0.0016); }
     for (let i = brood.length - 1; i >= 0; i--) {
@@ -801,51 +811,50 @@
     a.speed *= 1; a.segs.push({ wait: Math.random() * 3 });
   }
 
-  // ---------- the queen's command ----------
-  const waves = [], logEntries = [];
-  const WAVE_SPEED = 7, WAVE_MAX = Math.max(...Object.values(qDist)) + 14;
+  // ---------- the queen's command: a contagious pheromone ----------
+  // Ants that pass through the queen's haze pick up her newest order. For a while afterwards they are
+  // contagious: any ant they brush past in a tunnel, chamber or trail catches the order too.
+  const orders = [], logEntries = [];
+  const CLOUD_R = 1.9, CONTACT_R = 0.62, CONTAGIOUS_FOR = 35, CATCH_RATE = 4, QUEEN_RATE = 2.5;
   function issue(text, reason) {
-    colony.waveId++;
-    const ring = new THREE.Mesh(new THREE.RingGeometry(0.88, 1, 72), new THREE.MeshBasicMaterial({ color: ROYAL, opacity: 0, side: THREE.DoubleSide, ...additive }));
-    ring.rotation.x = -Math.PI / 2; ring.visible = false; scene.add(ring);
-    const entry = { day: day(), text, reason, count: 0 };
-    waves.push({ id: colony.waveId, r: 0, ring, entry });
-    logEntries.unshift(entry); if (logEntries.length > 4) logEntries.pop();
+    const o = { id: ++colony.orderId, decree: colony.decree, guard: colony.guard, day: day(), text, reason, infected: 0, count: 0 };
+    orders[o.id] = o;
+    logEntries.unshift(o); if (logEntries.length > 4) logEntries.pop();
     colony.pulse = 1;
   }
-  function receive(a, w) {
-    a.lastOrder = w.id; a.flash = 1;
-    const n = ants.length, c = countRoles(true), sh = shares(n), eff = a.pendingRole || a.role;
-    if (c[eff] - sh[eff] * n <= 0.5) return;
+  function infect(a, o, from) {
+    a.lastOrder = o.id; a.contagious = CONTAGIOUS_FOR; a.flash = 1; o.infected++;
+    if (from) addSpark(from.pos, a.pos);
+    const src = from ? `Caught the queen's order from #${String(from.id).padStart(3, '0')}` : 'Took the order straight from the queen';
+    const n = ants.length, c = countRoles(true), sh = shares(n, o.decree, o.guard), eff = a.pendingRole || a.role;
+    if (c[eff] - sh[eff] * n <= 0.5) { a.task = `${src}: keep working as a ${ROLES[eff].name.toLowerCase()}`; return; }
     let best = null, gap = 0.5;
     for (const k in ROLES) { const g = sh[k] * n - c[k]; if (g > gap) { gap = g; best = k; } }
     if (!best) return;
     a.pendingRole = best === a.role ? null : best;
-    w.entry.count++;
-    a.task = `Sensed the queen's order: become a ${ROLES[best].name.toLowerCase()}`;
+    o.count++;
+    a.task = `${src}: become a ${ROLES[best].name.toLowerCase()}`;
     // Drop the current plan at the next junction unless she is carrying, outside, or holding a reservation.
     if (!a.cargo && !a.onSurface && !a.committed) { const s = a.seg; a.segs.length = 0; a.at = (s && (s.to || s.node)) || a.here; }
   }
-  function updateWaves(dt) {
-    let pc = 0;
-    for (let wi = waves.length - 1; wi >= 0; wi--) {
-      const w = waves[wi];
-      w.r += dt * WAVE_SPEED;
-      for (const a of ants) if (a.lastOrder < w.id && a.gd <= w.r) receive(a, w);
-      for (const e of edges) {
-        const d0 = qDist[e.a], d1 = qDist[e.b];
-        if (pc >= 96 || d0 === d1 || w.r < Math.min(d0, d1) || w.r > Math.max(d0, d1)) continue;
-        e.curve.getPointAt((w.r - d0) / (d1 - d0), tmpP);
-        dm.position.copy(tmpP); dm.rotation.set(0, 0, 0); dm.scale.setScalar(1); dm.updateMatrix();
-        pulseCore.setMatrixAt(pc, dm.matrix); pulseGlow.setMatrixAt(pc, dm.matrix); pc++;
-      }
-      const sr = w.r - qDist.entrance;
-      if (sr > 0) { w.ring.visible = true; w.ring.scale.setScalar(sr); w.ring.position.y = groundY(sr, 0) + 0.06; w.ring.material.opacity = 0.75 * Math.max(0, 1 - sr / 14); }
-      if (w.r > WAVE_MAX) { scene.remove(w.ring); w.ring.geometry.dispose(); w.ring.material.dispose(); waves.splice(wi, 1); }
+  const grid = new Map(), cellKey = (x, y, z) => x + ',' + y + ',' + z, R2 = CONTACT_R * CONTACT_R;
+  function updateContagion(dt) {
+    const latest = orders[colony.orderId], Q = NODES.queen.center, pQueen = 1 - Math.exp(-QUEEN_RATE * dt), pCatch = 1 - Math.exp(-CATCH_RATE * dt);
+    grid.clear();
+    for (const a of ants) {
+      if (latest && a.lastOrder < latest.id && a.pos.distanceToSquared(Q) < CLOUD_R * CLOUD_R && Math.random() < pQueen) infect(a, latest, null);
+      a.cx = Math.floor(a.pos.x / CONTACT_R); a.cy = Math.floor(a.pos.y / CONTACT_R); a.cz = Math.floor(a.pos.z / CONTACT_R);
+      const k = cellKey(a.cx, a.cy, a.cz); let cell = grid.get(k); if (!cell) grid.set(k, cell = []); cell.push(a);
     }
-    pulseCore.count = pulseGlow.count = pc;
-    pulseCore.instanceMatrix.needsUpdate = pulseGlow.instanceMatrix.needsUpdate = true;
+    for (const a of ants) {
+      if (a.contagious <= 0 || !a.lastOrder) continue;
+      for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) for (let dz = -1; dz <= 1; dz++) {
+        const cell = grid.get(cellKey(a.cx + dx, a.cy + dy, a.cz + dz)); if (!cell) continue;
+        for (const b of cell) if (b.lastOrder < a.lastOrder && a.pos.distanceToSquared(b.pos) < R2 && Math.random() < pCatch) infect(b, orders[a.lastOrder], a);
+      }
+    }
   }
+  const reach = o => Math.round(ants.filter(a => a.lastOrder >= o.id).length / Math.max(1, ants.length) * 100);
   function setDecree(d, reason) { colony.decree = d; issue(DECREES[d].name, reason); syncCommandUI(); }
   function queenThinks() {
     const n = ants.length, cap = capacity(), young = brood.length + colony.eggsWaiting, st = Math.floor(colony.store), cur = colony.decree;
@@ -860,6 +869,8 @@
   // ---------- instance rendering ----------
   const dummy = new THREE.Object3D(), look = V(0, 0, 0), cargoColor = new THREE.Color();
   let selected = null;
+  const auraMesh = new THREE.InstancedMesh(new THREE.SphereGeometry(0.17, 10, 8), new THREE.MeshBasicMaterial({ color: ROYAL, opacity: 0.4, ...additive }), MAX_ANTS);
+  auraMesh.count = 0; auraMesh.frustumCulled = false; scene.add(auraMesh);
   const GUARD_TINT = ANT_COLOR.clone().lerp(ROYAL, 0.3), antCol = new THREE.Color();
   function renderAnts(time) {
     for (let i = 0; i < ants.length; i++) {
@@ -882,10 +893,13 @@
     for (let i = 0; i < ants.length; i++) {
       const a = ants[i];
       if (a === selected) antCol.copy(SEL_COLOR);
-      else { antCol.copy(a.role === 'guard' ? GUARD_TINT : ANT_COLOR); if (a.flash > 0) antCol.lerp(ROYAL, Math.min(1, a.flash) * 0.9); }
+      else { antCol.copy(a.role === 'guard' ? GUARD_TINT : ANT_COLOR); antCol.lerp(ROYAL, Math.min(0.9, Math.max(0, a.flash) * 0.9 + Math.max(0, a.contagious) / CONTAGIOUS_FOR * 0.35)); }
+      const ar = a.contagious > 0 ? 0.4 + 0.6 * a.contagious / CONTAGIOUS_FOR + 0.5 * Math.max(0, a.flash) : 0;
+      dm.position.copy(a.pos); dm.rotation.set(0, 0, 0); dm.scale.setScalar(ar); dm.updateMatrix(); auraMesh.setMatrixAt(i, dm.matrix);
       antMesh.setColorAt(i, antCol);
     }
     antMesh.instanceColor.needsUpdate = true;
+    auraMesh.count = ants.length; auraMesh.instanceMatrix.needsUpdate = true;
     antMesh.count = cargoMesh.count = ants.length;
     antMesh.instanceMatrix.needsUpdate = cargoMesh.instanceMatrix.needsUpdate = true;
     cargoMesh.instanceColor.needsUpdate = true;
@@ -1046,8 +1060,8 @@
   function renderCommand() {
     const D = DECREES[colony.decree];
     $('qStatus').innerHTML = `<b>${D.name}</b>: ${D.note}. <span>Room ${ants.length} / ${capacity()} · food ${Math.floor(colony.store)}</span>`;
-    $('log').innerHTML = '<li class="lh"><span>Decrees</span><span>Reassigned</span></li>' + logEntries.map(e =>
-      `<li><div><span>Day ${e.day} · <strong>${e.text}</strong></span><span>${e.reason}</span></div><b>${e.count}</b></li>`).join('');
+    $('log').innerHTML = '<li class="lh"><span>Decrees</span><span>Reached</span></li>' + logEntries.map(e =>
+      `<li><div><span>Day ${e.day} · <strong>${e.text}</strong></span><span>${e.reason} · ${e.count} changed job</span></div>${e.id === colony.orderId ? `<b>${reach(e)}%</b>` : '<span>replaced</span>'}</li>`).join('');
   }
   let toastT = 0;
   function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), 2200); }
@@ -1062,7 +1076,7 @@
     if (!follow) return;
     if (follow.isQueen) {
       const D = DECREES[colony.decree];
-      const q = [`Queen Ysolde`, 'founder', `Ruling by decree: ${D.name.toLowerCase()}${colony.guard ? ', with her royal guard posted' : ''}.`,
+      const q = [`Queen Ysolde`, 'founder', `Ruling by decree: ${D.name.toLowerCase()}${colony.guard ? ', with her royal guard posted' : ''}. Her latest order has spread to ${reach(orders[colony.orderId])}% of workers.`,
                  `70 cm down · ${colony.eggsLaid} eggs laid · laying at ${colony.lay}×`];
       const key = q.join('|'); if (!force && key === lastCard) return; lastCard = key;
       $('cRole').textContent = q[0]; $('cId').textContent = q[1]; $('cTask').textContent = q[2]; $('cMeta').textContent = q[3];
@@ -1071,7 +1085,7 @@
     const a = follow, depth = Math.max(0, Math.round(-a.pos.y * CM_PER_UNIT));
     const where = a.seg && a.seg.under === false ? 'on the surface' : `${depth} cm down`;
     const age = Math.floor((simTime - a.born) / 90);
-    const meta = `${where} · ${a.cargo ? 'carrying ' + a.cargo.name : 'empty-handed'} · ${age < 1 ? 'under a day old' : age + (age === 1 ? ' day old' : ' days old')}`;
+    const meta = `${where} · ${a.cargo ? 'carrying ' + a.cargo.name : 'empty-handed'} · ${age < 1 ? 'under a day old' : age + (age === 1 ? ' day old' : ' days old')}${a.lastOrder ? ` · order: ${orders[a.lastOrder].text.toLowerCase()}${a.contagious > 0 ? ' (contagious)' : ''}` : ' · no order yet'}`;
     const key = a.id + a.task + meta + a.role;
     if (!force && key === lastCard) return;
     lastCard = key;
@@ -1131,7 +1145,7 @@
       const sub = dt > 0.06 ? 2 : 1;
       for (let s = 0; s < sub; s++) { for (let i = 0; i < ants.length; i++) stepAnt(ants[i], dt / sub); tickColony(dt / sub); }
       updatePhero(dt);
-      updateWaves(dt);
+      updateContagion(dt); updateSparks(dt);
       queen.rotation.y = Math.sin(time * 0.25) * 0.6; queen.position.y = NODES.queen.v.y - 0.1 + Math.sin(time * 1.3) * 0.006;
       histT += dt; if (histT > 2 || !popHist.length) { histT = 0; popHist.push(ants.length); if (popHist.length > 120) popHist.shift(); }
     }
@@ -1139,6 +1153,7 @@
     halo.material.opacity = 0.28 + 0.12 * Math.sin(now / 600) + 0.7 * colony.pulse;
     halo.scale.setScalar(1 + 0.25 * colony.pulse);
     queenLight.intensity = 1.1 + 2.4 * colony.pulse;
+    updateCloud(time); cloud.material.opacity = 0.45 + 0.5 * colony.pulse;
     renderAnts(time); renderBrood(time);
     placeHeap(storeMesh, STORE_SPOTS, colony.store); placeHeap(middenMesh, MIDDEN_SPOTS, colony.midden * 0.6);
     updateCamera(rdt); controls.update();
