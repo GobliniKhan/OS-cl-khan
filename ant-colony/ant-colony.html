@@ -1,0 +1,925 @@
+<title>Formica Hollow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+  /* Layout: full-bleed 3D diorama of a nest slab; translucent field-notebook panels float over the corners. */
+  :root {
+    --bg: #100c0a;          /* deep humus */
+    --panel: rgba(24, 18, 14, 0.8);
+    --line: rgba(239, 227, 208, 0.13);
+    --fg: #efe3d0;          /* bone */
+    --muted: #a8957c;       /* dry loam */
+    --amber: #e8a23a;       /* food + pheromone */
+    --moss: #9aab63;
+    --clay: #c86f47;
+    --cream: #e9dcc0;
+    --stone: #7d6f60;
+    --display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", sans-serif;
+    --body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+    color-scheme: dark;
+  }
+  [hidden] { display: none !important; }
+  html, body { height: 100%; }
+  body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 14px; overflow: hidden; }
+  #app { position: fixed; inset: 0; }
+  #c { display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; }
+  #c:active { cursor: grabbing; }
+
+  .hud { position: absolute; background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+         backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+
+  .brief { top: calc(16px + env(safe-area-inset-top, 0px)); left: 16px; width: 290px; padding: 16px 16px 14px; display: grid; gap: 12px; }
+  .brief h1 { margin: 0; font-family: var(--display); font-weight: 700; font-size: 26px; line-height: 1; letter-spacing: -0.01em; text-wrap: balance; }
+  .brief .sp { margin: 4px 0 0; color: var(--muted); font-size: 12.5px; }
+  .brief .sp i { color: var(--cream); }
+  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; margin: 0; }
+  .stats div { display: grid; gap: 2px; min-width: 0; }
+  .stats dt { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+  .stats dd { margin: 0; font-family: var(--mono); font-size: 17px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .stats dd small { font-size: 11px; font-weight: 400; color: var(--muted); }
+  .castes { display: grid; gap: 6px; }
+  .bar { display: flex; height: 8px; border-radius: 4px; overflow: hidden; background: var(--line); }
+  .bar span { display: block; height: 100%; transition: width .4s ease; }
+  .legend { display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 11.5px; color: var(--muted); }
+  .legend b { font-family: var(--mono); font-weight: 600; color: var(--fg); font-variant-numeric: tabular-nums; }
+  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 4px; vertical-align: -0.5px; }
+  .spark { display: grid; gap: 4px; }
+  .spark .lbl { display: flex; justify-content: space-between; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+  #spark { width: 100%; height: 36px; display: block; }
+
+  .controls { top: calc(16px + env(safe-area-inset-top, 0px)); right: 16px; width: 214px; padding: 12px; display: grid; gap: 12px; }
+  .group { display: grid; gap: 6px; }
+  .group > .k { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+  .row { display: flex; gap: 4px; flex-wrap: wrap; }
+  button { font: inherit; font-size: 12.5px; color: var(--fg); background: rgba(239,227,208,0.06); border: 1px solid var(--line);
+           border-radius: 6px; padding: 6px 9px; cursor: pointer; transition: background .15s, border-color .15s; }
+  button:hover { background: rgba(239,227,208,0.12); }
+  button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+  button[aria-pressed="true"] { background: rgba(232,162,58,0.18); border-color: rgba(232,162,58,0.6); color: #ffe2b0; }
+  .seg button { flex: 1; padding-inline: 0; font-family: var(--mono); font-size: 12px; }
+  .wide { width: 100%; text-align: left; }
+  .row .wide { flex: 1; }
+
+  .hint { position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+          font-size: 12.5px; color: var(--muted); background: var(--panel); border: 1px solid var(--line); border-radius: 999px;
+          padding: 7px 14px; white-space: nowrap; pointer-events: none; }
+  .hint b { color: var(--fg); font-weight: 700; }
+
+  .card { bottom: calc(16px + env(safe-area-inset-bottom, 0px)); right: 16px; width: 260px; padding: 12px 14px; display: grid; gap: 6px;
+          border-color: rgba(232,162,58,0.45); }
+  .card .t { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+  .card h2 { margin: 0; font-family: var(--display); font-size: 17px; font-weight: 700; }
+  .card .id { font-family: var(--mono); color: var(--amber); font-size: 12px; }
+  .card p { margin: 0; color: var(--cream); line-height: 1.4; }
+  .card .meta { font-family: var(--mono); font-size: 11.5px; color: var(--muted); }
+
+  #labels { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+  .lab { position: absolute; left: 0; top: 0; pointer-events: auto; cursor: pointer; white-space: nowrap; font-size: 12px; color: var(--fg);
+         background: rgba(16,12,10,0.72); border: 1px solid var(--line); border-radius: 5px; padding: 3px 7px; display: flex; gap: 6px; align-items: baseline;
+         transform: translate(-50%, -100%); will-change: transform; }
+  .lab:hover { border-color: var(--amber); }
+  .lab em { font-style: normal; font-family: var(--mono); font-size: 10.5px; color: var(--muted); }
+  .tick { position: absolute; left: 0; top: 0; font-family: var(--mono); font-size: 10px; color: var(--muted); transform: translate(6px, -50%); }
+  .hide-labels .lab, .hide-labels .tick { display: none; }
+
+  .toast { position: absolute; left: 50%; top: calc(16px + env(safe-area-inset-top, 0px)); transform: translate(-50%, -6px); opacity: 0;
+           background: var(--panel); border: 1px solid rgba(232,162,58,0.5); border-radius: 8px; padding: 7px 12px; font-size: 12.5px;
+           transition: opacity .25s, transform .25s; pointer-events: none; }
+  .toast.on { opacity: 1; transform: translate(-50%, 0); }
+
+  @media (max-width: 760px) {
+    .brief { width: auto; right: 16px; padding: 10px 12px; gap: 8px; }
+    .brief h1 { font-size: 20px; }
+    .brief .sp, .spark { display: none; }
+    .stats { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+    .stats dd { font-size: 14px; }
+    .stats dd small { display: none; }
+    .controls { top: auto; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); left: 16px; right: 16px; width: auto; padding: 8px;
+                grid-template-columns: 1fr 1fr; gap: 8px; }
+    .controls .group > .k { display: none; }
+    .controls .group.views { grid-column: 1 / -1; }
+    .hint { display: none; }
+    .card { right: 16px; left: 16px; width: auto; bottom: calc(150px + env(safe-area-inset-bottom, 0px)); }
+    .toast { top: auto; bottom: calc(160px + env(safe-area-inset-bottom, 0px)); }
+  }
+  @media (prefers-reduced-motion: reduce) { .bar span, .toast { transition: none; } }
+</style>
+
+<div id="app">
+  <canvas id="c" aria-label="3D view of an ant colony nest. Drag to orbit, scroll to zoom."></canvas>
+  <div id="labels"></div>
+
+  <section class="hud brief" aria-label="Colony status">
+    <div>
+      <h1>Formica Hollow</h1>
+      <p class="sp">A live cross-section of a <i>Lasius niger</i> nest, the black garden ant, cut 90&nbsp;cm deep.</p>
+    </div>
+    <dl class="stats">
+      <div><dt>Workers</dt><dd id="sWorkers">0</dd></div>
+      <div><dt>Food store</dt><dd id="sFood">0 <small>items</small></dd></div>
+      <div><dt>Brood</dt><dd id="sBrood">0</dd></div>
+      <div><dt>Day</dt><dd id="sDay">1</dd></div>
+    </dl>
+    <div class="castes">
+      <div class="bar" id="casteBar"></div>
+      <div class="legend" id="casteLegend"></div>
+    </div>
+    <div class="spark">
+      <div class="lbl"><span>Population</span><span id="broodSplit">eggs 0 · larvae 0 · pupae 0</span></div>
+      <canvas id="spark"></canvas>
+    </div>
+  </section>
+
+  <section class="hud controls" aria-label="Controls">
+    <div class="group">
+      <span class="k">Time</span>
+      <div class="row seg" id="speedRow">
+        <button id="pause" aria-pressed="false" title="Pause (space)">❚❚</button>
+        <button data-speed="0.5" aria-pressed="false">½×</button>
+        <button data-speed="1" aria-pressed="true">1×</button>
+        <button data-speed="3" aria-pressed="false">3×</button>
+      </div>
+    </div>
+    <div class="group">
+      <span class="k">Layers</span>
+      <div class="row">
+        <button id="tSoil" aria-pressed="true">Soil</button>
+        <button id="tTrails" aria-pressed="true">Trails</button>
+        <button id="tLabels" aria-pressed="true">Labels</button>
+      </div>
+    </div>
+    <div class="group views">
+      <span class="k">View</span>
+      <div class="row">
+        <button id="follow" class="wide">Follow a forager</button>
+        <button id="reset">Reset</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="hud card" id="antcard" hidden aria-live="polite">
+    <div class="t"><h2 id="cRole">Forager</h2><span class="id" id="cId">#0</span></div>
+    <p id="cTask">—</p>
+    <div class="meta" id="cMeta">—</div>
+    <div class="row"><button id="unfollow">Stop following</button><button id="nextAnt">Another ant</button></div>
+  </section>
+
+  <div class="toast" id="toast"></div>
+  <div class="hint">Drag to orbit · scroll to zoom · <b>click the ground</b> to drop food · <b>click an ant</b> to follow it</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(() => {
+  // ---------- utilities ----------
+  function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  const rng = mulberry32(20261001);
+  const rand = (a, b) => a + (b - a) * Math.random();
+  const V = (x, y, z) => new THREE.Vector3(x, y, z);
+  const UP = V(0, 1, 0);
+  const HALF = 12, DEPTH = 18, CM_PER_UNIT = 5;
+
+  function groundY(x, z) {
+    const r = Math.hypot(x, z);
+    let h = 0;
+    if (r < 2.6) h = 0.55 * (1 - (r / 2.6) ** 2);
+    if (r < 0.4) h -= 0.12 * (1 - r / 0.4);
+    return h;
+  }
+
+  // ---------- renderer / scene ----------
+  const canvas = document.getElementById('c');
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x100c0a);
+  scene.fog = new THREE.Fog(0x100c0a, 45, 90);
+  const camera = new THREE.PerspectiveCamera(42, 1, 0.05, 200);
+  const HOME = { pos: V(20, 3, 22), target: V(0, -6.5, 0) };
+  camera.position.copy(HOME.pos);
+  const controls = new THREE.OrbitControls(camera, canvas);
+  controls.target.copy(HOME.target);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.08;
+  controls.minDistance = 1.2;
+  controls.maxDistance = 60;
+  controls.update();
+
+  scene.add(new THREE.HemisphereLight(0xffe9c8, 0x2a1a10, 0.5));
+  const sun = new THREE.DirectionalLight(0xffe2bb, 0.62);
+  sun.position.set(8, 20, 6);
+  scene.add(sun);
+
+  // ---------- nest graph ----------
+  const NODES = {
+    entrance: { p: [0, 0.65, 0], r: 0, label: 'Entrance' },
+    j1: { p: [0.6, -2.5, 0.4] },
+    midden: { p: [6.4, -3.6, 2.6], r: 1.4, label: 'Midden', note: 'waste heap' },
+    j2: { p: [-1.8, -5.6, 1.3] },
+    j3: { p: [2.7, -6.6, -1.0] },
+    pantry: { p: [5.8, -8.6, -2.3], r: 1.9, label: 'Food store' },
+    nursery: { p: [-5.4, -9.0, 2.5], r: 2.1, label: 'Nursery', note: 'brood' },
+    j4: { p: [0.3, -10.6, 0.2] },
+    queen: { p: [0.6, -14.0, -0.6], r: 1.7, label: 'Royal chamber' },
+    winter: { p: [-4.6, -15.6, -3.0], r: 1.8, label: 'Overwintering chamber', note: 'being dug' },
+  };
+  const EDGES = [['entrance', 'j1'], ['j1', 'midden'], ['j1', 'j2'], ['j1', 'j3'], ['j3', 'pantry'], ['j2', 'nursery'],
+                 ['j2', 'j4'], ['j3', 'j4'], ['j4', 'queen'], ['j4', 'winter'], ['nursery', 'winter'], ['pantry', 'j4']];
+  for (const k in NODES) NODES[k].v = V(...NODES[k].p);
+  const CHAMBERS = Object.keys(NODES).filter(k => NODES[k].r > 0);
+
+  const adj = {};
+  const edges = EDGES.map(([a, b]) => {
+    const A = NODES[a].v, B = NODES[b].v, L = A.distanceTo(B);
+    const j = () => (rng() - 0.5) * L * 0.32;
+    const p1 = A.clone().lerp(B, 0.33).add(V(j(), j() * 0.3, j()));
+    const p2 = A.clone().lerp(B, 0.66).add(V(j(), j() * 0.3, j()));
+    const curve = new THREE.CatmullRomCurve3([A.clone(), p1, p2, B.clone()], false, 'centripetal');
+    const e = { a, b, curve, len: curve.getLength() };
+    (adj[a] = adj[a] || []).push({ to: b, e });
+    (adj[b] = adj[b] || []).push({ to: a, e });
+    return e;
+  });
+
+  function routeSegs(from, to) {
+    if (from === to) return [];
+    const prev = { [from]: null }, q = [from];
+    while (q.length) {
+      const n = q.shift();
+      if (n === to) break;
+      for (const { to: m, e } of adj[n]) if (!(m in prev)) { prev[m] = { n, e }; q.push(m); }
+    }
+    const segs = [];
+    let cur = to;
+    while (prev[cur]) { const { n, e } = prev[cur]; segs.unshift({ curve: e.curve, len: e.len, rev: e.a !== n, under: true }); cur = n; }
+    return segs;
+  }
+
+  // ---------- tunnels & chambers ----------
+  const earthMat = new THREE.MeshStandardMaterial({ color: 0xb98150, emissive: 0x3d1d0a, emissiveIntensity: 0.7, roughness: 0.95,
+    transparent: true, opacity: 0.3, side: THREE.DoubleSide, depthWrite: false });
+  const chamberMat = earthMat.clone(); chamberMat.opacity = 0.26; chamberMat.color.set(0xd09460);
+  const nest = new THREE.Group(); scene.add(nest);
+  const TR = 0.42, ANT_S = 1.5, UNDER = -TR + 0.085 * ANT_S;
+  for (const e of edges) nest.add(new THREE.Mesh(new THREE.TubeGeometry(e.curve, 56, TR, 10, false), earthMat));
+  for (const k in NODES) {
+    const n = NODES[k];
+    if (n.r > 0) {
+      const ry = n.r * 0.5;
+      const m = new THREE.Mesh(new THREE.SphereGeometry(1, 28, 16), chamberMat);
+      m.scale.set(n.r, ry, n.r * 0.85);
+      n.center = n.v.clone().add(V(0, -0.32 + ry, 0));
+      m.position.copy(n.center);
+      nest.add(m);
+    } else {
+      const m = new THREE.Mesh(new THREE.SphereGeometry(TR, 12, 10), earthMat);
+      m.position.copy(n.v); nest.add(m);
+      n.center = n.v.clone();
+    }
+  }
+  for (const [k, c] of [['queen', 0xffb36b], ['nursery', 0xffd59a], ['pantry', 0xffb050]]) {
+    const L = new THREE.PointLight(c, 1.1, 7, 2);
+    L.position.copy(NODES[k].center); scene.add(L);
+  }
+
+  // ---------- soil slab ----------
+  const soil = new THREE.Group(); scene.add(soil);
+  const tunnelSamples = [];
+  for (const e of edges) for (let i = 0; i <= 40; i++) tunnelSamples.push(e.curve.getPointAt(i / 40));
+  function inHollow(p) {
+    for (const s of tunnelSamples) if (p.distanceToSquared(s) < 0.72 * 0.72) return true;
+    for (const k of CHAMBERS) {
+      const n = NODES[k], c = n.center;
+      const dx = (p.x - c.x) / (n.r + 0.35), dy = (p.y - c.y) / (n.r * 0.5 + 0.35), dz = (p.z - c.z) / (n.r * 0.85 + 0.35);
+      if (dx * dx + dy * dy + dz * dz < 1) return true;
+    }
+    return false;
+  }
+  const strata = [[-1.4, 0x3b2a1e], [-6, 0x6b4a2f], [-12, 0x8a5a3a], [-99, 0xa07d55]];
+  {
+    const N = 11000, pos = [], col = [], c = new THREE.Color(), p = V(0, 0, 0);
+    for (let i = 0; i < N; i++) {
+      p.set(rand(-HALF, HALF), -Math.random() * DEPTH, rand(-HALF, HALF));
+      if (p.y > groundY(p.x, p.z) - 0.1 || inHollow(p)) continue;
+      const band = strata.find(s => p.y > s[0] + (Math.sin(p.x * 0.4) + Math.cos(p.z * 0.3)) * 0.4);
+      c.set(band[1]).offsetHSL(0, rand(-0.05, 0.05), rand(-0.06, 0.06));
+      pos.push(p.x, p.y, p.z); col.push(c.r, c.g, c.b);
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+    soil.add(new THREE.Points(g, new THREE.PointsMaterial({ size: 0.11, vertexColors: true, transparent: true, opacity: 0.7, depthWrite: false })));
+    const box = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(HALF * 2, DEPTH, HALF * 2)),
+      new THREE.LineBasicMaterial({ color: 0x7a6250, transparent: true, opacity: 0.45 }));
+    box.position.y = -DEPTH / 2; soil.add(box);
+    // depth ruler at the front-left corner
+    const pts = [V(-HALF, 0, HALF), V(-HALF, -DEPTH, HALF)];
+    for (let d = 2; d <= DEPTH; d += 2) { pts.push(V(-HALF, -d, HALF), V(-HALF - (d % 4 ? 0.25 : 0.5), -d, HALF)); }
+    soil.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: 0xa8957c })));
+  }
+
+  // ---------- surface ----------
+  {
+    const g = new THREE.PlaneGeometry(HALF * 2, HALF * 2, 120, 120);
+    g.rotateX(-Math.PI / 2);
+    const pa = g.attributes.position, cols = [], c = new THREE.Color();
+    for (let i = 0; i < pa.count; i++) {
+      const x = pa.getX(i), z = pa.getZ(i), r = Math.hypot(x, z);
+      pa.setY(i, groundY(x, z));
+      if (r < 2.7) c.set(0x5a3e28).offsetHSL(0, 0, rand(-0.04, 0.04));
+      else c.set(0x3f4d1f).lerp(new THREE.Color(0x4e3c22), 0.3 + 0.3 * Math.sin(x * 0.7) * Math.cos(z * 0.5)).offsetHSL(0, 0, rand(-0.03, 0.03));
+      cols.push(c.r, c.g, c.b);
+    }
+    g.setAttribute('color', new THREE.Float32BufferAttribute(cols, 3));
+    g.computeVertexNormals();
+    var surface = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, side: THREE.FrontSide }));
+    scene.add(surface);
+
+    const grassGeo = new THREE.ConeGeometry(0.03, 0.55, 3); grassGeo.translate(0, 0.27, 0);
+    const GN = 3200, grass = new THREE.InstancedMesh(grassGeo, new THREE.MeshStandardMaterial({ roughness: 0.9 }), GN);
+    const d = new THREE.Object3D();
+    for (let i = 0; i < GN; i++) {
+      let x, z;
+      do { x = rand(-HALF + 0.2, HALF - 0.2); z = rand(-HALF + 0.2, HALF - 0.2); } while (Math.hypot(x, z) < 2.9);
+      d.position.set(x, 0, z);
+      d.rotation.set(rand(-0.35, 0.35), rand(0, 6.3), rand(-0.35, 0.35));
+      const s = rand(0.6, 1.5); d.scale.set(1, s, 1);
+      d.updateMatrix(); grass.setMatrixAt(i, d.matrix);
+      grass.setColorAt(i, c.setHSL(rand(0.17, 0.25), rand(0.4, 0.6), rand(0.13, 0.24)));
+    }
+    scene.add(grass);
+  }
+
+  // ---------- ant geometry ----------
+  function antGeometry(abd = 1) {
+    const parts = [];
+    const sph = new THREE.SphereGeometry(1, 10, 8);
+    const add = (geo, pos, scale, quat) => { const m = new THREE.Matrix4().compose(pos, quat || new THREE.Quaternion(), scale || V(1, 1, 1)); parts.push(geo.clone().applyMatrix4(m).toNonIndexed()); };
+    add(sph, V(0, 0.012 + 0.01 * (abd - 1), -0.13 - 0.06 * (abd - 1)), V(0.075 * abd, 0.065 * abd, 0.11 * abd));
+    add(sph, V(0, 0, -0.035), V(0.022, 0.026, 0.022));
+    add(sph, V(0, 0.012, 0.02), V(0.04, 0.042, 0.075));
+    add(sph, V(0, 0.022, 0.12), V(0.056, 0.046, 0.052));
+    const leg = new THREE.CylinderGeometry(0.0065, 0.005, 1, 4);
+    const limb = (from, dir, len) => { dir.normalize(); add(leg, from.clone().addScaledVector(dir, len / 2), V(1, len, 1), new THREE.Quaternion().setFromUnitVectors(UP, dir)); };
+    for (const s of [-1, 1]) {
+      for (const [z, dz] of [[-0.005, -0.8], [0.02, 0.05], [0.045, 0.8]]) {
+        const hip = V(0.03 * s, 0.005, z), knee = hip.clone().add(V(0.075 * s, 0.035, dz * 0.06));
+        limb(hip, knee.clone().sub(hip), hip.distanceTo(knee));
+        const foot = knee.clone().add(V(0.05 * s, -0.11, dz * 0.07));
+        limb(knee, foot.clone().sub(knee), knee.distanceTo(foot));
+      }
+      const base = V(0.02 * s, 0.045, 0.15), elbow = base.clone().add(V(0.03 * s, 0.06, 0.03));
+      limb(base, elbow.clone().sub(base), base.distanceTo(elbow));
+      const tip = elbow.clone().add(V(0.04 * s, -0.01, 0.07));
+      limb(elbow, tip.clone().sub(elbow), elbow.distanceTo(tip));
+    }
+    const pos = [], nor = [];
+    for (const g of parts) { pos.push(...g.attributes.position.array); nor.push(...g.attributes.normal.array); }
+    const out = new THREE.BufferGeometry();
+    out.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    out.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3));
+    return out;
+  }
+
+  const MAX_ANTS = 520;
+  const ANT_COLOR = new THREE.Color(0x231710), SEL_COLOR = new THREE.Color(0xffb444);
+  const antMesh = new THREE.InstancedMesh(antGeometry(), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.32, metalness: 0.15 }), MAX_ANTS);
+  for (let i = 0; i < MAX_ANTS; i++) antMesh.setColorAt(i, ANT_COLOR);
+  antMesh.count = 0; antMesh.frustumCulled = false;
+  scene.add(antMesh);
+  const cargoMesh = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(0.045, 0), new THREE.MeshStandardMaterial({ roughness: 0.6 }), MAX_ANTS);
+  for (let i = 0; i < MAX_ANTS; i++) cargoMesh.setColorAt(i, ANT_COLOR);
+  cargoMesh.count = 0; cargoMesh.frustumCulled = false;
+  scene.add(cargoMesh);
+
+  const queen = new THREE.Mesh(antGeometry(1.9), new THREE.MeshStandardMaterial({ color: 0x4a2414, roughness: 0.3, metalness: 0.2 }));
+  queen.scale.setScalar(2.6);
+  queen.position.copy(NODES.queen.v).add(V(0, -0.1, 0));
+  scene.add(queen);
+
+  // ---------- piles: brood, food store, midden, soil pellets ----------
+  function pileMesh(geo, max, mat) { const m = new THREE.InstancedMesh(geo, mat || new THREE.MeshStandardMaterial({ roughness: 0.7 }), max); m.count = 0; m.frustumCulled = false; scene.add(m); return m; }
+  function heapSpots(node, n, spread, rise) {
+    const N = NODES[node], out = [];
+    for (let i = 0; i < n; i++) {
+      const a = Math.random() * Math.PI * 2, rr = Math.sqrt(Math.random()) * N.r * spread;
+      out.push({ x: N.v.x + Math.cos(a) * rr, z: N.v.z + Math.sin(a) * rr * 0.85, rr, rot: Math.random() * 6 });
+    }
+    out.sort((a, b) => a.rr - b.rr);
+    out.forEach((s, i) => { s.y = N.v.y - 0.27 + rise * (1 - s.rr / (N.r * spread)) * Math.min(1, i / n * 2.5 + 0.2); });
+    return out;
+  }
+  const MAX_BROOD = 240;
+  const broodMesh = pileMesh(new THREE.SphereGeometry(1, 10, 8), MAX_BROOD, new THREE.MeshStandardMaterial({ roughness: 0.45, emissive: 0x2a1c0c }));
+  const STORE_SPOTS = heapSpots('pantry', 220, 0.7, 0.45);
+  const storeMesh = pileMesh(new THREE.IcosahedronGeometry(0.075, 0), 220);
+  STORE_SPOTS.forEach((s, i) => storeMesh.setColorAt(i, new THREE.Color().setHSL(rand(0.08, 0.12), rand(0.45, 0.65), rand(0.4, 0.6))));
+  const MIDDEN_SPOTS = heapSpots('midden', 180, 0.75, 0.4);
+  const middenMesh = pileMesh(new THREE.DodecahedronGeometry(0.07, 0), 180);
+  MIDDEN_SPOTS.forEach((s, i) => middenMesh.setColorAt(i, new THREE.Color().setHSL(rand(0.06, 0.1), rand(0.1, 0.25), rand(0.15, 0.3))));
+  const PELLETS = 260, pelletMesh = pileMesh(new THREE.DodecahedronGeometry(0.06, 0), PELLETS, new THREE.MeshStandardMaterial({ color: 0x7a5232, roughness: 1 }));
+  let pelletIdx = 0;
+  const dm = new THREE.Object3D();
+  function placeHeap(mesh, spots, n) {
+    n = Math.max(0, Math.min(spots.length, Math.floor(n)));
+    if (mesh.count === n) return;
+    for (let i = mesh.count; i < n; i++) { const s = spots[i]; dm.position.set(s.x, s.y, s.z); dm.rotation.set(s.rot, s.rot * 2, 0); dm.scale.setScalar(1); dm.updateMatrix(); mesh.setMatrixAt(i, dm.matrix); }
+    mesh.count = n; mesh.instanceMatrix.needsUpdate = true; if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+  }
+  function dropPellet(p) {
+    const a = Math.atan2(p.z, p.x) + rand(-0.2, 0.2), r = Math.hypot(p.x, p.z) + rand(-0.2, 0.2);
+    const x = Math.cos(a) * r, z = Math.sin(a) * r;
+    dm.position.set(x, groundY(x, z) + 0.03, z); dm.rotation.set(rand(0, 6), rand(0, 6), 0); dm.scale.setScalar(rand(0.8, 1.3)); dm.updateMatrix();
+    pelletMesh.setMatrixAt(pelletIdx % PELLETS, dm.matrix); pelletIdx++;
+    pelletMesh.count = Math.min(PELLETS, pelletIdx); pelletMesh.instanceMatrix.needsUpdate = true;
+  }
+
+  // ---------- pheromone trail ----------
+  const PH = 5000, phPos = new Float32Array(PH * 3), phCol = new Float32Array(PH * 3), phLife = new Float32Array(PH);
+  const phGeo = new THREE.BufferGeometry();
+  phGeo.setAttribute('position', new THREE.BufferAttribute(phPos, 3));
+  phGeo.setAttribute('color', new THREE.BufferAttribute(phCol, 3));
+  const phero = new THREE.Points(phGeo, new THREE.PointsMaterial({ size: 0.14, vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+  phero.frustumCulled = false; scene.add(phero);
+  let phIdx = 0;
+  function dropPhero(p) { const i = phIdx++ % PH; phPos[i * 3] = p.x; phPos[i * 3 + 1] = p.y - 0.04; phPos[i * 3 + 2] = p.z; phLife[i] = 1; }
+  function updatePhero(dt) {
+    const r = 0.91, g = 0.63, b = 0.23;
+    for (let i = 0; i < PH; i++) {
+      if (phLife[i] <= 0) continue;
+      phLife[i] = Math.max(0, phLife[i] - dt / 30);
+      const l = phLife[i] * 0.9; phCol[i * 3] = r * l; phCol[i * 3 + 1] = g * l; phCol[i * 3 + 2] = b * l;
+    }
+    phGeo.attributes.position.needsUpdate = true; phGeo.attributes.color.needsUpdate = true;
+  }
+
+  // ---------- food on the surface ----------
+  const FOOD_TYPES = [
+    { name: 'grass seed', color: 0xc9a25a }, { name: 'bread crumb', color: 0xdcb77c },
+    { name: 'honeydew drop', color: 0xe8c547 }, { name: 'beetle fragment', color: 0x6e4126 }, { name: 'clover seed', color: 0xa86c3a },
+  ];
+  const foods = [];
+  function trailCurve(x, z) {
+    const end = V(x, 0, z), L = end.length(), perp = V(-z, 0, x).normalize();
+    const pts = [V(0, 0, 0)];
+    for (let i = 1; i < 5; i++) pts.push(end.clone().multiplyScalar(i / 5).addScaledVector(perp, (Math.random() - 0.5) * L * 0.18));
+    pts.push(end);
+    return new THREE.CatmullRomCurve3(pts, false, 'centripetal');
+  }
+  function spawnFood(x, z, type) {
+    type = type || FOOD_TYPES[Math.floor(Math.random() * FOOD_TYPES.length)];
+    const max = Math.floor(rand(30, 55));
+    const g = new THREE.Group(), mat = new THREE.MeshStandardMaterial({ color: type.color, roughness: 0.55 });
+    for (let i = 0; i < 9; i++) {
+      const m = new THREE.Mesh(new THREE.IcosahedronGeometry(rand(0.09, 0.2), 0), mat);
+      m.position.set(rand(-0.35, 0.35), rand(0.05, 0.15), rand(-0.35, 0.35)); m.rotation.set(rand(0, 6), rand(0, 6), 0); g.add(m);
+    }
+    g.position.set(x, groundY(x, z), z); scene.add(g);
+    const curve = trailCurve(x, z);
+    const f = { x, z, type, amount: max, max, claims: 0, mesh: g, trail: curve, tlen: curve.getLength() };
+    foods.push(f);
+    return f;
+  }
+  function randomFoodSpot() { const a = Math.random() * Math.PI * 2, r = rand(6, 10.5); return [Math.cos(a) * r, Math.sin(a) * r]; }
+  function onFoodTaken(f) {
+    if (f.amount <= 0) { scene.remove(f.mesh); foods.splice(foods.indexOf(f), 1); }
+    else f.mesh.scale.setScalar(0.45 + 0.55 * f.amount / f.max);
+  }
+  function pickFood(from) {
+    const open = foods.filter(f => f.amount - f.claims > 0);
+    if (!open.length) return null;
+    let tot = 0; const w = open.map(f => (tot += (f.amount - f.claims) / f.tlen));
+    const r = Math.random() * tot;
+    return open[w.findIndex(x => x >= r)];
+  }
+
+  // ---------- colony state ----------
+  const ROLES = {
+    forager: { name: 'Forager', color: '#e8a23a', share: 0.42 },
+    nurse: { name: 'Nurse', color: '#e9dcc0', share: 0.2 },
+    excavator: { name: 'Excavator', color: '#c86f47', share: 0.1 },
+    cleaner: { name: 'Midden worker', color: '#7d6f60', share: 0.08 },
+    reserve: { name: 'Reserve', color: '#9aab63', share: 0.2 },
+  };
+  const colony = { store: 40, midden: 30, eggsWaiting: 3, eggsClaimed: 0, layTimer: 0, eatTimer: 0, foodTimer: 0, born: 0 };
+  const brood = [];
+  const ants = [];
+  let nextId = 1, simTime = 0;
+
+  function nodeSpot(k) { return NODES[k].v; }
+  function makeAnt(at, role) {
+    const a = { id: nextId++, role, at, segs: [], seg: null, t: 0, cargo: null, lane: (Math.random() - 0.5) * 0.36, speed: rand(1.25, 1.75),
+                task: 'Getting oriented', wob: Math.random() * 10, pos: nodeSpot(at).clone().add(V(0, UNDER, 0)), tan: V(1, 0, 0), ph: 0, born: simTime };
+    ants.push(a); return a;
+  }
+  function neededRole() {
+    const counts = countRoles(); let best = 'reserve', gap = -Infinity;
+    for (const k in ROLES) { const g = ROLES[k].share * (ants.length + 1) - counts[k]; if (g > gap) { gap = g; best = k; } }
+    return best;
+  }
+  function countRoles() { const c = {}; for (const k in ROLES) c[k] = 0; for (const a of ants) c[a.role]++; return c; }
+
+  function addBrood(stage) {
+    const N = NODES.nursery, ang = Math.random() * Math.PI * 2, rr = Math.sqrt(Math.random()) * N.r * 0.72;
+    brood.push({ stage, age: stage === 0 ? 0 : rand(0, 8), fed: stage === 2 ? 3 : 0, res: false,
+                 x: N.v.x + Math.cos(ang) * rr, z: N.v.z + Math.sin(ang) * rr * 0.85, rot: Math.random() * 6 });
+  }
+
+  // ---------- plans ----------
+  const say = (a, text) => a.segs.push({ fn: x => { x.task = text; } });
+  function goTo(a, to) { a.segs.push(...routeSegs(a.at, to)); a.at = to; }
+  function linger(a, node, loops = 1) {
+    const N = NODES[node];
+    if (!N.r) { a.segs.push({ wait: rand(0.3, 1) }); return; }
+    for (let i = 0; i < loops; i++) {
+      const pts = [N.v.clone()];
+      for (let k = 0; k < 2; k++) { const ang = Math.random() * 6.28, rr = Math.sqrt(Math.random()) * N.r * 0.75; pts.push(V(N.v.x + Math.cos(ang) * rr, N.v.y, N.v.z + Math.sin(ang) * rr * 0.85)); }
+      pts.push(N.v.clone());
+      const c = new THREE.CatmullRomCurve3(pts, false, 'centripetal');
+      a.segs.push({ curve: c, len: c.getLength(), rev: false, under: true, slow: 0.5 });
+      a.segs.push({ wait: rand(0.2, 1.4) });
+    }
+  }
+  const surf = (curve, rev, phero) => ({ curve, len: curve.getLength(), rev, under: false, phero });
+
+  function planForage(a) {
+    if (a.at !== 'entrance') { say(a, 'Climbing to the entrance to forage'); goTo(a, 'entrance'); return; }
+    const f = pickFood();
+    if (!f) {
+      say(a, 'Scouting the surface for food');
+      const [x, z] = randomFoodSpot(), c = trailCurve(x * 0.6, z * 0.6);
+      a.segs.push(surf(c, false), { wait: rand(0.5, 2) }, surf(c, true));
+      return;
+    }
+    f.claims++;
+    say(a, `Following the trail to a ${f.type.name}`);
+    a.segs.push(surf(f.trail, false));
+    a.segs.push({ fn: x => {
+      f.claims--;
+      if (f.amount > 0) { f.amount--; x.cargo = { kind: 'food', color: f.type.color, name: f.type.name }; x.task = `Carrying a ${f.type.name} home, laying pheromone`; onFoodTaken(f); }
+      else { x.task = 'Found the food gone, heading back'; }
+    } });
+    a.segs.push({ wait: rand(0.2, 0.7) }, surf(f.trail, true, true));
+    a.segs.push({ fn: x => { if (!x.cargo) { x.segs.length = 0; x.at = 'entrance'; } else x.task = `Taking the ${x.cargo.name} down to the food store`; } });
+    goTo(a, 'pantry');
+    a.segs.push({ fn: x => { colony.store += 1; x.cargo = null; x.task = 'Resting in the food store'; } });
+    linger(a, 'pantry');
+  }
+  function planNurse(a) {
+    if (colony.eggsWaiting - colony.eggsClaimed > 0) {
+      colony.eggsClaimed++;
+      say(a, 'Going to collect an egg from the queen');
+      goTo(a, 'queen'); linger(a, 'queen');
+      a.segs.push({ fn: x => { colony.eggsClaimed--; colony.eggsWaiting = Math.max(0, colony.eggsWaiting - 1); x.cargo = { kind: 'egg', color: 0xf6f1e4, name: 'egg' }; x.task = 'Carrying a fresh egg to the nursery'; } });
+      goTo(a, 'nursery');
+      a.segs.push({ fn: x => { if (brood.length < MAX_BROOD) addBrood(0); x.cargo = null; x.task = 'Tending eggs in the nursery'; } });
+      linger(a, 'nursery');
+      return;
+    }
+    const larva = brood.find(b => b.stage === 1 && b.fed < 3 && !b.res);
+    if (larva && colony.store >= 1) {
+      larva.res = true;
+      say(a, 'Fetching food for a hungry larva');
+      goTo(a, 'pantry'); linger(a, 'pantry');
+      a.segs.push({ fn: x => { if (colony.store >= 1) { colony.store -= 1; x.cargo = { kind: 'food', color: 0xd9a54a, name: 'regurgitated food' }; x.task = 'Bringing food back to the larvae'; } } });
+      goTo(a, 'nursery');
+      a.segs.push({ fn: x => { if (x.cargo) larva.fed++; larva.res = false; x.cargo = null; x.task = 'Feeding a larva'; } });
+      linger(a, 'nursery');
+      return;
+    }
+    if (a.at !== 'nursery') { say(a, 'Returning to the nursery'); goTo(a, 'nursery'); }
+    say(a, 'Grooming and turning the brood'); linger(a, 'nursery', 2);
+  }
+  function planDig(a) {
+    if (a.at !== 'winter') { say(a, 'Heading down to the dig face'); goTo(a, 'winter'); return; }
+    say(a, 'Excavating the overwintering chamber'); linger(a, 'winter');
+    a.segs.push({ fn: x => { x.cargo = { kind: 'soil', color: 0x7a5232, name: 'soil pellet' }; x.task = 'Hauling a soil pellet up 78 cm to the surface'; } });
+    goTo(a, 'entrance');
+    const ang = Math.random() * 6.28, r = rand(1.7, 2.5), c = trailCurve(Math.cos(ang) * r, Math.sin(ang) * r);
+    a.segs.push(surf(c, false));
+    a.segs.push({ fn: x => { dropPellet(x.pos); x.cargo = null; x.task = 'Dropped soil on the mound, going back down'; } });
+    a.segs.push(surf(c, true));
+    goTo(a, 'winter');
+  }
+  function planClean(a) {
+    if (a.at !== 'nursery') { say(a, 'Checking the nursery for waste'); goTo(a, 'nursery'); }
+    linger(a, 'nursery');
+    a.segs.push({ fn: x => { x.cargo = { kind: 'debris', color: 0x4a3a30, name: 'waste' }; x.task = 'Carrying waste to the midden'; } });
+    goTo(a, 'midden'); linger(a, 'midden');
+    a.segs.push({ fn: x => { colony.midden += 1; x.cargo = null; x.task = 'Sorting the midden'; } });
+  }
+  function planReserve(a) {
+    const opts = CHAMBERS.filter(k => k !== 'midden');
+    const to = opts[Math.floor(Math.random() * opts.length)];
+    say(a, `Idling in the ${NODES[to].label.toLowerCase()}`);
+    goTo(a, to); linger(a, to, 2); a.segs.push({ wait: rand(1, 4) });
+  }
+  const PLANS = { forager: planForage, nurse: planNurse, excavator: planDig, cleaner: planClean, reserve: planReserve };
+
+  // ---------- movement ----------
+  const tmpP = V(0, 0, 0), tmpT = V(0, 0, 0), side = V(0, 0, 0);
+  function placeOnSeg(a, s) {
+    const u = s.rev ? 1 - a.t : a.t;
+    s.curve.getPointAt(u, tmpP); s.curve.getTangentAt(u, tmpT);
+    if (s.rev) tmpT.negate();
+    side.crossVectors(tmpT, UP);
+    if (side.lengthSq() < 1e-4) side.set(1, 0, 0); else side.normalize();
+    a.pos.copy(tmpP).addScaledVector(side, a.lane);
+    if (s.under) a.pos.y += UNDER;
+    else { a.pos.y = groundY(a.pos.x, a.pos.z) + 0.075 * ANT_S; tmpT.y = 0; }
+    a.tan.copy(tmpT);
+  }
+  function stepAnt(a, dt) {
+    let guard = 0;
+    while (!a.seg && guard++ < 8) {
+      if (!a.segs.length) PLANS[a.role](a);
+      if (!a.segs.length) a.segs.push({ wait: 0.5 });
+      a.seg = a.segs.shift(); a.t = 0;
+      if (a.seg.fn) { a.seg.fn(a); a.seg = null; }
+    }
+    const s = a.seg; if (!s) return;
+    if (s.wait !== undefined) { a.t += dt; if (a.t >= s.wait) a.seg = null; return; }
+    a.t += dt * a.speed * (s.slow || 1) / s.len;
+    if (a.t >= 1) { a.t = 1; a.seg = null; }
+    placeOnSeg(a, s);
+    if (s.phero && a.cargo) { a.ph -= dt; if (a.ph <= 0) { a.ph = 0.22; dropPhero(a.pos); } }
+  }
+
+  // ---------- colony lifecycle ----------
+  function tickColony(dt) {
+    colony.layTimer += dt;
+    const lay = 2.4;
+    if (colony.layTimer > lay) {
+      colony.layTimer = 0;
+      if (colony.store >= 2 && ants.length + brood.length + colony.eggsWaiting < MAX_ANTS && colony.eggsWaiting < 12) { colony.eggsWaiting++; colony.store -= 0.5; }
+    }
+    colony.eatTimer += dt;
+    if (colony.eatTimer > 1) { colony.eatTimer = 0; colony.store = Math.max(0, colony.store - ants.length * 0.0016); }
+    for (let i = brood.length - 1; i >= 0; i--) {
+      const b = brood[i];
+      if (b.stage === 1 && b.fed < 3) b.age += dt * 0.15; else b.age += dt;
+      if (b.stage === 0 && b.age > 10) { b.stage = 1; b.age = 0; }
+      else if (b.stage === 1 && b.fed >= 3 && b.age > 8) { b.stage = 2; b.age = 0; }
+      else if (b.stage === 2 && b.age > 14) {
+        brood.splice(i, 1);
+        if (ants.length < MAX_ANTS) { const n = makeAnt('nursery', neededRole()); n.task = 'Freshly eclosed callow worker'; n.pos.set(b.x, NODES.nursery.v.y + UNDER, b.z); colony.born++; }
+      }
+    }
+    colony.foodTimer -= dt;
+    if (foods.length < 3 && colony.foodTimer <= 0) { spawnFood(...randomFoodSpot()); colony.foodTimer = rand(5, 10); }
+  }
+
+  // ---------- seed the colony ----------
+  for (let i = 0; i < 3; i++) spawnFood(...randomFoodSpot());
+  for (let i = 0; i < 26; i++) addBrood(i % 3);
+  for (let i = 0; i < 150; i++) {
+    const role = neededRole();
+    const start = role === 'forager' ? (Math.random() < 0.5 ? 'entrance' : 'pantry') : role === 'nurse' ? 'nursery' : role === 'excavator' ? 'winter' : role === 'cleaner' ? 'midden' : CHAMBERS[Math.floor(Math.random() * CHAMBERS.length)];
+    const a = makeAnt(start, role);
+    a.speed *= 1; a.segs.push({ wait: Math.random() * 3 });
+  }
+
+  // ---------- instance rendering ----------
+  const dummy = new THREE.Object3D(), look = V(0, 0, 0), cargoColor = new THREE.Color();
+  let selected = null, selColored = null;
+  function renderAnts(time) {
+    for (let i = 0; i < ants.length; i++) {
+      const a = ants[i];
+      dummy.position.copy(a.pos);
+      look.copy(a.pos).add(a.tan);
+      dummy.lookAt(look);
+      const moving = a.seg && a.seg.curve;
+      dummy.rotateY(Math.sin(time * 14 + a.wob) * (moving ? 0.09 : 0.02));
+      dummy.scale.setScalar(ANT_S * (a === selected ? 1.3 : 1));
+      dummy.updateMatrix();
+      antMesh.setMatrixAt(i, dummy.matrix);
+      if (a.cargo) {
+        dummy.position.copy(a.pos).addScaledVector(a.tan.clone().normalize(), 0.2 * ANT_S); dummy.position.y += 0.04;
+        dummy.scale.setScalar(ANT_S * (a.cargo.kind === 'egg' ? 0.85 : 1)); dummy.updateMatrix();
+        cargoMesh.setMatrixAt(i, dummy.matrix);
+        cargoMesh.setColorAt(i, cargoColor.set(a.cargo.color));
+      } else { dummy.scale.setScalar(0); dummy.updateMatrix(); cargoMesh.setMatrixAt(i, dummy.matrix); }
+    }
+    if (selColored !== selected) {
+      for (let i = 0; i < ants.length; i++) antMesh.setColorAt(i, ants[i] === selected ? SEL_COLOR : ANT_COLOR);
+      antMesh.instanceColor.needsUpdate = true; selColored = selected;
+    }
+    antMesh.count = cargoMesh.count = ants.length;
+    antMesh.instanceMatrix.needsUpdate = cargoMesh.instanceMatrix.needsUpdate = true;
+    cargoMesh.instanceColor.needsUpdate = true;
+  }
+  const BROOD_LOOK = [{ s: [0.045, 0.045, 0.065], c: 0xf6f1e4 }, { s: [0.075, 0.065, 0.12], c: 0xefe4c8 }, { s: [0.08, 0.075, 0.15], c: 0xd8b585 }];
+  const bc = new THREE.Color();
+  function renderBrood(time) {
+    let n = 0;
+    const floor = NODES.nursery.v.y - 0.27;
+    for (const b of brood) {
+      const L = BROOD_LOOK[b.stage], grow = b.stage === 1 ? 0.7 + 0.1 * b.fed : 1;
+      dm.position.set(b.x, floor + L.s[1] * grow, b.z); dm.rotation.set(0, b.rot, b.stage === 1 ? Math.sin(time * 2 + b.rot) * 0.15 : 0);
+      dm.scale.set(L.s[0] * grow, L.s[1] * grow, L.s[2] * grow); dm.updateMatrix();
+      broodMesh.setMatrixAt(n, dm.matrix); broodMesh.setColorAt(n, bc.set(L.c)); n++;
+    }
+    const Q = NODES.queen.v;
+    for (let i = 0; i < Math.min(colony.eggsWaiting, 12) && n < MAX_BROOD; i++) {
+      const ang = i * 0.9 + 2.2, r = 0.75 + (i % 3) * 0.1;
+      dm.position.set(Q.x + Math.cos(ang) * r, Q.y - 0.24, Q.z + Math.sin(ang) * r); dm.rotation.set(0, ang, 0);
+      dm.scale.set(0.045, 0.045, 0.065); dm.updateMatrix();
+      broodMesh.setMatrixAt(n, dm.matrix); broodMesh.setColorAt(n, bc.set(0xf6f1e4)); n++;
+    }
+    broodMesh.count = n; broodMesh.instanceMatrix.needsUpdate = true; if (broodMesh.instanceColor) broodMesh.instanceColor.needsUpdate = true;
+  }
+
+  // ---------- labels ----------
+  const labelsEl = document.getElementById('labels');
+  const labels = [];
+  for (const k of ['entrance', ...CHAMBERS]) {
+    const N = NODES[k], el = document.createElement('div');
+    el.className = 'lab';
+    const depth = Math.max(0, Math.round(-N.v.y * CM_PER_UNIT));
+    el.innerHTML = `${N.label}<em>${k === 'entrance' ? 'surface' : depth + ' cm'}</em>`;
+    el.title = `Fly to the ${N.label.toLowerCase()}`;
+    el.addEventListener('click', () => { stopFollow(); flyTo(N.center, k === 'entrance' ? 9 : 6.5); });
+    labelsEl.appendChild(el);
+    labels.push({ el, p: N.center.clone().add(V(0, k === 'entrance' ? 0.9 : N.r * 0.5 + 0.25, 0)) });
+  }
+  for (let d = 4; d <= DEPTH; d += 4) {
+    const el = document.createElement('div'); el.className = 'tick'; el.textContent = `${d * CM_PER_UNIT} cm`;
+    labelsEl.appendChild(el); labels.push({ el, p: V(-HALF - 0.5, -d, HALF), tick: true });
+  }
+  const proj = V(0, 0, 0);
+  function updateLabels(w, h) {
+    for (const L of labels) {
+      proj.copy(L.p).project(camera);
+      const vis = proj.z < 1 && Math.abs(proj.x) < 1.2 && Math.abs(proj.y) < 1.2;
+      L.el.style.visibility = vis ? 'visible' : 'hidden';
+      if (vis) L.el.style.transform = `translate(${(proj.x * 0.5 + 0.5) * w}px, ${(-proj.y * 0.5 + 0.5) * h}px) ${L.tick ? 'translate(6px,-50%)' : 'translate(-50%,-100%)'}`;
+    }
+  }
+
+  // ---------- camera moves ----------
+  let tween = null, follow = null, followZoom = 0;
+  function flyTo(target, dist) {
+    const dir = camera.position.clone().sub(controls.target).normalize();
+    tween = { t: 0, ft: controls.target.clone(), tt: target.clone(), fp: camera.position.clone(), tp: target.clone().addScaledVector(dir, dist) };
+  }
+  function startFollow(a) { selected = follow = a; followZoom = 1.6; tween = null; cardEl.hidden = false; updateCard(true); }
+  function stopFollow() { selected = follow = null; cardEl.hidden = true; }
+  const ease = t => t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2;
+  function updateCamera(dt) {
+    if (tween) {
+      tween.t = Math.min(1, tween.t + dt / 1.2);
+      const k = ease(tween.t);
+      controls.target.lerpVectors(tween.ft, tween.tt, k); camera.position.lerpVectors(tween.fp, tween.tp, k);
+      if (tween.t >= 1) tween = null;
+    } else if (follow) {
+      const d = follow.pos.clone().sub(controls.target).multiplyScalar(Math.min(1, dt * 5));
+      controls.target.add(d); camera.position.add(d);
+      if (followZoom > 0) {
+        followZoom -= dt;
+        const off = camera.position.clone().sub(controls.target), len = off.length();
+        off.setLength(len + (3.2 - len) * Math.min(1, dt * 2.5)); camera.position.copy(controls.target).add(off);
+      }
+    }
+  }
+
+  // ---------- picking ----------
+  const raycaster = new THREE.Raycaster(), ndc = new THREE.Vector2();
+  let downAt = null;
+  canvas.addEventListener('pointerdown', e => { downAt = [e.clientX, e.clientY]; });
+  canvas.addEventListener('pointerup', e => {
+    if (!downAt || Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) > 5) return;
+    const r = canvas.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top;
+    let best = null, bd = 22 * 22;
+    for (const a of ants) {
+      proj.copy(a.pos).project(camera);
+      if (proj.z > 1) continue;
+      const dx = (proj.x * 0.5 + 0.5) * r.width - mx, dy = (-proj.y * 0.5 + 0.5) * r.height - my, d = dx * dx + dy * dy;
+      if (d < bd) { bd = d; best = a; }
+    }
+    if (best) { startFollow(best); return; }
+    ndc.set(mx / r.width * 2 - 1, -my / r.height * 2 + 1);
+    raycaster.setFromCamera(ndc, camera);
+    const hit = raycaster.intersectObject(surface)[0];
+    if (hit) {
+      const { x, z } = hit.point;
+      if (Math.hypot(x, z) < 3.2) return toast('Too close to the mound. Drop food further out.');
+      if (Math.abs(x) > HALF - 0.6 || Math.abs(z) > HALF - 0.6) return;
+      if (foods.length >= 10) return toast('The surface already holds 10 food sources.');
+      const f = spawnFood(x, z);
+      toast(`Dropped a ${f.type.name}. Scouts will find it.`);
+    }
+  });
+
+  // ---------- UI ----------
+  const $ = id => document.getElementById(id);
+  const cardEl = $('antcard');
+  let speed = 1, paused = false;
+  const speedBtns = [...document.querySelectorAll('[data-speed]')];
+  function setPaused(p) { paused = p; $('pause').setAttribute('aria-pressed', p); $('pause').textContent = p ? '▶' : '❚❚'; $('pause').title = p ? 'Resume (space)' : 'Pause (space)'; }
+  $('pause').onclick = () => setPaused(!paused);
+  speedBtns.forEach(b => b.onclick = () => { speed = +b.dataset.speed; speedBtns.forEach(x => x.setAttribute('aria-pressed', x === b)); setPaused(false); });
+  function toggle(id, fn) { const b = $(id); b.onclick = () => { const on = b.getAttribute('aria-pressed') !== 'true'; b.setAttribute('aria-pressed', on); fn(on); }; }
+  toggle('tSoil', on => { soil.visible = on; });
+  toggle('tTrails', on => { phero.visible = on; });
+  toggle('tLabels', on => { labelsEl.classList.toggle('hide-labels', !on); });
+  function followSomeone(prefer) {
+    const pool = ants.filter(a => a !== selected && (prefer ? prefer(a) : true));
+    const list = pool.length ? pool : ants;
+    startFollow(list[Math.floor(Math.random() * list.length)]);
+  }
+  $('follow').onclick = () => followSomeone(a => a.role === 'forager' && a.seg && !a.seg.under);
+  $('nextAnt').onclick = () => followSomeone();
+  $('unfollow').onclick = () => stopFollow();
+  $('reset').onclick = () => { stopFollow(); flyTo(HOME.target, HOME.pos.distanceTo(HOME.target)); tween.tp.copy(HOME.pos); };
+  addEventListener('keydown', e => {
+    if (e.code === 'Space' && !(e.target instanceof HTMLButtonElement)) { e.preventDefault(); setPaused(!paused); }
+    if (e.key === 'Escape') stopFollow();
+  });
+  let toastT = 0;
+  function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), 2200); }
+
+  const legendEl = $('casteLegend'), barEl = $('casteBar'), barSpans = {}, legendNums = {};
+  for (const k in ROLES) {
+    const s = document.createElement('span'); s.style.background = ROLES[k].color; barEl.appendChild(s); barSpans[k] = s;
+    const l = document.createElement('span'); l.innerHTML = `<i class="dot" style="background:${ROLES[k].color}"></i>${ROLES[k].name} <b>0</b>`; legendEl.appendChild(l); legendNums[k] = l.querySelector('b');
+  }
+  let lastCard = '';
+  function updateCard(force) {
+    if (!follow) return;
+    const a = follow, depth = Math.max(0, Math.round(-a.pos.y * CM_PER_UNIT));
+    const where = a.seg && a.seg.under === false ? 'on the surface' : `${depth} cm down`;
+    const age = Math.floor((simTime - a.born) / 90);
+    const meta = `${where} · ${a.cargo ? 'carrying ' + a.cargo.name : 'empty-handed'} · ${age < 1 ? 'under a day old' : age + (age === 1 ? ' day old' : ' days old')}`;
+    const key = a.id + a.task + meta;
+    if (!force && key === lastCard) return;
+    lastCard = key;
+    $('cRole').textContent = ROLES[a.role].name; $('cId').textContent = '#' + String(a.id).padStart(3, '0');
+    $('cTask').textContent = a.task; $('cMeta').textContent = meta;
+  }
+
+  const spark = $('spark'), sctx = spark.getContext('2d'), popHist = [];
+  let histT = 0;
+  function drawSpark() {
+    const w = spark.clientWidth, h = spark.clientHeight, dpr = Math.min(devicePixelRatio, 2);
+    if (!w) return;
+    if (spark.width !== w * dpr) { spark.width = w * dpr; spark.height = h * dpr; }
+    sctx.setTransform(dpr, 0, 0, dpr, 0, 0); sctx.clearRect(0, 0, w, h);
+    if (popHist.length < 2) return;
+    const max = Math.max(...popHist) * 1.08, min = Math.min(...popHist) * 0.92, n = popHist.length;
+    const X = i => i / (Math.max(n, 60) - 1) * (w - 4) + 1, Y = v => h - 3 - (v - min) / (max - min || 1) * (h - 8);
+    sctx.beginPath(); popHist.forEach((v, i) => i ? sctx.lineTo(X(i), Y(v)) : sctx.moveTo(X(i), Y(v)));
+    sctx.lineTo(X(n - 1), h); sctx.lineTo(X(0), h); sctx.closePath();
+    sctx.fillStyle = 'rgba(232,162,58,0.16)'; sctx.fill();
+    sctx.beginPath(); popHist.forEach((v, i) => i ? sctx.lineTo(X(i), Y(v)) : sctx.moveTo(X(i), Y(v)));
+    sctx.strokeStyle = '#e8a23a'; sctx.lineWidth = 1.5; sctx.stroke();
+    sctx.fillStyle = '#ffd08a'; sctx.beginPath(); sctx.arc(X(n - 1), Y(popHist[n - 1]), 2.5, 0, 7); sctx.fill();
+  }
+  let hudT = 0;
+  function updateHud() {
+    const c = countRoles();
+    $('sWorkers').textContent = ants.length;
+    $('sFood').innerHTML = `${Math.floor(colony.store)} <small>items</small>`;
+    const st = [0, 0, 0]; brood.forEach(b => st[b.stage]++);
+    $('sBrood').textContent = brood.length + colony.eggsWaiting;
+    $('broodSplit').textContent = `eggs ${st[0] + colony.eggsWaiting} · larvae ${st[1]} · pupae ${st[2]}`;
+    $('sDay').textContent = Math.floor(simTime / 90) + 1;
+    for (const k in ROLES) { barSpans[k].style.width = (c[k] / ants.length * 100) + '%'; legendNums[k].textContent = c[k]; }
+    drawSpark();
+  }
+
+  // ---------- loop ----------
+  function resize() {
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    renderer.setSize(w, h, false); camera.aspect = w / h;
+    camera.fov = w < 600 ? 55 : 42; camera.updateProjectionMatrix();
+  }
+  addEventListener('resize', resize); resize();
+  if (innerWidth < 600) { camera.position.set(26, 2, 30); HOME.pos.set(26, 2, 30); }
+
+  let last = performance.now(), time = 0;
+  function frame(now) {
+    const rdt = Math.min(0.05, (now - last) / 1000); last = now;
+    const dt = paused ? 0 : rdt * speed;
+    time += dt; simTime += dt;
+    if (dt > 0) {
+      const sub = dt > 0.06 ? 2 : 1;
+      for (let s = 0; s < sub; s++) { for (let i = 0; i < ants.length; i++) stepAnt(ants[i], dt / sub); tickColony(dt / sub); }
+      updatePhero(dt);
+      queen.rotation.y = Math.sin(time * 0.25) * 0.6; queen.position.y = NODES.queen.v.y - 0.1 + Math.sin(time * 1.3) * 0.006;
+      histT += dt; if (histT > 2 || !popHist.length) { histT = 0; popHist.push(ants.length); if (popHist.length > 120) popHist.shift(); }
+    }
+    renderAnts(time); renderBrood(time);
+    placeHeap(storeMesh, STORE_SPOTS, colony.store); placeHeap(middenMesh, MIDDEN_SPOTS, colony.midden * 0.6);
+    updateCamera(rdt); controls.update();
+    renderer.render(scene, camera);
+    updateLabels(canvas.clientWidth, canvas.clientHeight);
+    hudT -= rdt; if (hudT <= 0) { hudT = 0.25; updateHud(); updateCard(); }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
