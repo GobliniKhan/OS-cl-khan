@@ -15,6 +15,7 @@
     --clay: #c86f47;
     --cream: #e9dcc0;
     --stone: #7d6f60;
+    --royal: #b48ae0;       /* queen pheromone + command */
     --display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", sans-serif;
     --body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
     --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
@@ -49,7 +50,28 @@
   .spark .lbl { display: flex; justify-content: space-between; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
   #spark { width: 100%; height: 36px; display: block; }
 
-  .controls { top: calc(16px + env(safe-area-inset-top, 0px)); right: 16px; width: 214px; padding: 12px; display: grid; gap: 12px; }
+  .side { position: absolute; top: calc(16px + env(safe-area-inset-top, 0px)); right: 16px; width: 240px; max-height: calc(100% - 32px);
+          overflow-y: auto; display: grid; gap: 10px; align-content: start; }
+  .side .hud { position: static; }
+  .controls { padding: 12px; display: grid; gap: 12px; }
+  .command { padding: 12px; display: grid; gap: 10px; border-color: rgba(180, 138, 224, 0.45); }
+  .command .ch { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .command .k { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--royal); }
+  .command h2 { margin: 2px 0 0; font-family: var(--display); font-size: 19px; font-weight: 700; line-height: 1.1; }
+  .status { margin: 0; font-size: 12px; color: var(--cream); line-height: 1.4; }
+  .status b { color: var(--royal); }
+  .status span { color: var(--muted); }
+  .decrees { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+  .decrees button { text-align: left; padding: 6px 8px; }
+  .decrees button:last-child:nth-child(odd) { grid-column: 1 / -1; }
+  .command button[aria-pressed="true"] { background: rgba(180, 138, 224, 0.2); border-color: rgba(180, 138, 224, 0.75); color: #f1e4ff; }
+  .command button:focus-visible { outline-color: var(--royal); }
+  .log { margin: 0; padding: 8px 0 0; list-style: none; display: grid; gap: 6px; border-top: 1px solid var(--line); font-size: 11.5px; color: var(--muted); }
+  .log .lh { display: flex; justify-content: space-between; font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; }
+  .log li { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+  .log li div { display: grid; min-width: 0; }
+  .log strong { color: var(--fg); font-weight: 700; }
+  .log b { font-family: var(--mono); font-weight: 600; color: var(--royal); font-variant-numeric: tabular-nums; }
   .group { display: grid; gap: 6px; }
   .group > .k { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
   .row { display: flex; gap: 4px; flex-wrap: wrap; }
@@ -67,7 +89,7 @@
           padding: 7px 14px; white-space: nowrap; pointer-events: none; }
   .hint b { color: var(--fg); font-weight: 700; }
 
-  .card { bottom: calc(16px + env(safe-area-inset-bottom, 0px)); right: 16px; width: 260px; padding: 12px 14px; display: grid; gap: 6px;
+  .card { bottom: calc(16px + env(safe-area-inset-bottom, 0px)); left: 16px; width: 260px; padding: 12px 14px; display: grid; gap: 6px;
           border-color: rgba(232,162,58,0.45); }
   .card .t { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
   .card h2 { margin: 0; font-family: var(--display); font-size: 17px; font-weight: 700; }
@@ -82,6 +104,7 @@
   .lab:hover { border-color: var(--amber); }
   .lab em { font-style: normal; font-family: var(--mono); font-size: 10.5px; color: var(--muted); }
   .tick { position: absolute; left: 0; top: 0; font-family: var(--mono); font-size: 10px; color: var(--muted); transform: translate(6px, -50%); }
+  #app:has(#antcard:not([hidden])) .hint { display: none; }
   .hide-labels .lab, .hide-labels .tick { display: none; }
 
   .toast { position: absolute; left: 50%; top: calc(16px + env(safe-area-inset-top, 0px)); transform: translate(-50%, -6px); opacity: 0;
@@ -96,14 +119,20 @@
     .stats { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
     .stats dd { font-size: 14px; }
     .stats dd small { display: none; }
-    .controls { top: auto; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); left: 16px; right: 16px; width: auto; padding: 8px;
-                grid-template-columns: 1fr 1fr; gap: 8px; }
+    .side { top: auto; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); left: 16px; right: 16px; width: auto; max-height: 48%; gap: 8px; }
+    .controls { padding: 8px; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .command { padding: 8px 10px; gap: 8px; }
+    .command h2 { font-size: 16px; }
+    .decrees { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .decrees button:last-child:nth-child(odd) { grid-column: auto; }
+    .log { display: none; }
     .controls .group > .k { display: none; }
     .controls .group.views { grid-column: 1 / -1; }
     .hint { display: none; }
-    .card { right: 16px; left: 16px; width: auto; bottom: calc(150px + env(safe-area-inset-bottom, 0px)); }
+    .card { right: 16px; left: 16px; width: auto; bottom: auto; top: calc(124px + env(safe-area-inset-top, 0px)); }
     .toast { top: auto; bottom: calc(160px + env(safe-area-inset-bottom, 0px)); }
   }
+  @media (max-width: 1180px) { .hint { display: none; } }
   @media (prefers-reduced-motion: reduce) { .bar span, .toast { transition: none; } }
 </style>
 
@@ -132,6 +161,7 @@
     </div>
   </section>
 
+  <div class="side">
   <section class="hud controls" aria-label="Controls">
     <div class="group">
       <span class="k">Time</span>
@@ -159,6 +189,25 @@
     </div>
   </section>
 
+  <section class="hud command" aria-label="Royal command">
+    <div class="ch">
+      <div><span class="k">Royal command</span><h2>Queen Ysolde</h2></div>
+      <button id="visitQueen">Visit</button>
+    </div>
+    <button id="auto" class="wide" aria-pressed="true" title="The queen reads the colony and issues her own decrees">Queen decides</button>
+    <p class="status" id="qStatus">—</p>
+    <div class="decrees" id="decrees"></div>
+    <div class="group">
+      <span class="k">Egg laying</span>
+      <div class="row seg" id="layRow">
+        <button data-lay="0.5">½×</button><button data-lay="1">1×</button><button data-lay="2">2×</button><button data-lay="3">3×</button>
+      </div>
+    </div>
+    <button id="guard" class="wide" aria-pressed="false">Summon royal guard</button>
+    <ol class="log" id="log"></ol>
+  </section>
+  </div>
+
   <section class="hud card" id="antcard" hidden aria-live="polite">
     <div class="t"><h2 id="cRole">Forager</h2><span class="id" id="cId">#0</span></div>
     <p id="cTask">—</p>
@@ -167,7 +216,7 @@
   </section>
 
   <div class="toast" id="toast"></div>
-  <div class="hint">Drag to orbit · scroll to zoom · <b>click the ground</b> to drop food · <b>click an ant</b> to follow it</div>
+  <div class="hint">Drag to orbit · scroll to zoom · <b>click the ground</b> to drop food · <b>click an ant</b> or the queen to follow</div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -245,6 +294,20 @@
     return e;
   });
 
+  // Distance from the queen through the tunnels: her decrees spread along these.
+  const qDist = {};
+  {
+    for (const k in NODES) qDist[k] = Infinity;
+    qDist.queen = 0;
+    const open = new Set(Object.keys(NODES));
+    while (open.size) {
+      let n = null;
+      for (const k of open) if (n === null || qDist[k] < qDist[n]) n = k;
+      open.delete(n);
+      for (const { to, e } of adj[n]) qDist[to] = Math.min(qDist[to], qDist[n] + e.len);
+    }
+  }
+
   function routeSegs(from, to) {
     if (from === to) return [];
     const prev = { [from]: null }, q = [from];
@@ -255,7 +318,7 @@
     }
     const segs = [];
     let cur = to;
-    while (prev[cur]) { const { n, e } = prev[cur]; segs.unshift({ curve: e.curve, len: e.len, rev: e.a !== n, under: true }); cur = n; }
+    while (prev[cur]) { const { n, e } = prev[cur]; segs.unshift({ curve: e.curve, len: e.len, rev: e.a !== n, under: true, from: n, to: cur }); cur = n; }
     return segs;
   }
 
@@ -272,6 +335,7 @@
       const ry = n.r * 0.5;
       const m = new THREE.Mesh(new THREE.SphereGeometry(1, 28, 16), chamberMat);
       m.scale.set(n.r, ry, n.r * 0.85);
+      n.mesh = m; n.r0 = n.r;
       n.center = n.v.clone().add(V(0, -0.32 + ry, 0));
       m.position.copy(n.center);
       nest.add(m);
@@ -281,9 +345,11 @@
       n.center = n.v.clone();
     }
   }
+  let queenLight;
   for (const [k, c] of [['queen', 0xffb36b], ['nursery', 0xffd59a], ['pantry', 0xffb050]]) {
     const L = new THREE.PointLight(c, 1.1, 7, 2);
     L.position.copy(NODES[k].center); scene.add(L);
+    if (k === 'queen') queenLight = L;
   }
 
   // ---------- soil slab ----------
@@ -312,7 +378,7 @@
     const g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
     g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
-    soil.add(new THREE.Points(g, new THREE.PointsMaterial({ size: 0.11, vertexColors: true, transparent: true, opacity: 0.7, depthWrite: false })));
+    soil.add(new THREE.Points(g, new THREE.PointsMaterial({ size: 2.2 * renderer.getPixelRatio(), sizeAttenuation: false, vertexColors: true, transparent: true, opacity: 0.75, depthWrite: false })));
     const box = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(HALF * 2, DEPTH, HALF * 2)),
       new THREE.LineBasicMaterial({ color: 0x7a6250, transparent: true, opacity: 0.45 }));
     box.position.y = -DEPTH / 2; soil.add(box);
@@ -400,6 +466,12 @@
   queen.scale.setScalar(2.6);
   queen.position.copy(NODES.queen.v).add(V(0, -0.1, 0));
   scene.add(queen);
+  const ROYAL = new THREE.Color(0xb48ae0), additive = { transparent: true, blending: THREE.AdditiveBlending, depthWrite: false };
+  const halo = new THREE.Mesh(new THREE.TorusGeometry(1.3, 0.035, 8, 72), new THREE.MeshBasicMaterial({ color: ROYAL, opacity: 0.4, ...additive }));
+  halo.rotation.x = Math.PI / 2; halo.position.copy(NODES.queen.v).add(V(0, -0.3, 0)); scene.add(halo);
+  const pulseCore = new THREE.InstancedMesh(new THREE.SphereGeometry(0.2, 12, 10), new THREE.MeshBasicMaterial({ color: ROYAL, opacity: 0.95, ...additive }), 96);
+  const pulseGlow = new THREE.InstancedMesh(new THREE.SphereGeometry(0.6, 14, 10), new THREE.MeshBasicMaterial({ color: ROYAL, opacity: 0.22, ...additive }), 96);
+  for (const m of [pulseCore, pulseGlow]) { m.count = 0; m.frustumCulled = false; scene.add(m); }
 
   // ---------- piles: brood, food store, midden, soil pellets ----------
   function pileMesh(geo, max, mat) { const m = new THREE.InstancedMesh(geo, mat || new THREE.MeshStandardMaterial({ roughness: 0.7 }), max); m.count = 0; m.frustumCulled = false; scene.add(m); return m; }
@@ -504,8 +576,25 @@
     excavator: { name: 'Excavator', color: '#c86f47', share: 0.1 },
     cleaner: { name: 'Midden worker', color: '#7d6f60', share: 0.08 },
     reserve: { name: 'Reserve', color: '#9aab63', share: 0.2 },
+    guard: { name: 'Royal guard', color: '#b48ae0', share: 0 },
   };
-  const colony = { store: 40, midden: 30, eggsWaiting: 3, eggsClaimed: 0, layTimer: 0, eatTimer: 0, foodTimer: 0, born: 0 };
+  const DECREES = {
+    balanced: { name: 'Balanced colony', note: 'work split evenly', shares: { forager: 0.42, nurse: 0.2, excavator: 0.1, cleaner: 0.08, reserve: 0.2 } },
+    gather: { name: 'Gather food', note: 'two in three workers forage', shares: { forager: 0.66, nurse: 0.14, excavator: 0.05, cleaner: 0.05, reserve: 0.1 } },
+    brood: { name: 'Raise brood', note: 'nurses double to feed the young', shares: { forager: 0.3, nurse: 0.42, excavator: 0.05, cleaner: 0.08, reserve: 0.15 } },
+    expand: { name: 'Expand the nest', note: 'diggers widen the winter chamber', shares: { forager: 0.3, nurse: 0.15, excavator: 0.35, cleaner: 0.05, reserve: 0.15 } },
+    shelter: { name: 'Shelter in place', note: 'foragers come home, the surface goes quiet', shares: { forager: 0, nurse: 0.25, excavator: 0.05, cleaner: 0.1, reserve: 0.6 } },
+  };
+  const GUARD_N = 12;
+  function shares(n) {
+    const d = DECREES[colony.decree].shares, g = colony.guard ? Math.min(GUARD_N, n) / Math.max(1, n) : 0, out = { guard: g };
+    for (const k in d) out[k] = d[k] * (1 - g);
+    return out;
+  }
+  const capacity = () => Math.round(200 + colony.dug * 0.8);
+  const day = () => Math.floor(simTime / 90) + 1;
+  const colony = { store: 40, midden: 30, eggsWaiting: 3, eggsClaimed: 0, layTimer: 0, eatTimer: 0, foodTimer: 0, born: 0,
+                  decree: 'balanced', guard: false, lay: 1, auto: true, autoT: 6, eggsLaid: 0, dug: 0, waveId: 0, pulse: 0 };
   const brood = [];
   const ants = [];
   let nextId = 1, simTime = 0;
@@ -513,15 +602,16 @@
   function nodeSpot(k) { return NODES[k].v; }
   function makeAnt(at, role) {
     const a = { id: nextId++, role, at, segs: [], seg: null, t: 0, cargo: null, lane: (Math.random() - 0.5) * 0.36, speed: rand(1.25, 1.75),
-                task: 'Getting oriented', wob: Math.random() * 10, pos: nodeSpot(at).clone().add(V(0, UNDER, 0)), tan: V(1, 0, 0), ph: 0, born: simTime };
+                task: 'Getting oriented', wob: Math.random() * 10, pos: nodeSpot(at).clone().add(V(0, UNDER, 0)), tan: V(1, 0, 0), ph: 0, born: simTime,
+                gd: qDist[at], here: at, onSurface: false, committed: false, lastOrder: colony.waveId, flash: 0, pendingRole: null, gspot: null };
     ants.push(a); return a;
   }
   function neededRole() {
-    const counts = countRoles(); let best = 'reserve', gap = -Infinity;
-    for (const k in ROLES) { const g = ROLES[k].share * (ants.length + 1) - counts[k]; if (g > gap) { gap = g; best = k; } }
+    const counts = countRoles(true), sh = shares(ants.length + 1); let best = 'reserve', gap = -Infinity;
+    for (const k in ROLES) { const g = sh[k] * (ants.length + 1) - counts[k]; if (g > gap) { gap = g; best = k; } }
     return best;
   }
-  function countRoles() { const c = {}; for (const k in ROLES) c[k] = 0; for (const a of ants) c[a.role]++; return c; }
+  function countRoles(eff) { const c = {}; for (const k in ROLES) c[k] = 0; for (const a of ants) c[eff ? (a.pendingRole || a.role) : a.role]++; return c; }
 
   function addBrood(stage) {
     const N = NODES.nursery, ang = Math.random() * Math.PI * 2, rr = Math.sqrt(Math.random()) * N.r * 0.72;
@@ -540,7 +630,7 @@
       for (let k = 0; k < 2; k++) { const ang = Math.random() * 6.28, rr = Math.sqrt(Math.random()) * N.r * 0.75; pts.push(V(N.v.x + Math.cos(ang) * rr, N.v.y, N.v.z + Math.sin(ang) * rr * 0.85)); }
       pts.push(N.v.clone());
       const c = new THREE.CatmullRomCurve3(pts, false, 'centripetal');
-      a.segs.push({ curve: c, len: c.getLength(), rev: false, under: true, slow: 0.5 });
+      a.segs.push({ curve: c, len: c.getLength(), rev: false, under: true, slow: 0.5, node });
       a.segs.push({ wait: rand(0.2, 1.4) });
     }
   }
@@ -555,11 +645,11 @@
       a.segs.push(surf(c, false), { wait: rand(0.5, 2) }, surf(c, true));
       return;
     }
-    f.claims++;
+    f.claims++; a.committed = true;
     say(a, `Following the trail to a ${f.type.name}`);
     a.segs.push(surf(f.trail, false));
     a.segs.push({ fn: x => {
-      f.claims--;
+      f.claims--; x.committed = false;
       if (f.amount > 0) { f.amount--; x.cargo = { kind: 'food', color: f.type.color, name: f.type.name }; x.task = `Carrying a ${f.type.name} home, laying pheromone`; onFoodTaken(f); }
       else { x.task = 'Found the food gone, heading back'; }
     } });
@@ -571,10 +661,10 @@
   }
   function planNurse(a) {
     if (colony.eggsWaiting - colony.eggsClaimed > 0) {
-      colony.eggsClaimed++;
+      colony.eggsClaimed++; a.committed = true;
       say(a, 'Going to collect an egg from the queen');
       goTo(a, 'queen'); linger(a, 'queen');
-      a.segs.push({ fn: x => { colony.eggsClaimed--; colony.eggsWaiting = Math.max(0, colony.eggsWaiting - 1); x.cargo = { kind: 'egg', color: 0xf6f1e4, name: 'egg' }; x.task = 'Carrying a fresh egg to the nursery'; } });
+      a.segs.push({ fn: x => { x.committed = false; colony.eggsClaimed--; colony.eggsWaiting = Math.max(0, colony.eggsWaiting - 1); x.cargo = { kind: 'egg', color: 0xf6f1e4, name: 'egg' }; x.task = 'Carrying a fresh egg to the nursery'; } });
       goTo(a, 'nursery');
       a.segs.push({ fn: x => { if (brood.length < MAX_BROOD) addBrood(0); x.cargo = null; x.task = 'Tending eggs in the nursery'; } });
       linger(a, 'nursery');
@@ -582,12 +672,12 @@
     }
     const larva = brood.find(b => b.stage === 1 && b.fed < 3 && !b.res);
     if (larva && colony.store >= 1) {
-      larva.res = true;
+      larva.res = true; a.committed = true;
       say(a, 'Fetching food for a hungry larva');
       goTo(a, 'pantry'); linger(a, 'pantry');
       a.segs.push({ fn: x => { if (colony.store >= 1) { colony.store -= 1; x.cargo = { kind: 'food', color: 0xd9a54a, name: 'regurgitated food' }; x.task = 'Bringing food back to the larvae'; } } });
       goTo(a, 'nursery');
-      a.segs.push({ fn: x => { if (x.cargo) larva.fed++; larva.res = false; x.cargo = null; x.task = 'Feeding a larva'; } });
+      a.segs.push({ fn: x => { x.committed = false; if (x.cargo) larva.fed++; larva.res = false; x.cargo = null; x.task = 'Feeding a larva'; } });
       linger(a, 'nursery');
       return;
     }
@@ -601,7 +691,7 @@
     goTo(a, 'entrance');
     const ang = Math.random() * 6.28, r = rand(1.7, 2.5), c = trailCurve(Math.cos(ang) * r, Math.sin(ang) * r);
     a.segs.push(surf(c, false));
-    a.segs.push({ fn: x => { dropPellet(x.pos); x.cargo = null; x.task = 'Dropped soil on the mound, going back down'; } });
+    a.segs.push({ fn: x => { dropPellet(x.pos); colony.dug++; growWinter(); x.cargo = null; x.task = 'Dropped soil on the mound, going back down'; } });
     a.segs.push(surf(c, true));
     goTo(a, 'winter');
   }
@@ -618,7 +708,22 @@
     say(a, `Idling in the ${NODES[to].label.toLowerCase()}`);
     goTo(a, to); linger(a, to, 2); a.segs.push({ wait: rand(1, 4) });
   }
-  const PLANS = { forager: planForage, nurse: planNurse, excavator: planDig, cleaner: planClean, reserve: planReserve };
+  function planGuard(a) {
+    if (a.at !== 'queen') { say(a, 'Answering the summons to guard the queen'); goTo(a, 'queen'); return; }
+    const i = Math.max(0, ants.filter(x => x.role === 'guard').indexOf(a));
+    const ang = i / GUARD_N * Math.PI * 2 + rand(-0.12, 0.12), rr = 1.05 + rand(-0.08, 0.08), Q = NODES.queen.v;
+    const spot = V(Q.x + Math.cos(ang) * rr, Q.y, Q.z + Math.sin(ang) * rr * 0.85);
+    const c = new THREE.LineCurve3(a.gspot || Q.clone(), spot);
+    a.segs.push({ curve: c, len: Math.max(0.05, c.getLength()), rev: false, under: true, slow: 0.4, node: 'queen' });
+    a.segs.push({ fn: x => { x.gspot = spot; x.lane = 0; x.tan.set(Math.cos(ang), 0, Math.sin(ang)); x.task = 'Standing guard beside the queen'; } });
+    a.segs.push({ wait: rand(3, 6) });
+  }
+  function growWinter() {
+    const N = NODES.winter, g = 1 + Math.min(0.5, colony.dug / 500);
+    N.r = N.r0 * g; const ry = N.r * 0.5;
+    N.mesh.scale.set(N.r, ry, N.r * 0.85); N.center.set(N.v.x, N.v.y - 0.32 + ry, N.v.z); N.mesh.position.copy(N.center);
+  }
+  const PLANS = { forager: planForage, nurse: planNurse, excavator: planDig, cleaner: planClean, reserve: planReserve, guard: planGuard };
 
   // ---------- movement ----------
   const tmpP = V(0, 0, 0), tmpT = V(0, 0, 0), side = V(0, 0, 0);
@@ -632,11 +737,22 @@
     if (s.under) a.pos.y += UNDER;
     else { a.pos.y = groundY(a.pos.x, a.pos.z) + 0.075 * ANT_S; tmpT.y = 0; }
     a.tan.copy(tmpT);
+    a.onSurface = !s.under;
+    if (s.from) a.gd = qDist[s.from] + (qDist[s.to] - qDist[s.from]) * a.t;
+    else if (s.node) a.gd = qDist[s.node];
+    else if (!s.under) a.gd = qDist.entrance + Math.hypot(a.pos.x, a.pos.z);
   }
   function stepAnt(a, dt) {
+    if (a.flash > 0) a.flash -= dt * 0.5;
     let guard = 0;
     while (!a.seg && guard++ < 8) {
-      if (!a.segs.length) PLANS[a.role](a);
+      if (!a.segs.length) {
+        if (a.pendingRole) {
+          if (a.gspot) { const c = new THREE.LineCurve3(a.gspot, NODES.queen.v.clone()); a.segs.push({ curve: c, len: Math.max(0.05, c.getLength()), rev: false, under: true, node: 'queen' }); a.gspot = null; }
+          a.role = a.pendingRole; a.pendingRole = null; a.lane = (Math.random() - 0.5) * 0.36;
+        }
+        PLANS[a.role](a);
+      }
       if (!a.segs.length) a.segs.push({ wait: 0.5 });
       a.seg = a.segs.shift(); a.t = 0;
       if (a.seg.fn) { a.seg.fn(a); a.seg = null; }
@@ -644,7 +760,7 @@
     const s = a.seg; if (!s) return;
     if (s.wait !== undefined) { a.t += dt; if (a.t >= s.wait) a.seg = null; return; }
     a.t += dt * a.speed * (s.slow || 1) / s.len;
-    if (a.t >= 1) { a.t = 1; a.seg = null; }
+    if (a.t >= 1) { a.t = 1; a.seg = null; a.here = s.to || s.node || a.here; }
     placeOnSeg(a, s);
     if (s.phero && a.cargo) { a.ph -= dt; if (a.ph <= 0) { a.ph = 0.22; dropPhero(a.pos); } }
   }
@@ -652,11 +768,13 @@
   // ---------- colony lifecycle ----------
   function tickColony(dt) {
     colony.layTimer += dt;
-    const lay = 2.4;
+    const lay = 2.4 / colony.lay;
     if (colony.layTimer > lay) {
       colony.layTimer = 0;
-      if (colony.store >= 2 && ants.length + brood.length + colony.eggsWaiting < MAX_ANTS && colony.eggsWaiting < 12) { colony.eggsWaiting++; colony.store -= 0.5; }
+      if (colony.store >= 2 && ants.length + brood.length + colony.eggsWaiting < MAX_ANTS && colony.eggsWaiting < 12) { colony.eggsWaiting++; colony.eggsLaid++; colony.store -= 0.5; }
     }
+    colony.autoT -= dt;
+    if (colony.auto && colony.autoT <= 0) { colony.autoT = 10; queenThinks(); }
     colony.eatTimer += dt;
     if (colony.eatTimer > 1) { colony.eatTimer = 0; colony.store = Math.max(0, colony.store - ants.length * 0.0016); }
     for (let i = brood.length - 1; i >= 0; i--) {
@@ -683,9 +801,66 @@
     a.speed *= 1; a.segs.push({ wait: Math.random() * 3 });
   }
 
+  // ---------- the queen's command ----------
+  const waves = [], logEntries = [];
+  const WAVE_SPEED = 7, WAVE_MAX = Math.max(...Object.values(qDist)) + 14;
+  function issue(text, reason) {
+    colony.waveId++;
+    const ring = new THREE.Mesh(new THREE.RingGeometry(0.88, 1, 72), new THREE.MeshBasicMaterial({ color: ROYAL, opacity: 0, side: THREE.DoubleSide, ...additive }));
+    ring.rotation.x = -Math.PI / 2; ring.visible = false; scene.add(ring);
+    const entry = { day: day(), text, reason, count: 0 };
+    waves.push({ id: colony.waveId, r: 0, ring, entry });
+    logEntries.unshift(entry); if (logEntries.length > 4) logEntries.pop();
+    colony.pulse = 1;
+  }
+  function receive(a, w) {
+    a.lastOrder = w.id; a.flash = 1;
+    const n = ants.length, c = countRoles(true), sh = shares(n), eff = a.pendingRole || a.role;
+    if (c[eff] - sh[eff] * n <= 0.5) return;
+    let best = null, gap = 0.5;
+    for (const k in ROLES) { const g = sh[k] * n - c[k]; if (g > gap) { gap = g; best = k; } }
+    if (!best) return;
+    a.pendingRole = best === a.role ? null : best;
+    w.entry.count++;
+    a.task = `Sensed the queen's order: become a ${ROLES[best].name.toLowerCase()}`;
+    // Drop the current plan at the next junction unless she is carrying, outside, or holding a reservation.
+    if (!a.cargo && !a.onSurface && !a.committed) { const s = a.seg; a.segs.length = 0; a.at = (s && (s.to || s.node)) || a.here; }
+  }
+  function updateWaves(dt) {
+    let pc = 0;
+    for (let wi = waves.length - 1; wi >= 0; wi--) {
+      const w = waves[wi];
+      w.r += dt * WAVE_SPEED;
+      for (const a of ants) if (a.lastOrder < w.id && a.gd <= w.r) receive(a, w);
+      for (const e of edges) {
+        const d0 = qDist[e.a], d1 = qDist[e.b];
+        if (pc >= 96 || d0 === d1 || w.r < Math.min(d0, d1) || w.r > Math.max(d0, d1)) continue;
+        e.curve.getPointAt((w.r - d0) / (d1 - d0), tmpP);
+        dm.position.copy(tmpP); dm.rotation.set(0, 0, 0); dm.scale.setScalar(1); dm.updateMatrix();
+        pulseCore.setMatrixAt(pc, dm.matrix); pulseGlow.setMatrixAt(pc, dm.matrix); pc++;
+      }
+      const sr = w.r - qDist.entrance;
+      if (sr > 0) { w.ring.visible = true; w.ring.scale.setScalar(sr); w.ring.position.y = groundY(sr, 0) + 0.06; w.ring.material.opacity = 0.75 * Math.max(0, 1 - sr / 14); }
+      if (w.r > WAVE_MAX) { scene.remove(w.ring); w.ring.geometry.dispose(); w.ring.material.dispose(); waves.splice(wi, 1); }
+    }
+    pulseCore.count = pulseGlow.count = pc;
+    pulseCore.instanceMatrix.needsUpdate = pulseGlow.instanceMatrix.needsUpdate = true;
+  }
+  function setDecree(d, reason) { colony.decree = d; issue(DECREES[d].name, reason); syncCommandUI(); }
+  function queenThinks() {
+    const n = ants.length, cap = capacity(), young = brood.length + colony.eggsWaiting, st = Math.floor(colony.store), cur = colony.decree;
+    let d = 'balanced', why = 'The colony is in good shape', lay = 1;
+    if (st < 18 || (cur === 'gather' && st < 45)) { d = 'gather'; why = `Food store down to ${st}`; lay = 0.5; }
+    else if (n > cap * 0.92 || (cur === 'expand' && n > cap * 0.8)) { d = 'expand'; why = `Crowded: ${n} workers, room for ${cap}`; lay = 0.5; }
+    else if ((young < n * 0.12 && st > 45) || (cur === 'brood' && young < n * 0.2 && st > 25)) { d = 'brood'; why = `Food is plentiful but only ${young} young`; lay = 2; }
+    if (colony.lay !== lay) { colony.lay = lay; syncCommandUI(); }
+    if (d !== cur) setDecree(d, why);
+  }
+
   // ---------- instance rendering ----------
   const dummy = new THREE.Object3D(), look = V(0, 0, 0), cargoColor = new THREE.Color();
-  let selected = null, selColored = null;
+  let selected = null;
+  const GUARD_TINT = ANT_COLOR.clone().lerp(ROYAL, 0.3), antCol = new THREE.Color();
   function renderAnts(time) {
     for (let i = 0; i < ants.length; i++) {
       const a = ants[i];
@@ -704,10 +879,13 @@
         cargoMesh.setColorAt(i, cargoColor.set(a.cargo.color));
       } else { dummy.scale.setScalar(0); dummy.updateMatrix(); cargoMesh.setMatrixAt(i, dummy.matrix); }
     }
-    if (selColored !== selected) {
-      for (let i = 0; i < ants.length; i++) antMesh.setColorAt(i, ants[i] === selected ? SEL_COLOR : ANT_COLOR);
-      antMesh.instanceColor.needsUpdate = true; selColored = selected;
+    for (let i = 0; i < ants.length; i++) {
+      const a = ants[i];
+      if (a === selected) antCol.copy(SEL_COLOR);
+      else { antCol.copy(a.role === 'guard' ? GUARD_TINT : ANT_COLOR); if (a.flash > 0) antCol.lerp(ROYAL, Math.min(1, a.flash) * 0.9); }
+      antMesh.setColorAt(i, antCol);
     }
+    antMesh.instanceColor.needsUpdate = true;
     antMesh.count = cargoMesh.count = ants.length;
     antMesh.instanceMatrix.needsUpdate = cargoMesh.instanceMatrix.needsUpdate = true;
     cargoMesh.instanceColor.needsUpdate = true;
@@ -742,7 +920,7 @@
     const depth = Math.max(0, Math.round(-N.v.y * CM_PER_UNIT));
     el.innerHTML = `${N.label}<em>${k === 'entrance' ? 'surface' : depth + ' cm'}</em>`;
     el.title = `Fly to the ${N.label.toLowerCase()}`;
-    el.addEventListener('click', () => { stopFollow(); flyTo(N.center, k === 'entrance' ? 9 : 6.5); });
+    el.addEventListener('click', () => { if (k === 'queen') return startFollow(QUEEN); stopFollow(); flyTo(N.center, k === 'entrance' ? 9 : 6.5); });
     labelsEl.appendChild(el);
     labels.push({ el, p: N.center.clone().add(V(0, k === 'entrance' ? 0.9 : N.r * 0.5 + 0.25, 0)) });
   }
@@ -766,7 +944,8 @@
     const dir = camera.position.clone().sub(controls.target).normalize();
     tween = { t: 0, ft: controls.target.clone(), tt: target.clone(), fp: camera.position.clone(), tp: target.clone().addScaledVector(dir, dist) };
   }
-  function startFollow(a) { selected = follow = a; followZoom = 1.6; tween = null; cardEl.hidden = false; updateCard(true); }
+  const QUEEN = { isQueen: true, pos: queen.position };
+  function startFollow(a) { follow = a; selected = a.isQueen ? null : a; followZoom = 1.6; tween = null; cardEl.hidden = false; updateCard(true); }
   function stopFollow() { selected = follow = null; cardEl.hidden = true; }
   const ease = t => t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2;
   function updateCamera(dt) {
@@ -781,7 +960,7 @@
       if (followZoom > 0) {
         followZoom -= dt;
         const off = camera.position.clone().sub(controls.target), len = off.length();
-        off.setLength(len + (3.2 - len) * Math.min(1, dt * 2.5)); camera.position.copy(controls.target).add(off);
+        off.setLength(len + ((follow.isQueen ? 6 : 3.2) - len) * Math.min(1, dt * 2.5)); camera.position.copy(controls.target).add(off);
       }
     }
   }
@@ -793,6 +972,8 @@
   canvas.addEventListener('pointerup', e => {
     if (!downAt || Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) > 5) return;
     const r = canvas.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top;
+    proj.copy(queen.position).project(camera);
+    if (proj.z < 1 && Math.hypot((proj.x * 0.5 + 0.5) * r.width - mx, (-proj.y * 0.5 + 0.5) * r.height - my) < 34) { startFollow(QUEEN); return; }
     let best = null, bd = 22 * 22;
     for (const a of ants) {
       proj.copy(a.pos).project(camera);
@@ -839,6 +1020,35 @@
     if (e.code === 'Space' && !(e.target instanceof HTMLButtonElement)) { e.preventDefault(); setPaused(!paused); }
     if (e.key === 'Escape') stopFollow();
   });
+  const decreesEl = $('decrees'), layBtns = [...document.querySelectorAll('[data-lay]')];
+  for (const k in DECREES) {
+    const b = document.createElement('button'); b.textContent = DECREES[k].name; b.dataset.decree = k; b.title = DECREES[k].note;
+    b.onclick = () => { takeCommand(); if (colony.decree !== k) setDecree(k, 'Your order'); };
+    decreesEl.appendChild(b);
+  }
+  function takeCommand() { if (colony.auto) { colony.auto = false; syncCommandUI(); toast('You hold command now. Press "Queen decides" to hand it back.'); } }
+  layBtns.forEach(b => b.onclick = () => { takeCommand(); colony.lay = +b.dataset.lay; syncCommandUI(); });
+  $('auto').onclick = () => { colony.auto = !colony.auto; colony.autoT = 0.5; syncCommandUI(); toast(colony.auto ? 'Queen Ysolde is ruling the colony again.' : 'You hold command now.'); };
+  $('guard').onclick = () => {
+    colony.guard = !colony.guard;
+    issue(colony.guard ? 'Summon royal guard' : 'Dismiss royal guard', colony.guard ? `${GUARD_N} workers to her side` : 'Guards return to work');
+    syncCommandUI();
+  };
+  $('visitQueen').onclick = () => startFollow(QUEEN);
+  function syncCommandUI() {
+    for (const b of decreesEl.children) b.setAttribute('aria-pressed', b.dataset.decree === colony.decree);
+    layBtns.forEach(b => b.setAttribute('aria-pressed', +b.dataset.lay === colony.lay));
+    $('auto').setAttribute('aria-pressed', colony.auto);
+    $('auto').textContent = colony.auto ? 'Queen decides' : 'You command · hand back';
+    $('guard').setAttribute('aria-pressed', colony.guard);
+    $('guard').textContent = colony.guard ? 'Dismiss royal guard' : 'Summon royal guard';
+  }
+  function renderCommand() {
+    const D = DECREES[colony.decree];
+    $('qStatus').innerHTML = `<b>${D.name}</b>: ${D.note}. <span>Room ${ants.length} / ${capacity()} · food ${Math.floor(colony.store)}</span>`;
+    $('log').innerHTML = '<li class="lh"><span>Decrees</span><span>Reassigned</span></li>' + logEntries.map(e =>
+      `<li><div><span>Day ${e.day} · <strong>${e.text}</strong></span><span>${e.reason}</span></div><b>${e.count}</b></li>`).join('');
+  }
   let toastT = 0;
   function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), 2200); }
 
@@ -850,11 +1060,19 @@
   let lastCard = '';
   function updateCard(force) {
     if (!follow) return;
+    if (follow.isQueen) {
+      const D = DECREES[colony.decree];
+      const q = [`Queen Ysolde`, 'founder', `Ruling by decree: ${D.name.toLowerCase()}${colony.guard ? ', with her royal guard posted' : ''}.`,
+                 `70 cm down · ${colony.eggsLaid} eggs laid · laying at ${colony.lay}×`];
+      const key = q.join('|'); if (!force && key === lastCard) return; lastCard = key;
+      $('cRole').textContent = q[0]; $('cId').textContent = q[1]; $('cTask').textContent = q[2]; $('cMeta').textContent = q[3];
+      return;
+    }
     const a = follow, depth = Math.max(0, Math.round(-a.pos.y * CM_PER_UNIT));
     const where = a.seg && a.seg.under === false ? 'on the surface' : `${depth} cm down`;
     const age = Math.floor((simTime - a.born) / 90);
     const meta = `${where} · ${a.cargo ? 'carrying ' + a.cargo.name : 'empty-handed'} · ${age < 1 ? 'under a day old' : age + (age === 1 ? ' day old' : ' days old')}`;
-    const key = a.id + a.task + meta;
+    const key = a.id + a.task + meta + a.role;
     if (!force && key === lastCard) return;
     lastCard = key;
     $('cRole').textContent = ROLES[a.role].name; $('cId').textContent = '#' + String(a.id).padStart(3, '0');
@@ -889,7 +1107,11 @@
     $('sDay').textContent = Math.floor(simTime / 90) + 1;
     for (const k in ROLES) { barSpans[k].style.width = (c[k] / ants.length * 100) + '%'; legendNums[k].textContent = c[k]; }
     drawSpark();
+    renderCommand();
   }
+
+  syncCommandUI();
+  setDecree('balanced', 'Founding order');
 
   // ---------- loop ----------
   function resize() {
@@ -909,9 +1131,14 @@
       const sub = dt > 0.06 ? 2 : 1;
       for (let s = 0; s < sub; s++) { for (let i = 0; i < ants.length; i++) stepAnt(ants[i], dt / sub); tickColony(dt / sub); }
       updatePhero(dt);
+      updateWaves(dt);
       queen.rotation.y = Math.sin(time * 0.25) * 0.6; queen.position.y = NODES.queen.v.y - 0.1 + Math.sin(time * 1.3) * 0.006;
       histT += dt; if (histT > 2 || !popHist.length) { histT = 0; popHist.push(ants.length); if (popHist.length > 120) popHist.shift(); }
     }
+    colony.pulse = Math.max(0, colony.pulse - rdt * 0.45);
+    halo.material.opacity = 0.28 + 0.12 * Math.sin(now / 600) + 0.7 * colony.pulse;
+    halo.scale.setScalar(1 + 0.25 * colony.pulse);
+    queenLight.intensity = 1.1 + 2.4 * colony.pulse;
     renderAnts(time); renderBrood(time);
     placeHeap(storeMesh, STORE_SPOTS, colony.store); placeHeap(middenMesh, MIDDEN_SPOTS, colony.midden * 0.6);
     updateCamera(rdt); controls.update();
