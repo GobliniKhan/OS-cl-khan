@@ -45,7 +45,7 @@
   .hpbar { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
   .hpbar span { display: block; height: 100%; background: var(--alarm); transition: width .3s; }
   .stats.mini dd { font-size: 15px; }
-  #mindBtn[aria-pressed="true"] { background: rgba(154, 171, 99, 0.18); border-color: rgba(154, 171, 99, 0.65); color: #e6f0c4; }
+  #refound.arm { background: rgba(224, 83, 61, 0.2); border-color: rgba(224, 83, 61, 0.7); color: #ffd3cb; }
   .lab.danger { border-color: rgba(224, 83, 61, 0.7); color: #ffc2b8; }
   .lab.farm { border-color: rgba(154, 171, 99, 0.6); }
   .brief h1 { margin: 0; font-family: var(--display); font-weight: 700; font-size: 26px; line-height: 1; letter-spacing: -0.01em; text-wrap: balance; }
@@ -66,7 +66,7 @@
   .spark .lbl { display: flex; flex-wrap: wrap; gap: 2px 8px; justify-content: space-between; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
   #spark { width: 100%; height: 36px; display: block; }
 
-  .side { position: absolute; top: calc(16px + env(safe-area-inset-top, 0px)); right: 16px; width: 240px; max-height: calc(100% - 32px);
+  .side { position: absolute; top: calc(16px + env(safe-area-inset-top, 0px)); right: 16px; width: 262px; max-height: calc(100% - 32px);
           overflow-y: auto; display: grid; gap: 10px; align-content: start; }
   .side .hud { position: static; }
   .controls { padding: 12px; display: grid; gap: 12px; }
@@ -77,9 +77,40 @@
   .status { margin: 0; font-size: 12px; color: var(--cream); line-height: 1.4; }
   .status b { color: var(--royal); }
   .status span { color: var(--muted); }
+  .tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--line); }
+  .tabs button { flex: 1; border: 0; border-radius: 6px 6px 0 0; background: transparent; padding: 6px 2px; font-size: 11.5px; color: var(--muted); }
+  .tabs button[aria-selected="true"] { color: var(--fg); background: rgba(180, 138, 224, 0.14); box-shadow: inset 0 -2px 0 var(--royal); }
+  .tabpanel { display: grid; gap: 10px; }
+  .small { margin: 0; font-size: 11.5px; color: var(--muted); line-height: 1.4; }
+  .small b { color: var(--fg); font-family: var(--mono); font-weight: 600; }
+  .meter { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
+  .meter span { display: block; height: 100%; transition: width .4s, background .4s; }
+  .blocs { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+  .blocs li { display: grid; gap: 3px; font-size: 11.5px; }
+  .blocs .top { display: flex; justify-content: space-between; gap: 6px; }
+  .blocs .top b { font-family: var(--mono); font-weight: 600; color: var(--fg); }
+  .blocs .pref { color: var(--muted); text-align: right; }
+  .ab { height: 4px; border-radius: 2px; background: var(--line); overflow: hidden; }
+  .ab span { display: block; height: 100%; transition: width .4s; }
+  .qgrid { display: grid; gap: 6px; }
+  .qrow { display: grid; gap: 3px; }
+  .qrow .sl { font-size: 11px; color: var(--muted); }
+  .qrow.cur .sl { color: var(--fg); }
+  .qrow.cur .sl::before { content: "▸ "; color: var(--royal); }
+  .qcells { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 2px; }
+  .qcells span { font-family: var(--mono); font-size: 10.5px; text-align: center; padding: 3px 0; border-radius: 3px; font-variant-numeric: tabular-nums; }
+  .qcells span.best { outline: 1px solid var(--royal); outline-offset: -1px; }
+  .qhead span { font-family: var(--body); color: var(--muted); padding: 0; }
+  .instincts { list-style: none; margin: 0; padding: 8px 0 0; border-top: 1px solid var(--line); display: grid; gap: 5px; font-size: 11.5px; color: var(--muted); }
+  .instincts b { font-family: var(--mono); color: var(--fg); font-weight: 600; }
+  .codons { display: flex; flex-wrap: wrap; gap: 2px; font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.04em; }
+  .codons span { padding: 2px 3px; border-radius: 3px; cursor: default; }
   .decrees { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
-  .decrees button { text-align: left; padding: 6px 8px; }
-  .decrees button:last-child:nth-child(odd) { grid-column: 1 / -1; }
+  .decrees span, .ro span { padding: 6px 8px; font-size: 12.5px; border: 1px solid var(--line); border-radius: 6px; color: var(--muted); background: rgba(239,227,208,0.03); }
+  .ro span { flex: 1; text-align: center; padding-inline: 0; }
+  .decrees span.on, .ro span.on { background: rgba(180, 138, 224, 0.2); border-color: rgba(180, 138, 224, 0.75); color: #f1e4ff; }
+  .watch { margin: 0; font-size: 11.5px; color: var(--muted); padding: 6px 8px; border: 1px dashed var(--line); border-radius: 6px; }
+  .decrees span:last-child:nth-child(odd) { grid-column: 1 / -1; }
   .command button[aria-pressed="true"] { background: rgba(180, 138, 224, 0.2); border-color: rgba(180, 138, 224, 0.75); color: #f1e4ff; }
   .command button:focus-visible { outline-color: var(--royal); }
   .log { margin: 0; padding: 8px 0 0; list-style: none; display: grid; gap: 6px; border-top: 1px solid var(--line); font-size: 11.5px; color: var(--muted); }
@@ -100,7 +131,7 @@
   .wide { width: 100%; text-align: left; }
   .row .wide { flex: 1; }
 
-  .hint { position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  .hint { position: absolute; left: 50%; transform: translateX(-50%); top: calc(16px + env(safe-area-inset-top, 0px));
           font-size: 12.5px; color: var(--muted); background: var(--panel); border: 1px solid var(--line); border-radius: 999px;
           padding: 7px 14px; white-space: nowrap; pointer-events: none; }
   .hint b { color: var(--fg); font-weight: 700; }
@@ -123,7 +154,7 @@
   #app:has(#antcard:not([hidden])) .hint { display: none; }
   .hide-labels .lab, .hide-labels .tick { display: none; }
 
-  .toast { position: absolute; left: 50%; top: calc(16px + env(safe-area-inset-top, 0px)); transform: translate(-50%, -6px); opacity: 0;
+  .toast { position: absolute; left: 50%; top: calc(58px + env(safe-area-inset-top, 0px)); transform: translate(-50%, -6px); opacity: 0;
            background: var(--panel); border: 1px solid rgba(232,162,58,0.5); border-radius: 8px; padding: 7px 12px; font-size: 12.5px;
            transition: opacity .25s, transform .25s; pointer-events: none; }
   .toast.on { opacity: 1; transform: translate(-50%, 0); }
@@ -136,7 +167,7 @@
     .mind h2 { font-size: 16px; }
     .brief h1 { font-size: 20px; }
     .brief .sp, .spark { display: none; }
-    .stats { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+    .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
     .stats dd { font-size: 14px; }
     .stats dd small { display: none; }
     .side { top: auto; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); left: 16px; right: 16px; width: auto; max-height: 48%; gap: 8px; }
@@ -144,7 +175,7 @@
     .command { padding: 8px 10px; gap: 8px; }
     .command h2 { font-size: 16px; }
     .decrees { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-    .decrees button:last-child:nth-child(odd) { grid-column: auto; }
+    .decrees span:last-child:nth-child(odd) { grid-column: auto; }
     .log { display: none; }
     .controls .group > .k { display: none; }
     .controls .group.views { grid-column: 1 / -1; }
@@ -152,7 +183,7 @@
     .card { right: 16px; left: 16px; width: auto; transform: none; bottom: auto; top: calc(16px + env(safe-area-inset-top, 0px)); }
     .toast { top: auto; bottom: calc(160px + env(safe-area-inset-bottom, 0px)); }
   }
-  @media (max-width: 1180px) { .hint { display: none; } }
+  @media (max-width: 1240px) { .hint { display: none; } }
   @media (prefers-reduced-motion: reduce) { .bar span, .toast { transition: none; } }
 </style>
 
@@ -171,6 +202,8 @@
       <div><dt>Food store</dt><dd id="sFood">0 <small>items</small></dd></div>
       <div><dt>Brood</dt><dd id="sBrood">0</dd></div>
       <div><dt>Day</dt><dd id="sDay">1</dd></div>
+      <div title="The prime directive, measured: population fit, growth, food, young and safety"><dt>Survival index</dt><dd id="sSurv">0</dd></div>
+      <div title="Every ant that has ever carried the colony genome"><dt>Ants ever lived</dt><dd id="sEver">0</dd></div>
     </dl>
     <div class="castes">
       <div class="bar" id="casteBar"></div>
@@ -194,7 +227,7 @@
       <div><dt>Defenders</dt><dd id="sDef">0</dd></div>
       <div><dt>Bodies waiting</dt><dd id="sBodies">0</dd></div>
     </dl>
-    <button id="mindBtn" class="wide" aria-pressed="true" title="Alarm response, defence, trail avoidance, undertaking and recruitment">Colony mind: on</button>
+    <p class="watch" id="mindLine">The colony mind is always on: alarm response, defence, trail avoidance, undertaking and recruitment.</p>
     <ol class="log" id="mindLog"></ol>
   </section>
   </div>
@@ -225,24 +258,56 @@
         <button id="reset">Reset</button>
       </div>
     </div>
+    <div class="group views">
+      <span class="k">Colony</span>
+      <button id="refound" class="wide" title="Wipe every worker and start again from one queen and one male. The CHR-1 chronicle carries over.">Refound from two progenitors</button>
+    </div>
   </section>
 
-  <section class="hud command" aria-label="Royal command">
+  <section class="hud command" aria-label="Colony government">
     <div class="ch">
-      <div><span class="k">Royal command</span><h2>Queen Ysolde</h2></div>
+      <div><span class="k" id="regimeK">Constitutional monarchy</span><h2 id="qName">Queen Ysolde</h2></div>
       <button id="visitQueen">Visit</button>
     </div>
-    <button id="auto" class="wide" aria-pressed="true" title="The queen reads the colony and issues her own decrees">Queen decides</button>
-    <p class="status" id="qStatus">—</p>
-    <div class="decrees" id="decrees"></div>
-    <div class="group">
-      <span class="k">Egg laying</span>
-      <div class="row seg" id="layRow">
-        <button data-lay="0.5">½×</button><button data-lay="1">1×</button><button data-lay="2">2×</button><button data-lay="3">3×</button>
-      </div>
+    <div class="tabs" role="tablist">
+      <button role="tab" data-tab="cmd" aria-selected="true">Command</button>
+      <button role="tab" data-tab="pol" aria-selected="false">Politics</button>
+      <button role="tab" data-tab="ml" aria-selected="false">Learning</button>
+      <button role="tab" data-tab="chr" aria-selected="false">Chronicle</button>
     </div>
-    <button id="guard" class="wide" aria-pressed="false">Summon royal guard</button>
-    <ol class="log" id="log"></ol>
+    <div class="tabpanel" id="tab-cmd" role="tabpanel">
+      <p class="watch" id="watchLine">The queen rules on her own. You can watch, but not command.</p>
+      <div class="group">
+        <span class="k">Who rules</span>
+        <div class="row ro" id="ruleRow"><span data-gov="queen">Queen</span><span data-gov="council">Council of castes</span></div>
+      </div>
+      <p class="status" id="qStatus">—</p>
+      <div class="decrees" id="decrees"></div>
+      <div class="group">
+        <span class="k">Egg laying</span>
+        <div class="row ro" id="layRow">
+          <span data-lay="0.5">½×</span><span data-lay="1">1×</span><span data-lay="2">2×</span><span data-lay="3">3×</span>
+        </div>
+      </div>
+      <p class="small" id="guardLine">Royal guard: not posted</p>
+      <ol class="log" id="log"></ol>
+    </div>
+    <div class="tabpanel" id="tab-pol" role="tabpanel" hidden>
+      <p class="status" id="polStatus">—</p>
+      <div class="group"><span class="k" id="unrestLbl">Unrest</span><div class="meter"><span id="unrest"></span></div></div>
+      <ol class="blocs" id="blocs"></ol>
+      <p class="small" id="voteLine">—</p>
+    </div>
+    <div class="tabpanel" id="tab-ml" role="tabpanel" hidden>
+      <p class="small" id="mlStatus">—</p>
+      <div class="qgrid" id="qgrid"></div>
+      <ul class="instincts" id="instincts"></ul>
+    </div>
+    <div class="tabpanel" id="tab-chr" role="tabpanel" hidden>
+      <p class="small" id="chrStatus">—</p>
+      <div class="codons" id="codons"></div>
+      <ol class="log" id="chrLog"></ol>
+    </div>
   </section>
   </div>
 
@@ -250,11 +315,12 @@
     <div class="t"><h2 id="cRole">Forager</h2><span class="id" id="cId">#0</span></div>
     <p id="cTask">—</p>
     <div class="meta" id="cMeta">—</div>
+    <div class="meta" id="cGene">—</div>
     <div class="row"><button id="unfollow">Stop following</button><button id="nextAnt">Another ant</button></div>
   </section>
 
   <div class="toast" id="toast"></div>
-  <div class="hint">Drag to orbit · scroll to zoom · <b>click the ground</b> to drop food · <b>click an ant</b> or the queen to follow · violet ants carry her orders</div>
+  <div class="hint">Drag to orbit · scroll to zoom · <b>click an ant</b> or the queen to follow</div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -649,17 +715,100 @@
   const capacity = () => Math.round(200 + colony.dug * 0.8);
   const day = () => Math.floor(simTime / 90) + 1;
   const colony = { store: 40, midden: 30, eggsWaiting: 3, eggsClaimed: 0, layTimer: 0, eatTimer: 0, foodTimer: 0, born: 0,
-                  decree: 'balanced', guard: false, lay: 1, auto: true, autoT: 6, eggsLaid: 0, dug: 0, orderId: 0, pulse: 0,
+                  decree: 'balanced', guard: false, lay: 1, gov: 'queen', govT: 8, everLived: 0, unrest: 0, unrestT: 0, lowT: 0, polT: 0, recentKills: 0, nextMilestone: 200, lastVote: null, regimeName: null, eggsLaid: 0, dug: 0, orderId: 0, pulse: 0, generation: 1, maleT: 0,
                   mind: true, mindT: 1, alarmT: 0, killed: 0, aged: 0, buried: 0 };
   const brood = [];
   const ants = [];
   let nextId = 1, simTime = 0;
+  const ROMAN = ['', '', ' II', ' III', ' IV', ' V', ' VI', ' VII', ' VIII', ' IX', ' X'];
+  const qName = () => `Queen Ysolde${ROMAN[colony.generation] ?? ' ' + colony.generation}`;
 
   function nodeSpot(k) { return NODES[k].v; }
+  // ---------- the colony genome ----------
+  // Every ant that was, is and will be carries the same prime directive, plus CHR-1: a gene that holds
+  // the colony's history as a sequence of codons, copied into each egg the queen lays.
+  const PRIME_DIRECTIVE = 'Ensure the survival of the colony';
+  const CODONS = { found: ['AUG', '#9aab63'], decree: ['GCA', '#b48ae0'], council: ['GGU', '#7fb0d8'], regime: ['CGA', '#e8a23a'],
+                   uprising: ['UAA', '#e0533d'], death: ['UGA', '#c0503f'], driven: ['CAU', '#f0b25a'], grow: ['AAG', '#b7c97a'], learn: ['ACG', '#e9dcc0'] };
+  const chronicle = [];
+  function chronicleAdd(kind, text) { chronicle.push({ day: day(), kind, text }); }
+  chronicleAdd('found', 'Queen Ysolde founded the colony and wrote the prime directive into every genome');
+
+  // Survival index: the prime directive turned into a number every decision is judged by.
+  function survival() {
+    const n = Math.max(1, ants.length), cap = capacity(), young = brood.length + colony.eggsWaiting;
+    const fit = n <= cap ? n / cap : cap / n, size = Math.min(1, n / 400), food = Math.min(1, colony.store / 60);
+    const next = Math.min(1, young / (0.15 * n)), safety = 1 - Math.min(1, colony.recentKills / 8);
+    return Math.round(100 * (0.25 * fit + 0.15 * size + 0.25 * food + 0.15 * next + 0.2 * safety));
+  }
+
+  // ---------- machine learning ----------
+  // Reinforcement learning over decrees: each 30 s lesson rewards the decree in force by the change in
+  // the survival index. The model starts with one feature and adds more as the colony grows.
+  const LESSON = 30, DECS = Object.keys(DECREES);
+  const SHORT = { balanced: 'Bal', gather: 'Food', brood: 'Brood', expand: 'Dig', shelter: 'Hide' };
+  const FEATURES = { food: 'food', crowd: 'crowding', threat: 'threats', brood: 'brood' };
+  const UNLOCKS = [['crowd', 170], ['threat', 200], ['brood', 240]];
+  const LAY_FOR = { balanced: 1, gather: 0.5, brood: 2, expand: 0.5, shelter: 0.5 };
+  const learn = { Q: {}, N: {}, lessons: 0, features: ['food'], prevKey: null, prevDecree: null, prevS: null, alpha: 0.35, gamma: 0.5,
+                  rewards: [], musterK: 8, fleeR: 5, musterFrom: 8, fleeFrom: 5 };
+  function stateParts() {
+    const n = ants.length, st = colony.store, young = brood.length + colony.eggsWaiting;
+    return { food: st < 20 ? 'food low' : st < 70 ? 'food ok' : 'food rich', crowd: n > capacity() * 0.9 ? 'crowded' : 'roomy',
+             threat: deathHunting() || colony.alarmT > 0 ? 'threat' : 'calm', brood: young < n * 0.1 ? 'few young' : 'many young' };
+  }
+  const stateKey = () => { const p = stateParts(); return learn.features.map(f => p[f]).join(' · '); };
+  function prior(key, d) {
+    let v = d === 'balanced' ? 0.4 : 0;
+    if (key.includes('food low') && d === 'gather') v += 1.2;
+    if (key.includes('crowded') && d === 'expand') v += 1.2;
+    if (key.includes('threat') && d === 'shelter') v += 0.8;
+    if (key.includes('few young') && d === 'brood') v += 1;
+    if (key.includes('food rich') && d === 'brood') v += 0.5;
+    return v;
+  }
+  function qRow(key) {
+    if (!learn.Q[key]) {
+      const parent = learn.Q[key.split(' · ').slice(0, -1).join(' · ')];   // a new feature starts from what the coarser model knew
+      learn.Q[key] = {}; learn.N[key] = 0;
+      for (const d of DECS) learn.Q[key][d] = parent ? parent[d] : prior(key, d);
+    }
+    return learn.Q[key];
+  }
+  const epsilon = () => Math.max(0.05, 0.4 * Math.pow(0.93, learn.lessons));
+  const bestOf = row => DECS.reduce((b, d) => row[d] > row[b] ? d : b, DECS[0]);
+
+  // ---------- politics ----------
+  // Castes form blocs. Seats follow headcount; approval follows whether the government does what each
+  // bloc wants and whether the colony is surviving. As survival drops, the prime directive overrides
+  // self-interest and every bloc converges on what the colony has learned works.
+  const BLOCS = [
+    { id: 'forager', name: "Foragers' guild", roles: ['forager'], bias: { gather: 1, shelter: -1 } },
+    { id: 'nurse', name: "Nurses' circle", roles: ['nurse'], bias: { brood: 1 } },
+    { id: 'digger', name: "Diggers' union", roles: ['excavator'], bias: { expand: 1 } },
+    { id: 'militia', name: 'Militia', roles: ['guard', 'defender'], bias: { shelter: 1, gather: -0.3 } },
+    { id: 'undertaker', name: 'Undertakers', roles: ['cleaner'], bias: { shelter: 0.4, balanced: 0.4 } },
+    { id: 'reserve', name: 'Reserve assembly', roles: ['reserve'], bias: { balanced: 0.8 } },
+  ];
+  BLOCS.forEach(b => { b.approval = 0.6; b.seats = 0; b.pref = 'balanced'; });
+  const REGIMES = { queen: ['Constitutional monarchy', 'Absolute monarchy'], council: ['Swarm democracy', 'Caste oligarchy'], you: ['Regency', 'Dictatorship'] };
+  const REGIME_NOTES = {
+    'Constitutional monarchy': 'The queen decrees from what the colony has learned, and workers still act on their own initiative.',
+    'Absolute monarchy': 'The queen decrees, and workers obey with no local initiative.',
+    'Swarm democracy': 'Castes vote on every decree, weighted by seats and approval. Workers act on their own initiative.',
+    'Caste oligarchy': 'Castes vote, but workers have lost their local initiative.',
+    'Regency': 'You rule in the queen’s name, and the colony mind still acts locally.',
+    'Dictatorship': 'You rule alone, with no local initiative.',
+  };
+  const regime = () => REGIMES[colony.gov][colony.mind ? 0 : 1];
+  const selfInterest = S => Math.max(0, Math.min(1, (S - 35) / 40));
+
   function makeAnt(at, role) {
     const a = { id: nextId++, role, at, segs: [], seg: null, t: 0, cargo: null, lane: (Math.random() - 0.5) * 0.36, speed: rand(1.25, 1.75),
                 task: 'Getting oriented', wob: Math.random() * 10, pos: nodeSpot(at).clone().add(V(0, UNDER, 0)), tan: V(1, 0, 0), ph: 0, born: simTime,
                 here: at, onSurface: false, claim: null, life: rand(7, 12) * 90, prevRole: null, temp: false, engaged: false, lastOrder: 0, contagious: 0, flash: 0, pendingRole: null, gspot: null };
+    colony.everLived++;
+    a.genome = { directive: PRIME_DIRECTIVE, chronicle: chronicle.length };
     ants.push(a); return a;
   }
   function neededRole() {
@@ -884,7 +1033,7 @@
     if (a.t >= 1) { a.t = 1; a.seg = null; a.here = s.to || s.node || a.here; }
     placeOnSeg(a, s);
     if (colony.mind && !s.under && !s.flee && a.role !== 'defender' && deathHunting() &&
-        (a.pos.x - death.pos.x) ** 2 + (a.pos.z - death.pos.z) ** 2 < 5 * 5 && Math.hypot(a.pos.x, a.pos.z) > 2.4) { flee(a); return; }
+        (a.pos.x - death.pos.x) ** 2 + (a.pos.z - death.pos.z) ** 2 < learn.fleeR ** 2 && Math.hypot(a.pos.x, a.pos.z) > 2.4) { flee(a); return; }
     if (s.phero && a.cargo) { a.ph -= dt; if (a.ph <= 0) { a.ph = 0.22; dropPhero(a.pos); } }
   }
 
@@ -894,10 +1043,14 @@
     const lay = 2.4 / colony.lay;
     if (colony.layTimer > lay) {
       colony.layTimer = 0;
-      if (colony.store >= 2 && ants.length + brood.length + colony.eggsWaiting < MAX_ANTS && colony.eggsWaiting < 12) { colony.eggsWaiting++; colony.eggsLaid++; colony.store -= 0.5; }
+      const founding = ants.length < 8;
+      if (founding && brood.length < 24) { addBrood(0); colony.eggsLaid++; }   // claustral founding: she lays and tends alone, living off her own reserves
+      else if (colony.store >= 2 && ants.length + brood.length + colony.eggsWaiting < MAX_ANTS && colony.eggsWaiting < 12) { colony.eggsWaiting++; colony.eggsLaid++; colony.store -= 0.5; }
     }
-    colony.autoT -= dt;
-    if (colony.auto && colony.autoT <= 0) { colony.autoT = 30; queenThinks(); }
+    colony.recentKills *= Math.exp(-dt / 60);
+    if ((colony.govT -= dt) <= 0) { colony.govT = LESSON; govern(); }
+    tickPolitics(dt);
+    if (ants.length >= colony.nextMilestone) { chronicleAdd('grow', `The colony reached ${colony.nextMilestone} workers`); colony.nextMilestone += 50; }
     colony.eatTimer += dt;
     if (colony.eatTimer > 1) {
       colony.eatTimer = 0; colony.store = Math.max(0, colony.store - ants.length * 0.0016);
@@ -905,6 +1058,7 @@
     }
     for (let i = brood.length - 1; i >= 0; i--) {
       const b = brood[i];
+      if (b.stage === 1 && b.fed < 3 && ants.length < 8 && !b.res) b.fed = Math.min(3, b.fed + dt / 5);
       if (b.stage === 1 && b.fed < 3) b.age += dt * 0.15; else b.age += dt;
       if (b.stage === 0 && b.age > 10) { b.stage = 1; b.age = 0; }
       else if (b.stage === 1 && b.fed >= 3 && b.age > 8) { b.stage = 2; b.age = 0; }
@@ -991,8 +1145,15 @@
   function retreat(reason, fighters) {
     const D = death, ang = Math.atan2(D.pos.z, D.pos.x);
     D.exit.set(Math.cos(ang) * (HALF + 2), 0, Math.sin(ang) * (HALF + 2)); D.state = 'retreat'; D.target = null;
-    if (reason === 'driven') mindLog(`${fighters} defenders drove Death away`, 'win');
-    else mindLog(`Death left the meadow after ${D.visitKills} kill${D.visitKills === 1 ? '' : 's'}`, 'death');
+    if (reason === 'driven') { mindLog(`${fighters} defenders drove Death away`, 'win'); chronicleAdd('driven', `${fighters} defenders drove Death away; ${D.defLost} fell in the fight`); }
+    else { mindLog(`Death left the meadow after ${D.visitKills} kill${D.visitKills === 1 ? '' : 's'}`, 'death'); chronicleAdd('death', `Death left sated after ${D.visitKills} kills`); }
+    if (!colony.mind) return;
+    // Learned instincts: tune the muster size from fight losses and the flight distance from forager losses.
+    const k0 = learn.musterK, r0 = learn.fleeR;
+    if (reason === 'driven') { if (D.defLost > 3) learn.musterK = Math.min(16, k0 + 2); else if (D.defLost <= 1) learn.musterK = Math.max(4, k0 - 1); }
+    if (D.forLost === 0) learn.fleeR = Math.max(3.5, r0 - 0.3); else if (D.forLost >= 2) learn.fleeR = Math.min(8, r0 + 0.4 * D.forLost);
+    if (learn.musterK !== k0) chronicleAdd('learn', `Defenders learned to charge once ${learn.musterK} have gathered (was ${k0})`);
+    if (Math.abs(learn.fleeR - r0) > 0.01) chronicleAdd('learn', `Foragers learned to flee Death at ${learn.fleeR.toFixed(1)} units (was ${r0.toFixed(1)})`);
   }
   function updateDeath(dt) {
     const D = death;
@@ -1001,7 +1162,7 @@
       if (D.timer <= 0) {
         const a = Math.random() * 6.28; D.pos.set(Math.cos(a) * (HALF + 1.5), 0, Math.sin(a) * (HALF + 1.5));
         D.state = 'prowl'; D.hp = 1; D.visitKills = 0; D.retaliate = 1.5; D.since = 0; D.visit++; D.goal.copy(lurkSpot());
-        mindLog('Death has entered the meadow', 'death');
+        mindLog('Death has entered the meadow', 'death'); chronicleAdd('death', 'Death entered the meadow'); D.defLost = 0; D.forLost = 0;
       }
       return;
     }
@@ -1043,7 +1204,7 @@
     else {
       const all = ants.filter(a => a.role === 'defender'), ready = all.filter(a => a.seg && a.seg.chase);
       D.muster = ready.length;
-      if (!D.charge && ready.length >= Math.min(8, all.length) && ready.length > 0) { D.charge = true; mindLog(`${ready.length} defenders mustered and charged together`, 'alarm', 'charge' + D.visit); }
+      if (!D.charge && ready.length >= Math.min(learn.musterK, all.length) && ready.length > 0) { D.charge = true; mindLog(`${ready.length} defenders mustered and charged together`, 'alarm', 'charge' + D.visit); }
     }
     if (deathHunting()) {
       const fighters = ants.filter(a => a.engaged && a.role === 'defender' && a.seg && a.seg.chase);
@@ -1075,7 +1236,7 @@
     let pos = a.pos.clone();
     if (!a.onSurface) { const N = NODES[a.here], ang = Math.random() * 6.28, rr = (N.r ? N.r * 0.55 : 0.12) * Math.random(); pos = V(N.v.x + Math.cos(ang) * rr, N.v.y + UNDER, N.v.z + Math.sin(ang) * rr * 0.85); }
     corpses.push({ pos, surface: a.onSurface, node: a.onSurface ? null : a.here, claimed: false, rot: Math.random() * 6 });
-    if (cause === 'death') { colony.killed++; raiseAlarm(a.pos); } else colony.aged++;
+    if (cause === 'death') { colony.killed++; colony.recentKills++; if (a.role === 'defender') death.defLost = (death.defLost || 0) + 1; else death.forLost = (death.forLost || 0) + 1; raiseAlarm(a.pos); } else colony.aged++;
     if (follow === a) { stopFollow(); toast(cause === 'death' ? `#${pad(a.id)} was caught by Death.` : `#${pad(a.id)} died of old age.`); }
   }
   const alarms = [];
@@ -1215,15 +1376,84 @@
     }
   }
   const reach = o => Math.round(ants.filter(a => a.lastOrder >= o.id).length / Math.max(1, ants.length) * 100);
-  function setDecree(d, reason) { colony.decree = d; issue(DECREES[d].name, reason); syncCommandUI(); }
-  function queenThinks() {
-    const n = ants.length, cap = capacity(), young = brood.length + colony.eggsWaiting, st = Math.floor(colony.store), cur = colony.decree;
-    let d = 'balanced', why = 'The colony is in good shape', lay = 1;
-    if (st < 18 || (cur === 'gather' && st < 45)) { d = 'gather'; why = `Food store down to ${st}`; lay = 0.5; }
-    else if (n > cap * 0.92 || (cur === 'expand' && n > cap * 0.8)) { d = 'expand'; why = `Crowded: ${n} workers, room for ${cap}`; lay = 0.5; }
-    else if ((young < n * 0.12 && st > 45) || (cur === 'brood' && young < n * 0.2 && st > 25)) { d = 'brood'; why = `Food is plentiful but only ${young} young`; lay = 2; }
-    if (colony.lay !== lay) { colony.lay = lay; syncCommandUI(); }
-    if (d !== cur) setDecree(d, why);
+  function setDecree(d, reason, kind = 'decree') { colony.decree = d; issue(DECREES[d].name, reason); chronicleAdd(kind, `${DECREES[d].name}: ${reason}`); syncCommandUI(); }
+  function govern() {
+    const S = survival();
+    for (const [f, n] of UNLOCKS) if (!learn.features.includes(f) && ants.length >= n) {
+      learn.features.push(f);
+      chronicleAdd('learn', `With ${ants.length} workers, the learning model grew to weigh ${FEATURES[f]}`);
+      toast(`The colony's learning model now weighs ${FEATURES[f]}.`);
+    }
+    const key = stateKey(), row = qRow(key);
+    if (learn.prevKey) {
+      const prow = qRow(learn.prevKey), rwd = S - learn.prevS;
+      prow[learn.prevDecree] += learn.alpha * (rwd + learn.gamma * row[bestOf(row)] - prow[learn.prevDecree]);
+      learn.N[learn.prevKey]++; learn.lessons++;
+      learn.rewards.push(rwd); if (learn.rewards.length > 12) learn.rewards.shift();
+    }
+    let d = colony.decree, reason = '', kind = 'decree';
+    if (colony.gov === 'queen') {
+      if (Math.random() < epsilon()) { d = DECS[Math.floor(Math.random() * DECS.length)]; reason = `queen experiments, ${Math.round(epsilon() * 100)}% exploration`; }
+      else { d = bestOf(row); reason = `queen's learned best when ${key}`; }
+    } else if (colony.gov === 'council') {
+      const v = councilVote(key, S); d = v.winner; reason = `council vote, ${v.pct}%`; kind = 'council';
+    }
+    if (colony.gov !== 'you') { colony.lay = LAY_FOR[d]; if (d !== colony.decree) setDecree(d, reason, kind); }
+    // The queen alone decides on her guard: posted while Death threatens, dismissed once it has passed.
+    const threatened = ants.length >= 40 && (deathHunting() || colony.recentKills > 3);
+    if (threatened !== colony.guard) {
+      colony.guard = threatened;
+      issue(threatened ? 'Summon royal guard' : 'Dismiss royal guard', threatened ? 'the queen senses Death' : 'the danger has passed');
+      chronicleAdd('decree', threatened ? `${qName()} summoned her royal guard as Death threatened` : `${qName()} dismissed her royal guard`);
+    }
+    learn.prevKey = key; learn.prevDecree = colony.decree; learn.prevS = S;
+    syncCommandUI();
+  }
+  function blocPreference(b, key, S) {
+    const row = qRow(key), w = selfInterest(S) * 0.9, score = d => row[d] + (b.bias[d] || 0) * w;
+    return DECS.reduce((best, d) => score(d) > score(best) ? d : best, DECS[0]);
+  }
+  function councilVote(key, S) {
+    const tally = {}; let total = 0;
+    for (const b of BLOCS) { if (!b.seats) continue; b.pref = blocPreference(b, key, S); const w = b.seats * (0.5 + b.approval); tally[b.pref] = (tally[b.pref] || 0) + w; total += w; }
+    const ks = Object.keys(tally);
+    if (!ks.length) return { winner: colony.decree, pct: 0 };
+    const winner = ks.reduce((a, c) => tally[c] > tally[a] ? c : a);
+    const pct = Math.round((tally[winner] || 0) / Math.max(1e-6, total) * 100);
+    colony.lastVote = { day: day(), winner, pct };
+    return { winner, pct };
+  }
+  function tickPolitics(dt) {
+    const S = survival();
+    for (const b of BLOCS) b.seats = 0;
+    for (const a of ants) { const b = BLOCS.find(b => b.roles.includes(a.role)); if (b) b.seats++; }
+    if ((colony.polT -= dt) <= 0) { colony.polT = 2; const key = stateKey(); for (const b of BLOCS) b.pref = blocPreference(b, key, S); }
+    let num = 0, den = 0;
+    for (const b of BLOCS) {
+      let target = (b.pref === colony.decree ? 0.8 : 0.35) + (S - 55) / 150;
+      if (b.id === 'militia' && colony.recentKills > 2) target -= 0.2;
+      if (colony.gov === 'you' && !colony.mind) target -= 0.1;
+      b.approval += (Math.max(0, Math.min(1, target)) - b.approval) * Math.min(1, dt / 25);
+      num += b.approval * b.seats; den += b.seats;
+    }
+    colony.unrest = ants.length < 20 ? 0 : 1 - num / Math.max(1, den);   // too few workers for politics yet
+    if (colony.gov !== 'council' && colony.unrest > 0.6) { if ((colony.unrestT += dt) > 40) uprising(); }
+    else colony.unrestT = Math.max(0, colony.unrestT - dt);
+    if (colony.gov === 'council' && S < 35) { if ((colony.lowT += dt) > 60) restoration(S); } else colony.lowT = 0;
+    const name = regime();
+    if (colony.regimeName && colony.regimeName !== name) chronicleAdd('regime', `Regime changed from ${colony.regimeName.toLowerCase()} to ${name.toLowerCase()}`);
+    colony.regimeName = name;
+  }
+  function uprising() {
+    const was = colony.gov === 'queen' ? 'the queen' : 'you';
+    colony.gov = 'council'; colony.unrestT = 0; colony.govT = 1; colony.regimeName = regime();
+    chronicleAdd('uprising', `Uprising: with unrest at ${Math.round(colony.unrest * 100)}%, the castes took power from ${was}`);
+    toast(`Uprising! The castes have taken power from ${was}.`); syncCommandUI();
+  }
+  function restoration(S) {
+    colony.gov = 'queen'; colony.lowT = 0; colony.govT = 1; colony.regimeName = regime();
+    chronicleAdd('regime', `Restoration: survival fell to ${S}, so the council returned power to the queen`);
+    toast('The council has failed. Power returns to the queen.'); syncCommandUI();
   }
 
   // ---------- instance rendering ----------
@@ -1376,17 +1606,6 @@
       if (d < bd) { bd = d; best = a; }
     }
     if (best) { startFollow(best); return; }
-    ndc.set(mx / r.width * 2 - 1, -my / r.height * 2 + 1);
-    raycaster.setFromCamera(ndc, camera);
-    const hit = raycaster.intersectObject(surface)[0];
-    if (hit) {
-      const { x, z } = hit.point;
-      if (Math.hypot(x, z) < 3.2) return toast('Too close to the mound. Drop food further out.');
-      if (Math.abs(x) > HALF - 0.6 || Math.abs(z) > HALF - 0.6) return;
-      if (foods.filter(f => !f.infinite).length >= 10) return toast('The surface already holds 10 food sources.');
-      const f = spawnFood(x, z);
-      toast(`Dropped a ${f.type.name}. Scouts will find it.`);
-    }
   });
 
   // ---------- UI ----------
@@ -1416,26 +1635,60 @@
   });
   const decreesEl = $('decrees'), layBtns = [...document.querySelectorAll('[data-lay]')];
   for (const k in DECREES) {
-    const b = document.createElement('button'); b.textContent = DECREES[k].name; b.dataset.decree = k; b.title = DECREES[k].note;
-    b.onclick = () => { takeCommand(); if (colony.decree !== k) setDecree(k, 'Your order'); };
+    const b = document.createElement('span'); b.textContent = DECREES[k].name; b.dataset.decree = k; b.title = DECREES[k].note;
     decreesEl.appendChild(b);
   }
-  function takeCommand() { if (colony.auto) { colony.auto = false; syncCommandUI(); toast('You hold command now. Press "Queen decides" to hand it back.'); } }
-  layBtns.forEach(b => b.onclick = () => { takeCommand(); colony.lay = +b.dataset.lay; syncCommandUI(); });
-  $('auto').onclick = () => { colony.auto = !colony.auto; colony.autoT = 0.5; syncCommandUI(); toast(colony.auto ? 'Queen Ysolde is ruling the colony again.' : 'You hold command now.'); };
-  $('guard').onclick = () => {
-    colony.guard = !colony.guard;
-    issue(colony.guard ? 'Summon royal guard' : 'Dismiss royal guard', colony.guard ? `${GUARD_N} workers to her side` : 'Guards return to work');
-    syncCommandUI();
-  };
+  const tabBtns = [...document.querySelectorAll('[data-tab]')];
+  function showTab(t) {
+    tabBtns.forEach(b => { b.setAttribute('aria-selected', b.dataset.tab === t); document.getElementById('tab-' + b.dataset.tab).hidden = b.dataset.tab !== t; });
+    try { localStorage.setItem('fh-tab', t); } catch (e) {}
+    updateHud();
+  }
+  tabBtns.forEach(b => b.onclick = () => showTab(b.dataset.tab));
   $('visitQueen').onclick = () => startFollow(QUEEN);
   function syncCommandUI() {
-    for (const b of decreesEl.children) b.setAttribute('aria-pressed', b.dataset.decree === colony.decree);
-    layBtns.forEach(b => b.setAttribute('aria-pressed', +b.dataset.lay === colony.lay));
-    $('auto').setAttribute('aria-pressed', colony.auto);
-    $('auto').textContent = colony.auto ? 'Queen decides' : 'You command · hand back';
-    $('guard').setAttribute('aria-pressed', colony.guard);
-    $('guard').textContent = colony.guard ? 'Dismiss royal guard' : 'Summon royal guard';
+    for (const b of decreesEl.children) b.classList.toggle('on', b.dataset.decree === colony.decree);
+    layBtns.forEach(b => b.classList.toggle('on', +b.dataset.lay === colony.lay));
+    document.querySelectorAll('[data-gov]').forEach(b => b.classList.toggle('on', b.dataset.gov === colony.gov));
+    $('regimeK').textContent = regime();
+    $('guardLine').textContent = colony.guard ? `Royal guard: ${GUARD_N} workers posted at her side` : 'Royal guard: not posted. She summons it when Death threatens.';
+    $('watchLine').textContent = colony.gov === 'queen' ? `${qName()} rules on her own. You can watch, but not command.` : `The council of castes rules by vote. ${qName()} reigns. You can watch, but not command.`;
+  }
+  const tabOpen = t => !document.getElementById('tab-' + t).hidden;
+  const approvalColor = v => v > 0.6 ? '#9aab63' : v > 0.4 ? '#e8a23a' : '#e0533d';
+  function renderPolitics() {
+    const S = survival(), name = regime(), si = selfInterest(S);
+    $('polStatus').innerHTML = `<b>${name}</b>: ${REGIME_NOTES[name]}` + (si < 1 ? ` <span>Survival is at ${S}, so the castes have set aside ${Math.round((1 - si) * 100)}% of their self-interest.</span>` : '');
+    const u = colony.unrest;
+    $('unrest').style.width = (u * 100) + '%'; $('unrest').style.background = approvalColor(1 - u);
+    $('unrestLbl').textContent = `Unrest ${Math.round(u * 100)}%` + (colony.gov !== 'council' && colony.unrestT > 0 && u > 0.6 ? ` · uprising in ${Math.max(0, Math.ceil(40 - colony.unrestT))} s` : colony.gov === 'council' && colony.lowT > 0 ? ` · restoration in ${Math.max(0, Math.ceil(60 - colony.lowT))} s` : '');
+    $('blocs').innerHTML = [...BLOCS].sort((a, b) => b.seats - a.seats).map(b =>
+      `<li><div class="top"><span>${b.name} <b>${b.seats}</b></span><span class="pref">wants ${SHORT[b.pref] === 'Bal' ? 'balance' : DECREES[b.pref].name.toLowerCase()}</span></div>` +
+      `<div class="ab" title="Approval ${Math.round(b.approval * 100)}%"><span style="width:${b.approval * 100}%;background:${approvalColor(b.approval)}"></span></div></li>`).join('');
+    const v = colony.lastVote;
+    $('voteLine').innerHTML = v ? `Last council vote, day ${v.day}: <b>${DECREES[v.winner].name}</b> won ${v.pct}% of weighted seats.` : 'The council votes every 30 s while it rules. Seats follow headcount, and votes are weighted by approval.';
+  }
+  function renderLearning() {
+    const key = stateKey(); qRow(key);
+    const depth = learn.features.length;
+    let keys = Object.keys(learn.Q).filter(k => k.split(' · ').length === depth && k !== key).sort((a, b) => learn.N[b] - learn.N[a]).slice(0, 3);
+    keys = [key, ...keys];
+    const avg = learn.rewards.length ? learn.rewards.reduce((a, b) => a + b, 0) / learn.rewards.length : 0;
+    $('mlStatus').innerHTML = `<b>${learn.lessons}</b> lessons learned · exploring <b>${Math.round(epsilon() * 100)}%</b> · recent reward <b>${avg >= 0 ? '+' : ''}${avg.toFixed(1)}</b>. The model weighs ${learn.features.map(f => FEATURES[f]).join(', ')} and adds more as the colony grows.`;
+    const cell = (v, best) => `<span class="${best ? 'best' : ''}" style="background:${v >= 0 ? `rgba(154,171,99,${Math.min(0.7, v / 4 + 0.05)})` : `rgba(224,83,61,${Math.min(0.7, -v / 4 + 0.05)})`}">${v >= 0 ? '+' : ''}${v.toFixed(1)}</span>`;
+    $('qgrid').innerHTML = `<div class="qcells qhead">${DECS.map(d => `<span title="${DECREES[d].name}">${SHORT[d]}</span>`).join('')}</div>` +
+      keys.map(k => { const row = learn.Q[k], b = bestOf(row); return `<div class="qrow${k === key ? ' cur' : ''}"><span class="sl">${k} · ${learn.N[k]} lessons</span><div class="qcells">${DECS.map(d => cell(row[d], d === b)).join('')}</div></div>`; }).join('');
+    $('instincts').innerHTML = [
+      `Defenders charge once <b>${learn.musterK}</b> have gathered`,
+      `Foragers flee Death at <b>${learn.fleeR.toFixed(1)}</b> units`,
+      `Reward is the change in the survival index (now <b>${survival()}</b>) over each 30 s lesson`,
+    ].map(t => `<li>${t}</li>`).join('');
+  }
+  function renderChronicle() {
+    $('chrStatus').innerHTML = `Gene <b>CHR-1</b> holds <b>${chronicle.length}</b> records of colony history, one codon each. Every egg inherits a copy, and <b>${colony.everLived}</b> ants have carried it.`;
+    $('codons').innerHTML = chronicle.slice(-72).map(e => { const [c, col] = CODONS[e.kind]; return `<span style="background:${col}2e;color:${col}" title="Day ${e.day}: ${e.text}">${c}</span>`; }).join('');
+    $('chrLog').innerHTML = '<li class="lh"><span>Latest records</span><span>Day</span></li>' + chronicle.slice(-6).reverse().map(e =>
+      `<li><div><span><strong>${CODONS[e.kind][0]}</strong> ${e.text}</span></div><b>${e.day}</b></li>`).join('');
   }
   function renderCommand() {
     const D = DECREES[colony.decree];
@@ -1443,12 +1696,7 @@
     $('log').innerHTML = '<li class="lh"><span>Decrees</span><span>Reached</span></li>' + logEntries.map(e =>
       `<li><div><span>Day ${e.day} · <strong>${e.text}</strong></span><span>${e.reason} · ${e.count} changed job</span></div>${e.id === colony.orderId ? `<b>${reach(e)}%</b>` : '<span>replaced</span>'}</li>`).join('');
   }
-  $('mindBtn').onclick = () => {
-    colony.mind = !colony.mind;
-    $('mindBtn').setAttribute('aria-pressed', colony.mind); $('mindBtn').textContent = `Colony mind: ${colony.mind ? 'on' : 'off'}`;
-    toast(colony.mind ? 'Colony mind on: alarms, defence and trail sense restored.' : 'Colony mind off: every ant fends for herself.');
-    mindLog(colony.mind ? 'Colony mind restored' : 'Colony mind switched off', 'mind');
-  };
+
   const DEATH_STATES = { away: 'Away', prowl: 'Prowling', stalk: 'Stalking', feed: 'Feeding', retreat: 'Retreating' };
   function renderMind() {
     const D = death, hunting = deathHunting();
@@ -1473,10 +1721,11 @@
     if (!follow) return;
     if (follow.isQueen) {
       const D = DECREES[colony.decree];
-      const q = [`Queen Ysolde`, 'founder', `Ruling by decree: ${D.name.toLowerCase()}${colony.guard ? ', with her royal guard posted' : ''}. Her latest order has spread to ${reach(orders[colony.orderId])}% of workers.`,
+      const q = [qName(), colony.generation > 1 ? `generation ${colony.generation}` : 'founder', `${colony.gov === 'queen' ? 'Ruling by decree' : colony.gov === 'council' ? 'Reigning while the council decides' : 'Reigning while you rule'}: ${D.name.toLowerCase()}${colony.guard ? ', with her royal guard posted' : ''}. Her latest order has spread to ${reach(orders[colony.orderId])}% of workers.`,
                  `70 cm down · ${colony.eggsLaid} eggs laid · laying at ${colony.lay}×`];
       const key = q.join('|'); if (!force && key === lastCard) return; lastCard = key;
       $('cRole').textContent = q[0]; $('cId').textContent = q[1]; $('cTask').textContent = q[2]; $('cMeta').textContent = q[3];
+      $('cGene').textContent = `Genome: “${PRIME_DIRECTIVE}” · CHR-1 holds all ${chronicle.length} records and passes them to every egg`;
       return;
     }
     const a = follow, depth = Math.max(0, Math.round(-a.pos.y * CM_PER_UNIT));
@@ -1488,6 +1737,7 @@
     lastCard = key;
     $('cRole').textContent = ROLES[a.role].name; $('cId').textContent = '#' + String(a.id).padStart(3, '0');
     $('cTask').textContent = a.task; $('cMeta').textContent = meta;
+    $('cGene').textContent = `Genome: “${a.genome.directive}” · CHR-1 inherited ${a.genome.chronicle} of ${chronicle.length} records`;
   }
 
   const spark = $('spark'), sctx = spark.getContext('2d'), popHist = [];
@@ -1518,12 +1768,70 @@
     $('sDay').textContent = Math.floor(simTime / 90) + 1;
     for (const k in ROLES) { barSpans[k].style.width = (c[k] / ants.length * 100) + '%'; legendNums[k].textContent = c[k]; }
     drawSpark();
-    renderCommand();
+    $('sSurv').textContent = survival(); $('sEver').textContent = colony.everLived;
+    $('regimeK').textContent = regime();
+    if (tabOpen('cmd')) renderCommand();
+    if (tabOpen('pol')) renderPolitics();
+    if (tabOpen('ml')) renderLearning();
+    if (tabOpen('chr')) renderChronicle();
     renderMind();
   }
 
+  // ---------- refounding from two progenitors ----------
+  const male = new THREE.Group();
+  male.add(new THREE.Mesh(antGeometry(0.85), new THREE.MeshStandardMaterial({ color: 0x2a1c14, roughness: 0.35, metalness: 0.15 })));
+  const wingMat = new THREE.MeshStandardMaterial({ color: 0xdfe8f0, transparent: true, opacity: 0.35, side: THREE.DoubleSide, roughness: 0.2, depthWrite: false });
+  for (const sd of [-1, 1]) { const w = new THREE.Mesh(new THREE.PlaneGeometry(0.11, 0.34), wingMat); w.position.set(0.07 * sd, 0.07, -0.14); w.rotation.set(-Math.PI / 2 + 0.12, 0, sd * 0.35); male.add(w); }
+  male.scale.setScalar(2); male.visible = false; scene.add(male);
+  function tickMale(dt, t) {
+    if (!male.visible) return;
+    male.rotation.y = Math.atan2(queen.position.x - male.position.x, queen.position.z - male.position.z) + Math.sin(t * 3) * 0.1;
+    if ((colony.maleT -= dt) <= 0) {
+      male.visible = false;
+      corpses.push({ pos: male.position.clone().setY(NODES.queen.v.y + UNDER), surface: false, node: 'queen', claimed: false, rot: Math.random() * 6 });
+      chronicleAdd('found', 'The male died after the nuptial flight, as ant males do; his genes live on in every egg');
+      mindLog('The male progenitor has died', 'death');
+    }
+  }
+  function refound() {
+    stopFollow(); tween = null;
+    const carried = chronicle.length;
+    colony.generation++;
+    ants.length = 0; brood.length = 0; corpses.length = 0; alarms.length = 0;
+    for (const f of [...foods]) if (!f.infinite) { scene.remove(f.mesh); foods.splice(foods.indexOf(f), 1); }
+    phLife.fill(0); alLife.fill(0); spLife.fill(0);
+    Object.assign(colony, { store: 12, midden: 0, eggsWaiting: 0, eggsClaimed: 0, eggsLaid: 0, dug: 0, killed: 0, aged: 0, buried: 0, everLived: 0,
+      decree: 'balanced', guard: false, lay: 1, gov: 'queen', govT: 8, unrest: 0, unrestT: 0, lowT: 0, recentKills: 0, nextMilestone: 50,
+      lastVote: null, alarmT: 0, layTimer: 0, foodTimer: 0, maleT: 15 });
+    middenMesh.count = 0; storeMesh.count = 0; pelletMesh.count = 0; pelletIdx = 0; growWinter();
+    Object.assign(death, { state: 'away', timer: 120, target: null, charge: false, hp: 1 });
+    Object.assign(learn, { Q: {}, N: {}, lessons: 0, features: ['food'], prevKey: null, prevDecree: null, prevS: null, rewards: [], musterK: 8, fleeR: 5 });
+    BLOCS.forEach(b => { b.approval = 0.6; b.seats = 0; b.pref = 'balanced'; });
+    logEntries.length = 0; mindEntries.length = 0; popHist.length = 0; nextId = 1;
+    const Q = NODES.queen.v; male.position.set(Q.x + 0.9, Q.y - 0.16, Q.z + 0.5); male.visible = true;
+    chronicleAdd('found', `${qName()} and a single male refounded the colony; CHR-1 carried ${carried} ancestral records into the new line`);
+    mindLog('Two progenitors: a queen and a male', 'found');
+    setDecree('balanced', 'founding order of the new line');
+    $('qName').textContent = qName();
+    flyTo(NODES.queen.center, 6);
+    toast(`${qName()} begins a new colony. She will raise the first workers alone.`);
+    updateHud();
+  }
+  let refoundArm = 0;
+  $('refound').onclick = () => {
+    const b = $('refound');
+    if (!b.classList.contains('arm')) {
+      b.classList.add('arm'); b.textContent = 'Click again to wipe the colony';
+      clearTimeout(refoundArm); refoundArm = setTimeout(() => { b.classList.remove('arm'); b.textContent = 'Refound from two progenitors'; }, 4000);
+      return;
+    }
+    clearTimeout(refoundArm); b.classList.remove('arm'); b.textContent = 'Refound from two progenitors';
+    refound();
+  };
+
   syncCommandUI();
   setDecree('balanced', 'Founding order');
+  try { const t = localStorage.getItem('fh-tab'); if (t && document.getElementById('tab-' + t)) showTab(t); } catch (e) {}
 
   // ---------- loop ----------
   function resize() {
@@ -1544,7 +1852,7 @@
       for (let s = 0; s < sub; s++) { for (let i = 0; i < ants.length; i++) stepAnt(ants[i], dt / sub); tickColony(dt / sub); updateDeath(dt / sub); tickMind(dt / sub); }
       updateAlarmFx(dt);
       updatePhero(dt);
-      updateContagion(dt); updateSparks(dt);
+      updateContagion(dt); updateSparks(dt); tickMale(dt, time);
       queen.rotation.y = Math.sin(time * 0.25) * 0.6; queen.position.y = NODES.queen.v.y - 0.1 + Math.sin(time * 1.3) * 0.006;
       histT += dt; if (histT > 2 || !popHist.length) { histT = 0; popHist.push(ants.length); if (popHist.length > 120) popHist.shift(); }
     }
