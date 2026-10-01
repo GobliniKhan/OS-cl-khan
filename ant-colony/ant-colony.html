@@ -16,6 +16,7 @@
     --cream: #e9dcc0;
     --stone: #7d6f60;
     --royal: #b48ae0;       /* queen pheromone + command */
+    --alarm: #e0533d;       /* alarm pheromone + Death */
     --display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", sans-serif;
     --body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
     --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
@@ -31,7 +32,22 @@
   .hud { position: absolute; background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
          backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
 
-  .brief { top: calc(16px + env(safe-area-inset-top, 0px)); left: 16px; width: 290px; padding: 16px 16px 14px; display: grid; gap: 12px; }
+  .left { position: absolute; top: calc(16px + env(safe-area-inset-top, 0px)); left: 16px; width: 290px; max-height: calc(100% - 32px);
+          overflow-y: auto; display: grid; gap: 10px; align-content: start; }
+  .left .hud { position: static; }
+  .brief { padding: 16px 16px 14px; display: grid; gap: 12px; }
+  .mind { padding: 12px 14px; display: grid; gap: 10px; border-color: rgba(224, 83, 61, 0.4); }
+  .mind .ch { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .mind .k { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--alarm); }
+  .mind h2 { margin: 2px 0 0; font-family: var(--display); font-size: 19px; font-weight: 700; line-height: 1.1; }
+  .pill { font-family: var(--mono); font-size: 11px; padding: 3px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
+  .pill.hunt { color: #ffc2b8; border-color: rgba(224, 83, 61, 0.65); background: rgba(224, 83, 61, 0.16); }
+  .hpbar { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
+  .hpbar span { display: block; height: 100%; background: var(--alarm); transition: width .3s; }
+  .stats.mini dd { font-size: 15px; }
+  #mindBtn[aria-pressed="true"] { background: rgba(154, 171, 99, 0.18); border-color: rgba(154, 171, 99, 0.65); color: #e6f0c4; }
+  .lab.danger { border-color: rgba(224, 83, 61, 0.7); color: #ffc2b8; }
+  .lab.farm { border-color: rgba(154, 171, 99, 0.6); }
   .brief h1 { margin: 0; font-family: var(--display); font-weight: 700; font-size: 26px; line-height: 1; letter-spacing: -0.01em; text-wrap: balance; }
   .brief .sp { margin: 4px 0 0; color: var(--muted); font-size: 12.5px; }
   .brief .sp i { color: var(--cream); }
@@ -47,7 +63,7 @@
   .legend b { font-family: var(--mono); font-weight: 600; color: var(--fg); font-variant-numeric: tabular-nums; }
   .dot { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 4px; vertical-align: -0.5px; }
   .spark { display: grid; gap: 4px; }
-  .spark .lbl { display: flex; justify-content: space-between; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+  .spark .lbl { display: flex; flex-wrap: wrap; gap: 2px 8px; justify-content: space-between; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
   #spark { width: 100%; height: 36px; display: block; }
 
   .side { position: absolute; top: calc(16px + env(safe-area-inset-top, 0px)); right: 16px; width: 240px; max-height: calc(100% - 32px);
@@ -89,7 +105,7 @@
           padding: 7px 14px; white-space: nowrap; pointer-events: none; }
   .hint b { color: var(--fg); font-weight: 700; }
 
-  .card { bottom: calc(16px + env(safe-area-inset-bottom, 0px)); left: 16px; width: 260px; padding: 12px 14px; display: grid; gap: 6px;
+  .card { z-index: 5; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); left: 50%; transform: translateX(-50%); width: 300px; padding: 12px 14px; display: grid; gap: 6px;
           border-color: rgba(232,162,58,0.45); }
   .card .t { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
   .card h2 { margin: 0; font-family: var(--display); font-size: 17px; font-weight: 700; }
@@ -113,7 +129,11 @@
   .toast.on { opacity: 1; transform: translate(-50%, 0); }
 
   @media (max-width: 760px) {
-    .brief { width: auto; right: 16px; padding: 10px 12px; gap: 8px; }
+    .left { right: 16px; width: auto; max-height: 40%; gap: 8px; }
+    .brief { padding: 10px 12px; gap: 8px; }
+    .mind { padding: 8px 10px; gap: 6px; }
+    .mind .stats.mini, .mind .log, .mind .k { display: none; }
+    .mind h2 { font-size: 16px; }
     .brief h1 { font-size: 20px; }
     .brief .sp, .spark { display: none; }
     .stats { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
@@ -129,7 +149,7 @@
     .controls .group > .k { display: none; }
     .controls .group.views { grid-column: 1 / -1; }
     .hint { display: none; }
-    .card { right: 16px; left: 16px; width: auto; bottom: auto; top: calc(124px + env(safe-area-inset-top, 0px)); }
+    .card { right: 16px; left: 16px; width: auto; transform: none; bottom: auto; top: calc(16px + env(safe-area-inset-top, 0px)); }
     .toast { top: auto; bottom: calc(160px + env(safe-area-inset-bottom, 0px)); }
   }
   @media (max-width: 1180px) { .hint { display: none; } }
@@ -140,6 +160,7 @@
   <canvas id="c" aria-label="3D view of an ant colony nest. Drag to orbit, scroll to zoom."></canvas>
   <div id="labels"></div>
 
+  <div class="left">
   <section class="hud brief" aria-label="Colony status">
     <div>
       <h1>Formica Hollow</h1>
@@ -160,6 +181,23 @@
       <canvas id="spark"></canvas>
     </div>
   </section>
+
+  <section class="hud mind" aria-label="Predator and colony mind">
+    <div class="ch">
+      <div><span class="k">Natural predator</span><h2>Death</h2></div>
+      <span class="pill" id="deathState">Away</span>
+    </div>
+    <div class="hpbar" title="Death's strength"><span id="deathHp" style="width:100%"></span></div>
+    <dl class="stats mini">
+      <div><dt>Taken by Death</dt><dd id="sKilled">0</dd></div>
+      <div><dt>Died of age</dt><dd id="sAged">0</dd></div>
+      <div><dt>Defenders</dt><dd id="sDef">0</dd></div>
+      <div><dt>Bodies waiting</dt><dd id="sBodies">0</dd></div>
+    </dl>
+    <button id="mindBtn" class="wide" aria-pressed="true" title="Alarm response, defence, trail avoidance, undertaking and recruitment">Colony mind: on</button>
+    <ol class="log" id="mindLog"></ol>
+  </section>
+  </div>
 
   <div class="side">
   <section class="hud controls" aria-label="Controls">
@@ -459,7 +497,7 @@
   const CLOUD_N = 240, cloudSeeds = [], cloudPos = new Float32Array(CLOUD_N * 3);
   for (let i = 0; i < CLOUD_N; i++) cloudSeeds.push({ a: Math.random() * 6.28, r: 0.3 + Math.sqrt(Math.random()) * 1.6, y: Math.random() * 0.9, w: rand(0.15, 0.5) * (Math.random() < 0.5 ? -1 : 1), b: Math.random() * 6.28 });
   const cloudGeo = new THREE.BufferGeometry(); cloudGeo.setAttribute('position', new THREE.BufferAttribute(cloudPos, 3));
-  const cloud = new THREE.Points(cloudGeo, new THREE.PointsMaterial({ color: ROYAL, size: 0.13, opacity: 0.55, ...additive }));
+  const cloud = new THREE.Points(cloudGeo, new THREE.PointsMaterial({ color: ROYAL, size: 3 * renderer.getPixelRatio(), sizeAttenuation: false, opacity: 0.55, ...additive }));
   cloud.frustumCulled = false; scene.add(cloud);
   function updateCloud(t) {
     const Q = NODES.queen.v;
@@ -527,7 +565,7 @@
   const phGeo = new THREE.BufferGeometry();
   phGeo.setAttribute('position', new THREE.BufferAttribute(phPos, 3));
   phGeo.setAttribute('color', new THREE.BufferAttribute(phCol, 3));
-  const phero = new THREE.Points(phGeo, new THREE.PointsMaterial({ size: 0.14, vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+  const phero = new THREE.Points(phGeo, new THREE.PointsMaterial({ size: 3 * renderer.getPixelRatio(), sizeAttenuation: false, vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
   phero.frustumCulled = false; scene.add(phero);
   let phIdx = 0;
   function dropPhero(p) { const i = phIdx++ % PH; phPos[i * 3] = p.x; phPos[i * 3 + 1] = p.y - 0.04; phPos[i * 3 + 2] = p.z; phLife[i] = 1; }
@@ -564,19 +602,23 @@
     }
     g.position.set(x, groundY(x, z), z); scene.add(g);
     const curve = trailCurve(x, z);
-    const f = { x, z, type, amount: max, max, claims: 0, mesh: g, trail: curve, tlen: curve.getLength() };
+    const f = { x, z, type, amount: max, max, claims: 0, mesh: g, trail: curve, tlen: curve.getLength(), samples: curve.getSpacedPoints(16), strength: 0 };
     foods.push(f);
     return f;
   }
   function randomFoodSpot() { const a = Math.random() * Math.PI * 2, r = rand(6, 10.5); return [Math.cos(a) * r, Math.sin(a) * r]; }
   function onFoodTaken(f) {
+    if (f.infinite) return;
     if (f.amount <= 0) { scene.remove(f.mesh); foods.splice(foods.indexOf(f), 1); }
     else f.mesh.scale.setScalar(0.45 + 0.55 * f.amount / f.max);
   }
-  function pickFood(from) {
-    const open = foods.filter(f => f.amount - f.claims > 0);
+  // With the colony mind on, foragers skip trails that smell of Death and follow the strongest
+  // recruitment trails (sources other foragers keep returning from). Without it they pick blindly.
+  function pickFood() {
+    const open = foods.filter(f => (f.infinite || f.amount - f.claims > 0) && !(colony.mind && foodDanger(f)));
     if (!open.length) return null;
-    let tot = 0; const w = open.map(f => (tot += (f.amount - f.claims) / f.tlen));
+    let tot = 0;
+    const w = open.map(f => (tot += colony.mind ? (f.infinite ? 40 : f.amount - f.claims) / f.tlen * (1 + f.strength) : 1));
     const r = Math.random() * tot;
     return open[w.findIndex(x => x >= r)];
   }
@@ -589,6 +631,7 @@
     cleaner: { name: 'Midden worker', color: '#7d6f60', share: 0.08 },
     reserve: { name: 'Reserve', color: '#9aab63', share: 0.2 },
     guard: { name: 'Royal guard', color: '#b48ae0', share: 0 },
+    defender: { name: 'Defender', color: '#e0533d', share: 0 },
   };
   const DECREES = {
     balanced: { name: 'Balanced colony', note: 'work split evenly', shares: { forager: 0.42, nurse: 0.2, excavator: 0.1, cleaner: 0.08, reserve: 0.2 } },
@@ -599,14 +642,15 @@
   };
   const GUARD_N = 12;
   function shares(n, decree = colony.decree, guard = colony.guard) {
-    const d = DECREES[decree].shares, g = guard ? Math.min(GUARD_N, n) / Math.max(1, n) : 0, out = { guard: g };
+    const d = DECREES[decree].shares, g = guard ? Math.min(GUARD_N, n) / Math.max(1, n) : 0, out = { guard: g, defender: 0 };
     for (const k in d) out[k] = d[k] * (1 - g);
     return out;
   }
   const capacity = () => Math.round(200 + colony.dug * 0.8);
   const day = () => Math.floor(simTime / 90) + 1;
   const colony = { store: 40, midden: 30, eggsWaiting: 3, eggsClaimed: 0, layTimer: 0, eatTimer: 0, foodTimer: 0, born: 0,
-                  decree: 'balanced', guard: false, lay: 1, auto: true, autoT: 6, eggsLaid: 0, dug: 0, orderId: 0, pulse: 0 };
+                  decree: 'balanced', guard: false, lay: 1, auto: true, autoT: 6, eggsLaid: 0, dug: 0, orderId: 0, pulse: 0,
+                  mind: true, mindT: 1, alarmT: 0, killed: 0, aged: 0, buried: 0 };
   const brood = [];
   const ants = [];
   let nextId = 1, simTime = 0;
@@ -615,7 +659,7 @@
   function makeAnt(at, role) {
     const a = { id: nextId++, role, at, segs: [], seg: null, t: 0, cargo: null, lane: (Math.random() - 0.5) * 0.36, speed: rand(1.25, 1.75),
                 task: 'Getting oriented', wob: Math.random() * 10, pos: nodeSpot(at).clone().add(V(0, UNDER, 0)), tan: V(1, 0, 0), ph: 0, born: simTime,
-                here: at, onSurface: false, committed: false, lastOrder: 0, contagious: 0, flash: 0, pendingRole: null, gspot: null };
+                here: at, onSurface: false, claim: null, life: rand(7, 12) * 90, prevRole: null, temp: false, engaged: false, lastOrder: 0, contagious: 0, flash: 0, pendingRole: null, gspot: null };
     ants.push(a); return a;
   }
   function neededRole() {
@@ -623,7 +667,11 @@
     for (const k in ROLES) { const g = sh[k] * (ants.length + 1) - counts[k]; if (g > gap) { gap = g; best = k; } }
     return best;
   }
-  function countRoles(eff) { const c = {}; for (const k in ROLES) c[k] = 0; for (const a of ants) c[eff ? (a.pendingRole || a.role) : a.role]++; return c; }
+  function countRoles(eff) {
+    const c = {}; for (const k in ROLES) c[k] = 0;
+    for (const a of ants) { let k = eff ? (a.pendingRole || a.role) : a.role; if (eff && k === 'defender') k = a.prevRole || 'reserve'; c[k]++; }
+    return c;
+  }
 
   function addBrood(stage) {
     const N = NODES.nursery, ang = Math.random() * Math.PI * 2, rr = Math.sqrt(Math.random()) * N.r * 0.72;
@@ -657,11 +705,12 @@
       a.segs.push(surf(c, false), { wait: rand(0.5, 2) }, surf(c, true));
       return;
     }
-    f.claims++; a.committed = true;
+    f.claims++; a.claim = { k: 'food', f };
     say(a, `Following the trail to a ${f.type.name}`);
     a.segs.push(surf(f.trail, false));
     a.segs.push({ fn: x => {
-      f.claims--; x.committed = false;
+      f.claims--; x.claim = null;
+      if (colony.mind) f.strength = Math.min(6, f.strength + 0.3);
       if (f.amount > 0) { f.amount--; x.cargo = { kind: 'food', color: f.type.color, name: f.type.name }; x.task = `Carrying a ${f.type.name} home, laying pheromone`; onFoodTaken(f); }
       else { x.task = 'Found the food gone, heading back'; }
     } });
@@ -673,10 +722,10 @@
   }
   function planNurse(a) {
     if (colony.eggsWaiting - colony.eggsClaimed > 0) {
-      colony.eggsClaimed++; a.committed = true;
+      colony.eggsClaimed++; a.claim = { k: 'egg' };
       say(a, 'Going to collect an egg from the queen');
       goTo(a, 'queen'); linger(a, 'queen');
-      a.segs.push({ fn: x => { x.committed = false; colony.eggsClaimed--; colony.eggsWaiting = Math.max(0, colony.eggsWaiting - 1); x.cargo = { kind: 'egg', color: 0xf6f1e4, name: 'egg' }; x.task = 'Carrying a fresh egg to the nursery'; } });
+      a.segs.push({ fn: x => { x.claim = null; colony.eggsClaimed--; colony.eggsWaiting = Math.max(0, colony.eggsWaiting - 1); x.cargo = { kind: 'egg', color: 0xf6f1e4, name: 'egg' }; x.task = 'Carrying a fresh egg to the nursery'; } });
       goTo(a, 'nursery');
       a.segs.push({ fn: x => { if (brood.length < MAX_BROOD) addBrood(0); x.cargo = null; x.task = 'Tending eggs in the nursery'; } });
       linger(a, 'nursery');
@@ -684,12 +733,12 @@
     }
     const larva = brood.find(b => b.stage === 1 && b.fed < 3 && !b.res);
     if (larva && colony.store >= 1) {
-      larva.res = true; a.committed = true;
+      larva.res = true; a.claim = { k: 'larva', larva };
       say(a, 'Fetching food for a hungry larva');
       goTo(a, 'pantry'); linger(a, 'pantry');
       a.segs.push({ fn: x => { if (colony.store >= 1) { colony.store -= 1; x.cargo = { kind: 'food', color: 0xd9a54a, name: 'regurgitated food' }; x.task = 'Bringing food back to the larvae'; } } });
       goTo(a, 'nursery');
-      a.segs.push({ fn: x => { x.committed = false; if (x.cargo) larva.fed++; larva.res = false; x.cargo = null; x.task = 'Feeding a larva'; } });
+      a.segs.push({ fn: x => { x.claim = null; if (x.cargo) larva.fed++; larva.res = false; x.cargo = null; x.task = 'Feeding a larva'; } });
       linger(a, 'nursery');
       return;
     }
@@ -708,6 +757,21 @@
     goTo(a, 'winter');
   }
   function planClean(a) {
+    const c = corpses.find(c => !c.claimed && collectable(c));
+    if (c) {
+      c.claimed = true; a.claim = { k: 'corpse', c };
+      const pick = { fn: x => { x.claim = null; corpses.splice(corpses.indexOf(c), 1); x.cargo = { kind: 'corpse', color: 0x2b2522, name: 'dead sister' }; x.task = 'Carrying a dead sister to the midden'; } };
+      if (c.surface) {
+        say(a, 'Going out to recover a fallen sister'); goTo(a, 'entrance');
+        const cv = trailCurve(c.pos.x, c.pos.z);
+        a.segs.push(surf(cv, false), pick, surf(cv, true));
+      } else { say(a, `Collecting a body from the ${(NODES[c.node].label || 'tunnels').toLowerCase()}`); goTo(a, c.node); a.segs.push(pick); }
+      goTo(a, 'midden');
+      a.segs.push({ fn: x => { colony.midden += 1; colony.buried++; x.cargo = null; x.task = 'Laid a dead sister on the midden'; } });
+      linger(a, 'midden');
+      return;
+    }
+    if (a.temp) { a.pendingRole = a.prevRole || 'reserve'; a.prevRole = null; a.temp = false; a.task = 'No bodies left, back to my old job'; a.segs.push({ wait: 0.3 }); return; }
     if (a.at !== 'nursery') { say(a, 'Checking the nursery for waste'); goTo(a, 'nursery'); }
     linger(a, 'nursery');
     a.segs.push({ fn: x => { x.cargo = { kind: 'debris', color: 0x4a3a30, name: 'waste' }; x.task = 'Carrying waste to the midden'; } });
@@ -735,7 +799,39 @@
     N.r = N.r0 * g; const ry = N.r * 0.5;
     N.mesh.scale.set(N.r, ry, N.r * 0.85); N.center.set(N.v.x, N.v.y - 0.32 + ry, N.v.z); N.mesh.position.copy(N.center);
   }
-  const PLANS = { forager: planForage, nurse: planNurse, excavator: planDig, cleaner: planClean, reserve: planReserve, guard: planGuard };
+  function planDefend(a) {
+    if (!deathHunting() || !colony.mind) { a.pendingRole = a.prevRole || 'reserve'; a.prevRole = null; a.task = 'The threat has passed, back to work'; a.segs.push({ wait: 0.3 }); return; }
+    if (a.at !== 'entrance') { say(a, 'Alarm pheromone! Rushing up to fight Death'); goTo(a, 'entrance'); return; }
+    say(a, 'Charging Death with jaws open');
+    a.segs.push({ chase: true, under: false });
+    a.segs.push({ fn: x => { x.engaged = false; x.segs.unshift(surf(homeCurve(x.pos), false)); x.task = 'Returning to the nest'; } });
+  }
+  const homeCurve = p => {
+    const st = V(p.x, 0, p.z), mid = st.clone().multiplyScalar(0.5).add(V(rand(-0.3, 0.3), 0, rand(-0.3, 0.3)));
+    return new THREE.CatmullRomCurve3([st, mid, V(0, 0, 0)], false, 'centripetal');
+  };
+  // After running home, finish whatever was in her mandibles.
+  function deliverCargo(a) {
+    const k = a.cargo && a.cargo.kind;
+    if (k === 'food') { goTo(a, 'pantry'); a.segs.push({ fn: x => { colony.store += 1; x.cargo = null; x.task = 'Made it to the food store'; } }); }
+    else if (k === 'corpse') { goTo(a, 'midden'); a.segs.push({ fn: x => { colony.midden += 1; colony.buried++; x.cargo = null; x.task = 'Laid a dead sister on the midden'; } }); }
+    else if (k === 'soil') a.segs.push({ fn: x => { dropPellet(x.pos); colony.dug++; growWinter(); x.cargo = null; } });
+  }
+  function flee(a) {
+    release(a);
+    a.segs.length = 0; a.seg = null; a.at = 'entrance';
+    a.segs.push({ fn: x => { x.task = 'Smelled Death on the trail and ran for the nest'; } }, { ...surf(homeCurve(a.pos), false), flee: true });
+    deliverCargo(a);
+  }
+  function release(a) {
+    const c = a.claim; a.claim = null;
+    if (!c) return;
+    if (c.k === 'food') c.f.claims--;
+    else if (c.k === 'egg') colony.eggsClaimed--;
+    else if (c.k === 'larva') c.larva.res = false;
+    else if (c.k === 'corpse') c.c.claimed = false;
+  }
+  const PLANS = { forager: planForage, nurse: planNurse, excavator: planDig, cleaner: planClean, reserve: planReserve, guard: planGuard, defender: planDefend };
 
   // ---------- movement ----------
   const tmpP = V(0, 0, 0), tmpT = V(0, 0, 0), side = V(0, 0, 0);
@@ -768,10 +864,27 @@
       if (a.seg.fn) { a.seg.fn(a); a.seg = null; }
     }
     const s = a.seg; if (!s) return;
+    if (s.chase) {
+      if (!deathHunting() || !colony.mind || a.role !== 'defender') { a.seg = null; a.engaged = false; return; }
+      // Defenders muster on the mound until enough have gathered, then charge together.
+      let tx, tz;
+      if (death.charge) { tx = death.pos.x + Math.cos(a.wob) * 0.8; tz = death.pos.z + Math.sin(a.wob) * 0.8; }
+      else { const ang = Math.atan2(death.pos.z, death.pos.x) + Math.cos(a.wob) * 0.45; tx = Math.cos(ang) * (1.9 + Math.sin(a.wob) * 0.3); tz = Math.sin(ang) * (1.9 + Math.sin(a.wob) * 0.3); }
+      const dx = tx - a.pos.x, dz = tz - a.pos.z, d = Math.hypot(dx, dz);
+      if (d > 0.05) { const st = Math.min(d, dt * a.speed * 1.3); a.pos.x += dx / d * st; a.pos.z += dz / d * st; }
+      a.engaged = death.charge && d < 0.4;
+      if (a.engaged) a.task = 'Biting Death’s legs';
+      else if (!death.charge && d < 0.4) a.task = `Mustering on the mound: ${death.muster} gathered`;
+      a.tan.set(death.pos.x - a.pos.x, 0, death.pos.z - a.pos.z).normalize();
+      a.pos.y = groundY(a.pos.x, a.pos.z) + 0.075 * ANT_S; a.onSurface = true;
+      return;
+    }
     if (s.wait !== undefined) { a.t += dt; if (a.t >= s.wait) a.seg = null; return; }
     a.t += dt * a.speed * (s.slow || 1) / s.len;
     if (a.t >= 1) { a.t = 1; a.seg = null; a.here = s.to || s.node || a.here; }
     placeOnSeg(a, s);
+    if (colony.mind && !s.under && !s.flee && a.role !== 'defender' && deathHunting() &&
+        (a.pos.x - death.pos.x) ** 2 + (a.pos.z - death.pos.z) ** 2 < 5 * 5 && Math.hypot(a.pos.x, a.pos.z) > 2.4) { flee(a); return; }
     if (s.phero && a.cargo) { a.ph -= dt; if (a.ph <= 0) { a.ph = 0.22; dropPhero(a.pos); } }
   }
 
@@ -786,7 +899,10 @@
     colony.autoT -= dt;
     if (colony.auto && colony.autoT <= 0) { colony.autoT = 30; queenThinks(); }
     colony.eatTimer += dt;
-    if (colony.eatTimer > 1) { colony.eatTimer = 0; colony.store = Math.max(0, colony.store - ants.length * 0.0016); }
+    if (colony.eatTimer > 1) {
+      colony.eatTimer = 0; colony.store = Math.max(0, colony.store - ants.length * 0.0016);
+      for (const a of ants.filter(a => simTime - a.born > a.life)) kill(a, 'age');
+    }
     for (let i = brood.length - 1; i >= 0; i--) {
       const b = brood[i];
       if (b.stage === 1 && b.fed < 3) b.age += dt * 0.15; else b.age += dt;
@@ -798,7 +914,250 @@
       }
     }
     colony.foodTimer -= dt;
-    if (foods.length < 3 && colony.foodTimer <= 0) { spawnFood(...randomFoodSpot()); colony.foodTimer = rand(5, 10); }
+    if (foods.filter(f => !f.infinite).length < 3 && colony.foodTimer <= 0) { spawnFood(...randomFoodSpot()); colony.foodTimer = rand(5, 10); }
+  }
+
+  // ---------- aphid herd: the colony's endless food source ----------
+  // Lasius niger farms aphids for honeydew. This herd never runs dry.
+  const FARM = { x: -6.6, z: -5.8 };
+  const farm = (() => {
+    const g = new THREE.Group();
+    const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.09, 3, 8), new THREE.MeshStandardMaterial({ color: 0x5f7a2e, roughness: 0.8 }));
+    stem.position.y = 1.5; g.add(stem);
+    const leafMat = new THREE.MeshStandardMaterial({ color: 0x6f9a35, roughness: 0.7, side: THREE.DoubleSide }), spots = [];
+    for (let i = 0; i < 6; i++) {
+      const leaf = new THREE.Mesh(new THREE.SphereGeometry(1, 12, 6), leafMat), h = 0.7 + i * 0.38, ang = i * 2.4;
+      leaf.scale.set(0.5, 0.04, 0.2); leaf.position.set(Math.cos(ang) * 0.45, h, Math.sin(ang) * 0.45); leaf.rotation.set(0, -ang, 0.35);
+      g.add(leaf); spots.push([Math.cos(ang) * 0.45, h + 0.05, Math.sin(ang) * 0.45]);
+    }
+    const aphidMat = new THREE.MeshStandardMaterial({ color: 0x9cc94a, roughness: 0.5 }), aphidGeo = new THREE.SphereGeometry(1, 8, 6);
+    for (let i = 0; i < 46; i++) {
+      const m = new THREE.Mesh(aphidGeo, aphidMat); m.scale.set(0.05, 0.045, 0.07);
+      if (i < 26) { const h = rand(0.3, 2.8), ang = rand(0, 6.28); m.position.set(Math.cos(ang) * 0.09, h, Math.sin(ang) * 0.09); }
+      else { const sp = spots[i % spots.length]; m.position.set(sp[0] + rand(-0.2, 0.2), sp[1], sp[2] + rand(-0.1, 0.1)); }
+      g.add(m);
+    }
+    const dew = new THREE.MeshStandardMaterial({ color: 0xf0d27a, roughness: 0.1, transparent: true, opacity: 0.85, emissive: 0x3a2a00 });
+    for (let i = 0; i < 7; i++) { const d = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 6), dew); d.position.set(rand(-0.35, 0.35), 0.06, rand(-0.35, 0.35)); g.add(d); }
+    g.position.set(FARM.x, groundY(FARM.x, FARM.z), FARM.z); scene.add(g);
+    const curve = trailCurve(FARM.x, FARM.z);
+    const f = { x: FARM.x, z: FARM.z, type: { name: 'honeydew drop', color: 0xe8c547 }, amount: Infinity, max: Infinity, claims: 0, mesh: g,
+                trail: curve, tlen: curve.getLength(), samples: curve.getSpacedPoints(16), strength: 0, infinite: true };
+    foods.push(f);
+    return f;
+  })();
+
+  // ---------- Death: a wolf spider that hunts the meadow ----------
+  const death = { state: 'away', timer: 30, pos: V(HALF, 0, 0), heading: 0, hp: 1, goal: V(0, 0, 0), target: null, eat: 0, visitKills: 0,
+                  retaliate: 1.5, since: 0, charge: false, muster: 0, scan: 0, exit: V(0, 0, 0), speed: 0, visit: 0 };
+  const deathRig = (() => {
+    const g = new THREE.Group();
+    const mat = new THREE.MeshStandardMaterial({ color: 0x1b1512, roughness: 0.75, metalness: 0.05 });
+    const stripe = new THREE.MeshStandardMaterial({ color: 0x5a4a3c, roughness: 0.9 });
+    const blob = (sx, sy, sz, x, y, z, m) => { const b = new THREE.Mesh(new THREE.SphereGeometry(1, 18, 12), m || mat); b.scale.set(sx, sy, sz); b.position.set(x, y, z); g.add(b); };
+    blob(0.42, 0.33, 0.56, 0, 0.44, -0.5); blob(0.15, 0.05, 0.42, 0, 0.74, -0.48, stripe);
+    blob(0.3, 0.22, 0.36, 0, 0.42, 0.12); blob(0.08, 0.04, 0.28, 0, 0.62, 0.1, stripe);
+    const eyeMat = new THREE.MeshBasicMaterial({ color: 0xff3a2a });
+    for (const [x, y, z, rr] of [[-0.07, 0.52, 0.45, 0.045], [0.07, 0.52, 0.45, 0.045], [-0.13, 0.48, 0.41, 0.03], [0.13, 0.48, 0.41, 0.03], [-0.09, 0.6, 0.35, 0.035], [0.09, 0.6, 0.35, 0.035]]) {
+      const e = new THREE.Mesh(new THREE.SphereGeometry(rr, 8, 6), eyeMat); e.position.set(x, y, z); g.add(e);
+    }
+    const legGeo = new THREE.CylinderGeometry(0.035, 0.022, 1, 6), legs = [];
+    const bone = (parent, from, to) => { const dir = to.clone().sub(from), len = dir.length(), m = new THREE.Mesh(legGeo, mat); m.scale.set(1, len, 1); m.position.copy(from).addScaledVector(dir, 0.5); m.quaternion.setFromUnitVectors(UP, dir.normalize()); parent.add(m); };
+    for (const sd of [-1, 1]) for (let i = 0; i < 4; i++) {
+      const pivot = new THREE.Group(); pivot.position.set(0.2 * sd, 0.44, 0.28 - i * 0.14); g.add(pivot);
+      const fz = [0.9, 0.35, -0.25, -0.8][i], knee = V(0.5 * sd, 0.32, fz * 0.35), foot = V(0.95 * sd, -0.44, fz * 0.75);
+      bone(pivot, V(0, 0, 0), knee); bone(pivot, knee, foot);
+      for (const [a, b] of [[V(-0.04, 0.3, 0.42), V(-0.03, 0.12, 0.5)], [V(0.04, 0.3, 0.42), V(0.03, 0.12, 0.5)]]) if (i === 0 && sd === 1) bone(g, a, b);
+      legs.push({ pivot, phase: i * 1.6 + (sd > 0 ? Math.PI : 0) });
+    }
+    const glow = new THREE.PointLight(0xff3020, 0.9, 3.5, 2); glow.position.set(0, 0.9, 0.5); g.add(glow);
+    g.scale.setScalar(1.35); g.visible = false; scene.add(g);
+    return { g, legs };
+  })();
+  const deathHunting = () => death.state === 'prowl' || death.state === 'stalk' || death.state === 'feed';
+  function lurkSpot() {
+    const trails = foods.filter(f => !f.infinite || Math.random() < 0.5);
+    if (trails.length && Math.random() < 0.6) { const f = trails[Math.floor(Math.random() * trails.length)], p = f.trail.getPointAt(rand(0.45, 0.95)); return V(p.x, 0, p.z); }
+    const a = Math.random() * 6.28, rr = rand(4, 10.5); return V(Math.cos(a) * rr, 0, Math.sin(a) * rr);
+  }
+  function nearestPrey(p, range) {
+    let best = null, bd = range * range;
+    for (const a of ants) {
+      if (!a.onSurface || Math.hypot(a.pos.x, a.pos.z) < 2.4) continue;
+      const d = (a.pos.x - p.x) ** 2 + (a.pos.z - p.z) ** 2; if (d < bd) { bd = d; best = a; }
+    }
+    return best;
+  }
+  function retreat(reason, fighters) {
+    const D = death, ang = Math.atan2(D.pos.z, D.pos.x);
+    D.exit.set(Math.cos(ang) * (HALF + 2), 0, Math.sin(ang) * (HALF + 2)); D.state = 'retreat'; D.target = null;
+    if (reason === 'driven') mindLog(`${fighters} defenders drove Death away`, 'win');
+    else mindLog(`Death left the meadow after ${D.visitKills} kill${D.visitKills === 1 ? '' : 's'}`, 'death');
+  }
+  function updateDeath(dt) {
+    const D = death;
+    if (D.state === 'away') {
+      D.timer -= dt;
+      if (D.timer <= 0) {
+        const a = Math.random() * 6.28; D.pos.set(Math.cos(a) * (HALF + 1.5), 0, Math.sin(a) * (HALF + 1.5));
+        D.state = 'prowl'; D.hp = 1; D.visitKills = 0; D.retaliate = 1.5; D.since = 0; D.visit++; D.goal.copy(lurkSpot());
+        mindLog('Death has entered the meadow', 'death');
+      }
+      return;
+    }
+    D.since += dt;
+    let goal = null, speed = 0;
+    if (D.state === 'prowl') {
+      speed = 0.9; goal = D.goal;
+      if (Math.hypot(D.pos.x - D.goal.x, D.pos.z - D.goal.z) < 0.5) D.goal.copy(lurkSpot());
+      if ((D.scan -= dt) <= 0) { D.scan = 0.4; const prey = nearestPrey(D.pos, 4.5); if (prey) { D.target = prey; D.state = 'stalk'; } }
+      if (D.since > 160) retreat('sated');
+    } else if (D.state === 'stalk') {
+      const t = D.target;
+      if (!t || !ants.includes(t) || !t.onSurface || Math.hypot(t.pos.x, t.pos.z) < 2.4 || t.pos.distanceTo(D.pos) > 7) { D.state = 'prowl'; D.target = null; }
+      else {
+        speed = 2.05; goal = t.pos;
+        if (Math.hypot(t.pos.x - D.pos.x, t.pos.z - D.pos.z) < 0.6) { kill(t, 'death'); D.state = 'feed'; D.eat = 4; D.visitKills++; D.target = null; }
+      }
+    } else if (D.state === 'feed') {
+      if ((D.eat -= dt) <= 0) { if (D.visitKills >= 12) retreat('sated'); else D.state = 'prowl'; }
+    } else if (D.state === 'retreat') {
+      speed = 2.4; goal = D.exit;
+      if (Math.hypot(D.pos.x - D.exit.x, D.pos.z - D.exit.z) < 0.4) { D.state = 'away'; D.timer = rand(70, 110); }
+    }
+    D.speed = 0;
+    if (goal) {
+      const dx = goal.x - D.pos.x, dz = goal.z - D.pos.z, d = Math.hypot(dx, dz);
+      if (d > 0.02) {
+        const st = Math.min(d, dt * speed); D.pos.x += dx / d * st; D.pos.z += dz / d * st; D.speed = speed;
+        let dh = Math.atan2(dx, dz) - D.heading; dh = Math.atan2(Math.sin(dh), Math.cos(dh)); D.heading += dh * Math.min(1, dt * 6);
+      }
+    }
+    if (D.state !== 'retreat') {
+      const rr = Math.hypot(D.pos.x, D.pos.z); if (rr < 3) { D.pos.x *= 3 / rr; D.pos.z *= 3 / rr; }
+      const lim = HALF - 0.4; if (D.since > 4) { D.pos.x = Math.max(-lim, Math.min(lim, D.pos.x)); D.pos.z = Math.max(-lim, Math.min(lim, D.pos.z)); }
+    }
+    D.pos.y = Math.abs(D.pos.x) <= HALF && Math.abs(D.pos.z) <= HALF ? groundY(D.pos.x, D.pos.z) : 0;
+    // Defenders biting her legs wear her down; she snaps back at them.
+    if (!deathHunting() || !colony.mind) D.charge = false;
+    else {
+      const all = ants.filter(a => a.role === 'defender'), ready = all.filter(a => a.seg && a.seg.chase);
+      D.muster = ready.length;
+      if (!D.charge && ready.length >= Math.min(8, all.length) && ready.length > 0) { D.charge = true; mindLog(`${ready.length} defenders mustered and charged together`, 'alarm', 'charge' + D.visit); }
+    }
+    if (deathHunting()) {
+      const fighters = ants.filter(a => a.engaged && a.role === 'defender' && a.seg && a.seg.chase);
+      if (fighters.length) {
+        D.hp -= dt * 0.07 * fighters.length;
+        if ((D.retaliate -= dt) <= 0) { D.retaliate = 2.5; D.visitKills++; kill(fighters[Math.floor(Math.random() * fighters.length)], 'death'); }
+        if (D.hp <= 0) retreat('driven', fighters.length);
+      }
+    }
+  }
+  function renderDeath(t) {
+    const g = deathRig.g, D = death;
+    g.visible = D.state !== 'away';
+    if (!g.visible) return;
+    g.position.copy(D.pos); g.rotation.y = D.heading;
+    const gait = D.speed > 0 ? Math.min(1, D.speed) : 0, f = 6 + D.speed * 5;
+    for (const l of deathRig.legs) { l.pivot.rotation.y = Math.sin(t * f + l.phase) * 0.28 * gait; l.pivot.rotation.x = Math.max(0, Math.cos(t * f + l.phase)) * -0.12 * gait; }
+    if (D.state === 'feed') g.rotation.x = Math.sin(t * 9) * 0.04; else g.rotation.x = 0;
+  }
+
+  // ---------- death, bodies and alarm pheromone ----------
+  const corpses = [];
+  const pad = id => String(id).padStart(3, '0');
+  function kill(a, cause) {
+    const i = ants.indexOf(a); if (i < 0) return;
+    release(a);
+    if (a.cargo && a.cargo.kind === 'corpse') corpses.push({ pos: a.pos.clone(), surface: a.onSurface, node: a.onSurface ? null : a.here, claimed: false, rot: Math.random() * 6 });
+    ants.splice(i, 1);
+    let pos = a.pos.clone();
+    if (!a.onSurface) { const N = NODES[a.here], ang = Math.random() * 6.28, rr = (N.r ? N.r * 0.55 : 0.12) * Math.random(); pos = V(N.v.x + Math.cos(ang) * rr, N.v.y + UNDER, N.v.z + Math.sin(ang) * rr * 0.85); }
+    corpses.push({ pos, surface: a.onSurface, node: a.onSurface ? null : a.here, claimed: false, rot: Math.random() * 6 });
+    if (cause === 'death') { colony.killed++; raiseAlarm(a.pos); } else colony.aged++;
+    if (follow === a) { stopFollow(); toast(cause === 'death' ? `#${pad(a.id)} was caught by Death.` : `#${pad(a.id)} died of old age.`); }
+  }
+  const alarms = [];
+  const AL = 900, alPos = new Float32Array(AL * 3), alCol = new Float32Array(AL * 3), alVel = new Float32Array(AL * 3), alLife = new Float32Array(AL);
+  const alGeo = new THREE.BufferGeometry();
+  alGeo.setAttribute('position', new THREE.BufferAttribute(alPos, 3)); alGeo.setAttribute('color', new THREE.BufferAttribute(alCol, 3));
+  const alarmFx = new THREE.Points(alGeo, new THREE.PointsMaterial({ size: 4 * renderer.getPixelRatio(), sizeAttenuation: false, vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+  alarmFx.frustumCulled = false; scene.add(alarmFx);
+  let alIdx = 0;
+  function raiseAlarm(p) {
+    alarms.push({ x: p.x, z: p.z, life: 1 });
+    colony.alarmT = 25;
+    for (let k = 0; k < 60; k++) {
+      const i = alIdx++ % AL, ang = Math.random() * 6.28, sp = rand(0.3, 1.3);
+      alPos.set([p.x, p.y + 0.1, p.z], i * 3); alVel.set([Math.cos(ang) * sp, rand(0.4, 1.5), Math.sin(ang) * sp], i * 3); alLife[i] = 1;
+    }
+  }
+  function updateAlarmFx(dt) {
+    for (let i = 0; i < AL; i++) {
+      if (alLife[i] <= 0) continue;
+      alLife[i] = Math.max(0, alLife[i] - dt / 2.5); alVel[i * 3 + 1] -= dt * 0.7;
+      for (let k = 0; k < 3; k++) alPos[i * 3 + k] += alVel[i * 3 + k] * dt;
+      const l = alLife[i]; alCol[i * 3] = 1 * l; alCol[i * 3 + 1] = 0.3 * l; alCol[i * 3 + 2] = 0.18 * l;
+    }
+    alGeo.attributes.position.needsUpdate = alGeo.attributes.color.needsUpdate = true;
+  }
+  function nearDanger(x, z, r) {
+    if (deathHunting() && Math.hypot(x - death.pos.x, z - death.pos.z) < r + 0.5) return true;
+    return alarms.some(a => a.life > 0.3 && Math.hypot(x - a.x, z - a.z) < r);
+  }
+  // Undertakers only hold back while Death herself is close to the body.
+  const collectable = c => !c.surface || !colony.mind || !deathHunting() || Math.hypot(c.pos.x - death.pos.x, c.pos.z - death.pos.z) > 4;
+  const foodDanger = f => f.samples.some(p => nearDanger(p.x, p.z, 3.2));
+
+  // ---------- organizational intelligence ----------
+  // The colony mind is local rules adding up to group decisions: alarm pheromone mobilizes defenders,
+  // foragers avoid trails that smell of Death, reserves turn undertaker when bodies pile up, and
+  // recruitment trails steer foragers to the sources that keep paying off.
+  const mindEntries = [];
+  // Entries with a key (one per Death visit or per day) are updated in place instead of repeated.
+  function mindLog(text, kind, key) {
+    const old = key && mindEntries.find(e => e.key === key);
+    if (old) { old.text = text; mindEntries.splice(mindEntries.indexOf(old), 1); mindEntries.unshift(old); return; }
+    if (mindEntries[0] && mindEntries[0].text === text) return;
+    mindEntries.unshift({ day: day(), text, kind, key }); if (mindEntries.length > 5) mindEntries.pop();
+  }
+  function enlist(a, role, why) {
+    a.prevRole = a.pendingRole || a.role; a.pendingRole = role; a.task = why;
+    if (!a.onSurface && !a.claim && !a.cargo) { const s = a.seg; a.segs.length = 0; a.at = (s && (s.to || s.node)) || a.here; }
+  }
+  function tickMind(dt) {
+    for (let i = alarms.length - 1; i >= 0; i--) if ((alarms[i].life -= dt / 30) <= 0) alarms.splice(i, 1);
+    for (const f of foods) f.strength *= Math.exp(-dt * 0.04);
+    colony.alarmT = Math.max(0, colony.alarmT - dt);
+    if ((colony.mindT -= dt) > 0) return;
+    colony.mindT = 1;
+    if (!colony.mind) return;
+    if (deathHunting() && (colony.alarmT > 0 || Math.hypot(death.pos.x, death.pos.z) < 5.5)) {
+      const want = Math.min(26, 8 + death.visitKills * 3), cur = ants.filter(a => (a.pendingRole || a.role) === 'defender').length;
+      if (cur < want) {
+        const pool = ants.filter(a => !a.cargo && !a.claim && !a.onSurface && !['defender', 'guard'].includes(a.pendingRole || a.role))
+          .sort((p, q) => (q.role === 'reserve') - (p.role === 'reserve') || q.pos.y - p.pos.y);
+        const n = Math.min(want - cur, pool.length);
+        for (let i = 0; i < n; i++) enlist(pool[i], 'defender', 'Smelled alarm pheromone: turning defender');
+        if (n) { death.enlisted = (death.enlistVisit === death.visit ? death.enlisted : 0) + n; death.enlistVisit = death.visit; mindLog(`Alarm pheromone: ${death.enlisted} workers turned defender`, 'alarm', 'def' + death.visit); }
+      }
+    }
+    const waiting = corpses.filter(c => !c.claimed && collectable(c)).length, temps = ants.filter(a => a.temp).length;
+    if (waiting > 3 && temps < 14) {
+      const pool = ants.filter(a => a.role === 'reserve' && !a.pendingRole && !a.cargo && !a.claim).slice(0, Math.min(4, waiting - 2, 14 - temps));
+      pool.forEach(a => { enlist(a, 'cleaner', `Sensed ${waiting} dead nestmates: taking undertaker duty`); a.temp = true; });
+      if (pool.length) { colony.undertook = (colony.undertookDay === day() ? colony.undertook : 0) + pool.length; colony.undertookDay = day(); mindLog(`${colony.undertook} reserves turned undertaker as bodies piled up`, 'death', 'und' + day()); }
+    }
+    for (const f of foods) {
+      const d = foodDanger(f);
+      if (d && !f.danger && f.warned !== death.visit) {
+        f.warned = death.visit;
+        const names = [...new Set(foods.filter(x => x.warned === death.visit).map(x => x.infinite ? 'aphid herd' : x.type.name))];
+        mindLog(`Foragers rerouted away from ${names.length} trail${names.length > 1 ? 's' : ''} near Death (${names.join(', ')})`, 'trail', 'trail' + death.visit);
+      }
+      f.danger = d;
+    }
   }
 
   // ---------- seed the colony ----------
@@ -808,7 +1167,7 @@
     const role = neededRole();
     const start = role === 'forager' ? (Math.random() < 0.5 ? 'entrance' : 'pantry') : role === 'nurse' ? 'nursery' : role === 'excavator' ? 'winter' : role === 'cleaner' ? 'midden' : CHAMBERS[Math.floor(Math.random() * CHAMBERS.length)];
     const a = makeAnt(start, role);
-    a.speed *= 1; a.segs.push({ wait: Math.random() * 3 });
+    a.born = -Math.random() * 6 * 90; a.segs.push({ wait: Math.random() * 3 });
   }
 
   // ---------- the queen's command: a contagious pheromone ----------
@@ -827,6 +1186,7 @@
     if (from) addSpark(from.pos, a.pos);
     const src = from ? `Caught the queen's order from #${String(from.id).padStart(3, '0')}` : 'Took the order straight from the queen';
     const n = ants.length, c = countRoles(true), sh = shares(n, o.decree, o.guard), eff = a.pendingRole || a.role;
+    if (eff === 'defender') { a.task = `${src}, but staying in the fight`; return; }
     if (c[eff] - sh[eff] * n <= 0.5) { a.task = `${src}: keep working as a ${ROLES[eff].name.toLowerCase()}`; return; }
     let best = null, gap = 0.5;
     for (const k in ROLES) { const g = sh[k] * n - c[k]; if (g > gap) { gap = g; best = k; } }
@@ -835,7 +1195,7 @@
     o.count++;
     a.task = `${src}: become a ${ROLES[best].name.toLowerCase()}`;
     // Drop the current plan at the next junction unless she is carrying, outside, or holding a reservation.
-    if (!a.cargo && !a.onSurface && !a.committed) { const s = a.seg; a.segs.length = 0; a.at = (s && (s.to || s.node)) || a.here; }
+    if (!a.cargo && !a.onSurface && !a.claim) { const s = a.seg; a.segs.length = 0; a.at = (s && (s.to || s.node)) || a.here; }
   }
   const grid = new Map(), cellKey = (x, y, z) => x + ',' + y + ',' + z, R2 = CONTACT_R * CONTACT_R;
   function updateContagion(dt) {
@@ -869,9 +1229,20 @@
   // ---------- instance rendering ----------
   const dummy = new THREE.Object3D(), look = V(0, 0, 0), cargoColor = new THREE.Color();
   let selected = null;
-  const auraMesh = new THREE.InstancedMesh(new THREE.SphereGeometry(0.17, 10, 8), new THREE.MeshBasicMaterial({ color: ROYAL, opacity: 0.4, ...additive }), MAX_ANTS);
+  const auraMesh = new THREE.InstancedMesh(new THREE.SphereGeometry(0.12, 10, 8), new THREE.MeshBasicMaterial({ color: ROYAL, opacity: 0.3, ...additive }), MAX_ANTS);
   auraMesh.count = 0; auraMesh.frustumCulled = false; scene.add(auraMesh);
-  const GUARD_TINT = ANT_COLOR.clone().lerp(ROYAL, 0.3), antCol = new THREE.Color();
+  const GUARD_TINT = ANT_COLOR.clone().lerp(ROYAL, 0.3), DEF_TINT = ANT_COLOR.clone().lerp(new THREE.Color(0xe0533d), 0.5), antCol = new THREE.Color();
+  const corpseMesh = new THREE.InstancedMesh(antMesh.geometry, new THREE.MeshStandardMaterial({ color: 0x3a3330, roughness: 0.9 }), 260);
+  corpseMesh.count = 0; corpseMesh.frustumCulled = false; scene.add(corpseMesh);
+  function renderCorpses() {
+    const n = Math.min(260, corpses.length);
+    for (let i = 0; i < n; i++) {
+      const c = corpses[i];
+      dm.position.copy(c.pos); if (c.surface) dm.position.y = groundY(c.pos.x, c.pos.z) + 0.05;
+      dm.rotation.set(Math.PI, c.rot, 0); dm.scale.setScalar(ANT_S); dm.updateMatrix(); corpseMesh.setMatrixAt(i, dm.matrix);
+    }
+    corpseMesh.count = n; corpseMesh.instanceMatrix.needsUpdate = true;
+  }
   function renderAnts(time) {
     for (let i = 0; i < ants.length; i++) {
       const a = ants[i];
@@ -885,7 +1256,7 @@
       antMesh.setMatrixAt(i, dummy.matrix);
       if (a.cargo) {
         dummy.position.copy(a.pos).addScaledVector(a.tan.clone().normalize(), 0.2 * ANT_S); dummy.position.y += 0.04;
-        dummy.scale.setScalar(ANT_S * (a.cargo.kind === 'egg' ? 0.85 : 1)); dummy.updateMatrix();
+        dummy.scale.setScalar(ANT_S * (a.cargo.kind === 'egg' ? 0.85 : a.cargo.kind === 'corpse' ? 1.9 : 1)); dummy.updateMatrix();
         cargoMesh.setMatrixAt(i, dummy.matrix);
         cargoMesh.setColorAt(i, cargoColor.set(a.cargo.color));
       } else { dummy.scale.setScalar(0); dummy.updateMatrix(); cargoMesh.setMatrixAt(i, dummy.matrix); }
@@ -893,7 +1264,7 @@
     for (let i = 0; i < ants.length; i++) {
       const a = ants[i];
       if (a === selected) antCol.copy(SEL_COLOR);
-      else { antCol.copy(a.role === 'guard' ? GUARD_TINT : ANT_COLOR); antCol.lerp(ROYAL, Math.min(0.9, Math.max(0, a.flash) * 0.9 + Math.max(0, a.contagious) / CONTAGIOUS_FOR * 0.35)); }
+      else { antCol.copy(a.role === 'guard' ? GUARD_TINT : a.role === 'defender' ? DEF_TINT : ANT_COLOR); antCol.lerp(ROYAL, Math.min(0.9, Math.max(0, a.flash) * 0.9 + Math.max(0, a.contagious) / CONTAGIOUS_FOR * 0.35)); }
       const ar = a.contagious > 0 ? 0.4 + 0.6 * a.contagious / CONTAGIOUS_FOR + 0.5 * Math.max(0, a.flash) : 0;
       dm.position.copy(a.pos); dm.rotation.set(0, 0, 0); dm.scale.setScalar(ar); dm.updateMatrix(); auraMesh.setMatrixAt(i, dm.matrix);
       antMesh.setColorAt(i, antCol);
@@ -938,6 +1309,15 @@
     labelsEl.appendChild(el);
     labels.push({ el, p: N.center.clone().add(V(0, k === 'entrance' ? 0.9 : N.r * 0.5 + 0.25, 0)) });
   }
+  const deathLabelPos = V(0, 0, 0);
+  for (const [cls, html, p, onClick, hideIf] of [
+    ['lab danger', 'Death<em id="deathTag">prowling</em>', deathLabelPos, () => { stopFollow(); flyTo(death.pos, 8); }, () => death.state === 'away' || !g3vis()],
+    ['lab farm', 'Aphid herd<em>endless honeydew</em>', V(FARM.x, 3.4, FARM.z), () => { stopFollow(); flyTo(V(FARM.x, 1, FARM.z), 7); }, null],
+  ]) {
+    const el = document.createElement('div'); el.className = cls; el.innerHTML = html; el.addEventListener('click', onClick);
+    labelsEl.appendChild(el); labels.push({ el, p, hideIf });
+  }
+  function g3vis() { return Math.abs(death.pos.x) < HALF + 1 && Math.abs(death.pos.z) < HALF + 1; }
   for (let d = 4; d <= DEPTH; d += 4) {
     const el = document.createElement('div'); el.className = 'tick'; el.textContent = `${d * CM_PER_UNIT} cm`;
     labelsEl.appendChild(el); labels.push({ el, p: V(-HALF - 0.5, -d, HALF), tick: true });
@@ -946,7 +1326,7 @@
   function updateLabels(w, h) {
     for (const L of labels) {
       proj.copy(L.p).project(camera);
-      const vis = proj.z < 1 && Math.abs(proj.x) < 1.2 && Math.abs(proj.y) < 1.2;
+      const vis = !(L.hideIf && L.hideIf()) && proj.z < 1 && Math.abs(proj.x) < 1.2 && Math.abs(proj.y) < 1.2;
       L.el.style.visibility = vis ? 'visible' : 'hidden';
       if (vis) L.el.style.transform = `translate(${(proj.x * 0.5 + 0.5) * w}px, ${(-proj.y * 0.5 + 0.5) * h}px) ${L.tick ? 'translate(6px,-50%)' : 'translate(-50%,-100%)'}`;
     }
@@ -1003,7 +1383,7 @@
       const { x, z } = hit.point;
       if (Math.hypot(x, z) < 3.2) return toast('Too close to the mound. Drop food further out.');
       if (Math.abs(x) > HALF - 0.6 || Math.abs(z) > HALF - 0.6) return;
-      if (foods.length >= 10) return toast('The surface already holds 10 food sources.');
+      if (foods.filter(f => !f.infinite).length >= 10) return toast('The surface already holds 10 food sources.');
       const f = spawnFood(x, z);
       toast(`Dropped a ${f.type.name}. Scouts will find it.`);
     }
@@ -1062,6 +1442,23 @@
     $('qStatus').innerHTML = `<b>${D.name}</b>: ${D.note}. <span>Room ${ants.length} / ${capacity()} · food ${Math.floor(colony.store)}</span>`;
     $('log').innerHTML = '<li class="lh"><span>Decrees</span><span>Reached</span></li>' + logEntries.map(e =>
       `<li><div><span>Day ${e.day} · <strong>${e.text}</strong></span><span>${e.reason} · ${e.count} changed job</span></div>${e.id === colony.orderId ? `<b>${reach(e)}%</b>` : '<span>replaced</span>'}</li>`).join('');
+  }
+  $('mindBtn').onclick = () => {
+    colony.mind = !colony.mind;
+    $('mindBtn').setAttribute('aria-pressed', colony.mind); $('mindBtn').textContent = `Colony mind: ${colony.mind ? 'on' : 'off'}`;
+    toast(colony.mind ? 'Colony mind on: alarms, defence and trail sense restored.' : 'Colony mind off: every ant fends for herself.');
+    mindLog(colony.mind ? 'Colony mind restored' : 'Colony mind switched off', 'mind');
+  };
+  const DEATH_STATES = { away: 'Away', prowl: 'Prowling', stalk: 'Stalking', feed: 'Feeding', retreat: 'Retreating' };
+  function renderMind() {
+    const D = death, hunting = deathHunting();
+    $('deathState').textContent = D.state === 'away' ? `Away · back in ${Math.max(0, Math.ceil(D.timer))} s` : DEATH_STATES[D.state];
+    $('deathState').classList.toggle('hunt', hunting);
+    $('deathHp').style.width = (D.state === 'away' ? 100 : Math.max(0, D.hp) * 100) + '%';
+    const tag = document.getElementById('deathTag'); if (tag) tag.textContent = DEATH_STATES[D.state].toLowerCase();
+    $('sKilled').textContent = colony.killed; $('sAged').textContent = colony.aged;
+    $('sDef').textContent = ants.filter(a => a.role === 'defender').length; $('sBodies').textContent = corpses.length;
+    $('mindLog').innerHTML = '<li class="lh"><span>Colony mind</span><span>Day</span></li>' + mindEntries.map(e => `<li><div><span>${e.text}</span></div><b>${e.day}</b></li>`).join('');
   }
   let toastT = 0;
   function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), 2200); }
@@ -1122,6 +1519,7 @@
     for (const k in ROLES) { barSpans[k].style.width = (c[k] / ants.length * 100) + '%'; legendNums[k].textContent = c[k]; }
     drawSpark();
     renderCommand();
+    renderMind();
   }
 
   syncCommandUI();
@@ -1143,7 +1541,8 @@
     time += dt; simTime += dt;
     if (dt > 0) {
       const sub = dt > 0.06 ? 2 : 1;
-      for (let s = 0; s < sub; s++) { for (let i = 0; i < ants.length; i++) stepAnt(ants[i], dt / sub); tickColony(dt / sub); }
+      for (let s = 0; s < sub; s++) { for (let i = 0; i < ants.length; i++) stepAnt(ants[i], dt / sub); tickColony(dt / sub); updateDeath(dt / sub); tickMind(dt / sub); }
+      updateAlarmFx(dt);
       updatePhero(dt);
       updateContagion(dt); updateSparks(dt);
       queen.rotation.y = Math.sin(time * 0.25) * 0.6; queen.position.y = NODES.queen.v.y - 0.1 + Math.sin(time * 1.3) * 0.006;
@@ -1154,7 +1553,8 @@
     halo.scale.setScalar(1 + 0.25 * colony.pulse);
     queenLight.intensity = 1.1 + 2.4 * colony.pulse;
     updateCloud(time); cloud.material.opacity = 0.45 + 0.5 * colony.pulse;
-    renderAnts(time); renderBrood(time);
+    renderAnts(time); renderBrood(time); renderCorpses(); renderDeath(time);
+    deathLabelPos.copy(death.pos).add(V(0, 1.6, 0));
     placeHeap(storeMesh, STORE_SPOTS, colony.store); placeHeap(middenMesh, MIDDEN_SPOTS, colony.midden * 0.6);
     updateCamera(rdt); controls.update();
     renderer.render(scene, camera);
