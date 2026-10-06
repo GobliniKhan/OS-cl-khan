@@ -1,9 +1,9 @@
-<title>Ithilwen Village</title>
+<title>Ithilwen Robot Village</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;1,400;1,500&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
-/* Layout: a full-bleed night glade; the watched elf's card on the left, the inspector on the right, their song at the bottom. */
+/* Layout: a full-bleed night glade; the watched robot's card on the left, the inspector on the right, their song at the bottom. */
 :root {
   --void: #040906;
   --ink: #e3e8da;
@@ -243,16 +243,16 @@ form.eq { width: min(780px, 100%); background: var(--panel); backdrop-filter: bl
 }
 </style>
 
-<canvas id="void" aria-label="A small planet of forests, deserts, seas and ice, turning in the void; the elves of Ithilwen live on its surface. Drag to turn it, scroll to zoom, hover an elf to see who they are."></canvas>
+<canvas id="void" aria-label="A small planet of forests, deserts, seas and ice, turning in the void; the robots of Ithilwen live on its surface. Drag to turn it, scroll to zoom, hover a robot to see who they are."></canvas>
 <div class="tip" id="tip" role="status" hidden></div>
 
 <div class="ui" id="ui">
   <div class="top">
     <div class="col left">
       <header class="id">
-        <div class="eyebrow">Watching <span id="spec">—</span> · an elven village</div>
+        <div class="eyebrow">Watching <span id="spec">—</span> · a robot village</div>
         <h1>Ithilwen</h1>
-        <details class="about"><summary>About the village</summary><p class="lede">Ithilwen is an elven village on a small planet turning in the void, a world of forests, jungles, grasslands, deserts, tundra, ice, mountains and seas. Elves walk its land but never the sea; forests restore their vigor, deserts drain it, and snow and stone slow them. Each elf’s aura is shaped by their song, an equation of genes, and their heart holds one wisp of light per gene. Every elf wants above all to be the fairest. Drive genes shape their days: <code>forage(θ)</code> gathers lore leaves from the Ancestor Grove, <code>grow(t)</code> lets new genes reshape them, <code>rival(θ)</code> sets their standing, and <code>circle(θ)</code> joins them to the Circle. A <code>psyche</code> gene carries the five personality traits, which also decide their faction, how they vote, and how they react to your cursor. Drag to turn the planet, scroll to zoom, hover an elf to meet them. Their song, below, is the only way to change the elf you are watching.</p></details>
+        <details class="about"><summary>About the village</summary><p class="lede">Ithilwen is a village of little mechanoid robots on a small planet turning in the void, a world of forests, jungles, grasslands, deserts, tundra, ice, mountains and seas. Robots walk its land but never the sea; forests recharge their vigor, deserts drain it, and snow and stone slow them. Each robot’s energy field is shaped by its song, an equation of genes, and its chest light holds one wisp per gene. Every robot wants above all to be the fairest. Drive genes shape their days: <code>forage(θ)</code> gathers lore leaves from the Ancestor Grove, <code>grow(t)</code> lets new genes reshape them, <code>rival(θ)</code> sets their standing, and <code>circle(θ)</code> joins them to the Circle. A <code>psyche</code> gene carries five personality traits, which also decide their faction, how they vote, and how they react to your cursor. Drag to turn the planet, scroll to zoom, hover a robot to meet it. Its song, below, is the only way to change the robot you are watching.</p></details>
       </header>
       <dl class="vitals">
         <dt>State</dt><dd id="mood">Steady</dd>
@@ -276,7 +276,7 @@ form.eq { width: min(780px, 100%); background: var(--panel); backdrop-filter: bl
       <section class="panel inspector" aria-label="Inspector">
         <div class="tabs" role="tablist" aria-label="Inspector sections">
           <button type="button" role="tab" id="tab-beauty" data-tab="beauty" aria-controls="tp-beauty">Beauty</button>
-          <button type="button" role="tab" id="tab-body" data-tab="body" aria-controls="tp-body">Elf</button>
+          <button type="button" role="tab" id="tab-body" data-tab="body" aria-controls="tp-body">Robot</button>
           <button type="button" role="tab" id="tab-mind" data-tab="mind" aria-controls="tp-mind">Mind</button>
           <button type="button" role="tab" id="tab-council" data-tab="council" aria-controls="tp-council">Council</button>
           <button type="button" role="tab" id="tab-world" data-tab="world" aria-controls="tp-world">Village</button>
@@ -344,7 +344,7 @@ form.eq { width: min(780px, 100%); background: var(--panel); backdrop-filter: bl
   </div>
   <div class="bottom">
     <div class="poprow">
-      <div class="pop" id="pop" aria-label="Elves of the village"></div>
+      <div class="pop" id="pop" aria-label="Robots of the village"></div>
       <span class="ctrls">
         <button type="button" class="paneltoggle" id="zoomout" aria-label="Zoom out">−</button>
         <button type="button" class="paneltoggle" id="zoomin" aria-label="Zoom in">+</button>
@@ -594,11 +594,11 @@ addEventListener('resize', resize); resize();
 
 /* ---------- the planet ---------- */
 // The village lives on a small planet floating in the void. Its surface is a map in "map units":
-// x is longitude and wraps all the way round; y is latitude, a band of about ±67° the elves can walk.
+// x is longitude and wraps all the way round; y is latitude, a band of about ±67° the robots can walk.
 // Everything is simulated on the map and drawn by projecting onto a rotating globe.
 const MW = 2400, MH = 900;
 const RW = MW / (2 * Math.PI);           // the planet's radius in map units
-const R0W = 34;                          // an elf's base aura radius, in map units
+const R0W = 34;                          // a robot's base aura radius, in map units
 const wrapX = x => ((x % MW) + MW) % MW;
 const cam = { yaw: 0, pitch: 0.28, zoom: 1, follow: false, idle: 0 };
 let GR = 300, GX = 0, GY = 0;
@@ -1306,14 +1306,14 @@ if (!states) {
   states = [old && old.eq && Array.isArray(old.needs) ? old : FIRST];
 }
 if (world.next == null) world.next = world.specimen || 1; // before populations, `specimen` was the living creature's number
-// creatures saved before the village become its elves
+// creatures saved before the village become its robots
 for (const sd of world.seeds) { const m = OLD_NAME.exec(sd.name || ''); if (m) sd.name = specName(+m[1]); sd.eq = renameGenes(sd.eq); for (const e of sd.equations || []) e.eq = renameGenes(e.eq); }
 if (world.best) { const m = OLD_NAME.exec(world.best.name); if (m) world.best.name = specName(+m[1]); }
 for (const s of states) {
   if (s.eq) s.eq = renameGenes(s.eq);
   for (const e of s.history || []) e.eq = renameGenes(e.eq);
   if (s.origins) for (const k of Object.keys(s.origins)) { const nk = renameGenes(k); if (nk !== k) { s.origins[nk] = s.origins[k]; delete s.origins[k]; } }
-  { const m = OLD_NAME.exec(s.name || ''); if (m && s.id != null) { s.name = specName(s.id); (s.log || (s.log = [])).unshift({ g: s.gen, text: `Woke in the glade of Ithilwen as an elf named <b>${s.name}</b>.` }); } }
+  { const m = OLD_NAME.exec(s.name || ''); if (m && s.id != null) { s.name = specName(s.id); (s.log || (s.log = [])).unshift({ g: s.gen, text: `Woke in the glade of Ithilwen as a robot named <b>${s.name}</b>.` }); } }
   for (const [k, d] of [['memory', []], ['origins', {}], ['instinct', {}], ['tries', 0], ['rewrites', 0], ['log', []], ['G', 0], ['carried', []], ['digested', []], ['insights', []], ['question', null], ['qWait', 8]]) if (s[k] == null) s[k] = d;
   if (s.history == null) s.history = [{ eq: s.eq, by: 'origin', g: s.gen }];
   if (s.id == null) { s.id = world.next++; s.name = specName(s.id); }
@@ -1338,7 +1338,7 @@ for (const s of states) {
     try {
       s.eq = show(parse(s.eq + ' + ' + hg)); s.history.push({ eq: s.eq, by: 'origin', g: s.gen });
       s.origins[show(parse(hg))] = { k: 'self', label: 'hive gene' };
-      s.log.unshift({ g: s.gen, text: 'Received a <b>circle(θ)</b> gene. At 0.05 or more they join the Circle. Every elf shares one supreme objective: to be the fairest in the village.' });
+      s.log.unshift({ g: s.gen, text: 'Received a <b>circle(θ)</b> gene. At 0.05 or more they join the Circle. Every robot shares one supreme objective: to be the fairest in the village.' });
     } catch (_) {}
   }
   pop.push(makeCreature(s));
@@ -1506,12 +1506,11 @@ function stepCarried(c, dt) {
   return gain;
 }
 function drawCarried(c, cx, cy, mean) {
-  for (const [a, b, rate] of c.links || []) {
-    ctx.strokeStyle = `hsla(140, 80%, 80%, ${Math.min(0.9, rate * 14)})`; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(cx + a.x * mean, cy + a.y * mean); ctx.lineTo(cx + b.x * mean, cy + b.y * mean); ctx.stroke();
-  }
+  const reacting = new Set();
+  for (const [a, b] of c.links || []) { reacting.add(a); reacting.add(b); }
   for (const g of state.carried) {
     const x = cx + g.x * mean, y = cy + g.y * mean, s = 1.6 + 1.6 * Math.max(0, g.charge);
+    if (reacting.has(g)) { const h = ctx.createRadialGradient(x, y, 0, x, y, s * 3); h.addColorStop(0, 'hsla(140, 90%, 80%, 0.6)'); h.addColorStop(1, 'hsla(140, 90%, 60%, 0)'); ctx.fillStyle = h; ctx.beginPath(); ctx.arc(x, y, s * 3, 0, 6.283); ctx.fill(); }
     ctx.fillStyle = `hsla(140, 65%, 78%, ${0.35 + 0.55 * Math.max(0, g.charge)})`;
     ctx.beginPath(); ctx.moveTo(x, y - s); ctx.lineTo(x + s, y); ctx.lineTo(x, y + s); ctx.lineTo(x - s, y); ctx.closePath(); ctx.fill();
   }
@@ -1687,15 +1686,13 @@ function bite(p, q) {
   if (p === focus || q === focus) uiDirty = true;
 }
 function drawChase() {
-  ctx.setLineDash([3, 5]); ctx.lineWidth = 1; ctx.strokeStyle = 'hsla(8, 90%, 70%, 0.5)';
-  for (const c of pop) if (c.chasing && pop.includes(c.chasing)) strokeSurface(c.x, c.y, wrapD(c.chasing.x - c.x, MW), c.chasing.y - c.y, 12);
-  ctx.setLineDash([]);
   for (let i = bites.length - 1; i >= 0; i--) {
     const b = bites[i], k = (wall - b.t) / 1;
     if (k > 1) { bites.splice(i, 1); continue; }
     const p = proj(b.x, b.y); if (p.z < 0.05) continue;
-    ctx.strokeStyle = `hsla(8, 95%, 70%, ${0.85 * (1 - k)})`; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.arc(p.x, p.y, (8 + 34 * k) * p.k, 0, 6.283); ctx.stroke();
+    const r = (8 + 34 * k) * p.k, g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, r);
+    g.addColorStop(0, `hsla(8, 95%, 70%, ${0.5 * (1 - k)})`); g.addColorStop(1, 'hsla(8, 95%, 60%, 0)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, 6.283); ctx.fill();
   }
 }
 
@@ -1774,7 +1771,7 @@ function stepBeauty(dt) {
   const best = world.best;
   if (!best || leader.beauty > best.score + 0.02) {
     world.best = { name: leader.s.name, score: +leader.beauty.toFixed(3), eq: leader.s.eq };
-    if (best) announce(`${leader.s.name} is now the fairest elf Ithilwen has known (beauty ${leader.beauty.toFixed(2)}).`);
+    if (best) announce(`${leader.s.name} is now the fairest robot Ithilwen has known (beauty ${leader.beauty.toFixed(2)}).`);
   }
   // admirers drift toward the most beautiful, and their attention feeds it
   let admirers = 0;
@@ -1792,13 +1789,8 @@ function stepBeauty(dt) {
 function drawCrown() {
   if (!leader || pop.length < 2) return;
   const c = leader, p = proj(c.x, c.y); if (p.z < 0.05) return;
-  const r = c.radius * p.k * 1.55 + 6;
-  ctx.setLineDash([2, 6]); ctx.lineDashOffset = -wall * 10;
-  ctx.strokeStyle = 'rgba(230, 194, 127, 0.6)'; ctx.lineWidth = 1.2;
-  ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, 6.283); ctx.stroke();
-  ctx.setLineDash([]); ctx.lineDashOffset = 0;
-  const x = p.x, y = p.y - r - 6, w = 8;
-  ctx.fillStyle = 'rgba(230, 194, 127, 0.9)';
+  const s = R0W * p.k * 1.2, x = p.x, y = p.y - s * 0.75 - 8, w = 7;
+  ctx.fillStyle = 'rgba(230, 194, 127, 0.95)';
   ctx.beginPath(); ctx.moveTo(x - w, y + 4); ctx.lineTo(x - w, y - 2); ctx.lineTo(x - w / 2, y + 1); ctx.lineTo(x, y - 5); ctx.lineTo(x + w / 2, y + 1); ctx.lineTo(x + w, y - 2); ctx.lineTo(x + w, y + 4); ctx.closePath(); ctx.fill();
 }
 function renderBeauty() {
@@ -1849,16 +1841,6 @@ function shareInsight(text, answer) {
     o.s.insightCount = (o.s.insightCount || 0) + 1;
     logTo(o, `<i>Learned through the Circle</i> from <b>${state.name}</b>: ${esc(text)}`);
     if (o === focus) uiDirty = true;
-  }
-}
-function drawHive() {
-  const m = hiveMembers();
-  if (m.length < 2) return;
-  ctx.lineWidth = 0.9;
-  for (let i = 0; i < m.length; i++) for (let j = i + 1; j < m.length; j++) {
-    const a = m[i], b = m[j], k = 0.5 + 0.5 * Math.sin(wall * 2 + i + j);
-    ctx.strokeStyle = `hsla(200, 30%, 88%, ${(0.1 + 0.14 * k) * Math.min(1, (a.hiveAmp + b.hiveAmp) * 4)})`;
-    strokeSurface(a.x, a.y, wrapD(b.x - a.x, MW), b.y - a.y, 20, 0.03);
   }
 }
 
@@ -1949,12 +1931,12 @@ function updatePanel(fit) {
   else if (phase === 'alive' && focus.fleeing) { sig = `They are avoiding ${focus.fleeing.s.name}, who outranks them.`; key = 'flee'; }
   else if (phase === 'alive' && focus.chasing) { sig = `They are challenging ${focus.chasing.s.name}.`; key = 'hunt'; }
   else if (phase === 'alive' && focus.seeking && E < 0.6) { sig = `They are weary, and gathering lore from ${focus.seeking.anc}.`; key = 'forage'; }
-  else if (phase === 'alive' && E >= 1.65) { sig = pop.length < MAX_POP ? 'They are brimming with vigor, and an elfling is about to be born.' : 'They are brimming with vigor, but the village is full.'; key = 'split'; }
+  else if (phase === 'alive' && E >= 1.65) { sig = pop.length < MAX_POP ? 'They are brimming with vigor, and a new robot is about to be built.' : 'They are brimming with vigor, but the village is full.'; key = 'split'; }
   if (phase === 'alive' && votes.length && wall - votes[0].t < VOTE_SHOW) { sig = `The village has voted. ${world.politics.elderName} is Elder, and ${FACTION[world.politics.faction].law.name} is the law.`; key = 'vote'; }
   if (phase === 'condensing') { sig = `Their wisps have gone out. They are passing into the Ancestor Grove as a tree that keeps all ${state.history.length} of their songs.`; key = 'condense'; }
-  else if (phase === 'birth') { sig = 'A new elf wanders into the glade.'; key = 'birth'; }
+  else if (phase === 'birth') { sig = 'A new robot wanders into the glade.'; key = 'birth'; }
   $('signal').textContent = sig;
-  if (key !== lastSignalKey) { lastSignalKey = key; $('hint').textContent = HINTS[key] || (key === 'birth' ? 'Their song starts as a plain 1. Give them their first form.' : key === 'condense' ? 'Their tree joins the Ancestor Grove, listed under Village.' : key === 'vote' ? 'Each elf votes by their faction, the Circle, harmony, beauty, wisdom and old grudges.' : key === 'beauty' ? 'Beauty is scored from order, symmetry, balanced complexity, golden proportion, grace and radiance.' : key === 'flee' ? 'The neuroticism value in psyche(θ, …) sets how warily they avoid rivals.' : key === 'hunt' ? 'The coefficient of rival(θ), with their stature, sets their standing.' : key === 'forage' ? 'Lore that drifts close together inside them kindles vigor.' : key === 'harmony' ? 'Elves harmonize when their lobe counts form a simple ratio, like 1:1 or 2:1, and they move with a similar liveliness.' : key === 'split' ? 'At full vigor an elf has an elfling, whose genes vary a little.' : key === 'spiral' ? 'A form that pleases them gives them the vigor to lift their wisps again.' : key === 'dormant' ? 'If every wisp goes out, they pass into the Ancestor Grove.' : 'Change any term to give them something new.'); }
+  if (key !== lastSignalKey) { lastSignalKey = key; $('hint').textContent = HINTS[key] || (key === 'birth' ? 'Their song starts as a plain 1. Give them their first form.' : key === 'condense' ? 'Their tree joins the Ancestor Grove, listed under Village.' : key === 'vote' ? 'Each robot votes by their faction, the Circle, harmony, beauty, wisdom and old grudges.' : key === 'beauty' ? 'Beauty is scored from order, symmetry, balanced complexity, golden proportion, grace and radiance.' : key === 'flee' ? 'The neuroticism value in psyche(θ, …) sets how warily they avoid rivals.' : key === 'hunt' ? 'The coefficient of rival(θ), with their stature, sets their standing.' : key === 'forage' ? 'Lore that drifts close together inside them kindles vigor.' : key === 'harmony' ? 'Robots harmonize when their lobe counts form a simple ratio, like 1:1 or 2:1, and they move with a similar liveliness.' : key === 'split' ? 'At full vigor a robot builds a new robot, whose genes vary a little.' : key === 'spiral' ? 'A form that pleases them gives them the vigor to lift their wisps again.' : key === 'dormant' ? 'If every wisp goes out, they pass into the Ancestor Grove.' : 'Change any term to give them something new.'); }
 }
 
 /* ---------- the only interface: the equation ---------- */
@@ -2111,7 +2093,7 @@ function finishCondense(c) {
     const ancN = world.seeds.reduce((t, sd) => t + ancestralGenes(sd).length, 0);
     nb.s.log = [{ g: 0, text: `Wandered into the glade after <b>${s.name}</b> passed into the Ancestor Grove. They can learn from <span class="anc">${ancN} ancestral genes</span>${Object.keys(nb.s.instinct).length ? ' and starts with instincts inherited from them' : ''}.` }];
     pop.push(nb);
-    msg += ` The village was empty, so a new elf, ${nb.s.name}, has wandered in.`;
+    msg += ` The village was empty, so a new robot, ${nb.s.name}, has wandered in.`;
   }
   if (focus === c) focus = pop[0];
   uiDirty = true;
@@ -2127,7 +2109,7 @@ function split(c) {
   d.carried = s.carried.filter((g, i) => i % 2 === 1); s.carried = s.carried.filter((g, i) => i % 2 === 0);
   d.question = null; d.qWait = 10; d.G = s.G = (s.G || 0) * 0.5;
   d.log = [{ g: d.gen, text: `Born to <b>${s.name}</b>.` }];
-  s.log.unshift({ g: s.gen, text: `Brimming with vigor, had an <b>elfling</b>: <b>${d.name}</b>.` }); s.log = s.log.slice(0, 6);
+  s.log.unshift({ g: s.gen, text: `Brimming with vigor, built a <b>new robot</b>: <b>${d.name}</b>.` }); s.log = s.log.slice(0, 6);
   const a = Math.random() * 6.283, off = c.radius * 0.8;
   const dc = makeCreature(d, { x: wrapX(c.x + Math.cos(a) * off), y: clamp(c.y + Math.sin(a) * off, 20, MH - 20), vx: c.vx + Math.cos(a) * 30, vy: c.vy + Math.sin(a) * 30, traits: c.traits });
   c.vx -= Math.cos(a) * 30; c.vy -= Math.sin(a) * 30;
@@ -2160,7 +2142,7 @@ function split(c) {
   for (const n of state.needs) if (Math.random() < 0.5) shiftTarget(n, 0.4);
   leave(dc);
   uiDirty = true;
-  announce(`${s.name} is brimming with vigor and has an elfling, ${d.name}.`);
+  announce(`${s.name} is brimming with vigor and has built a new robot, ${d.name}.`);
   save();
 }
 function renderLineage() {
@@ -2168,7 +2150,7 @@ function renderLineage() {
   $('lcount').textContent = n ? `${n} tree${n === 1 ? '' : 's'}` : '';
   $('lin').textContent = n ? `${n} tree${n === 1 ? '' : 's'}` : 'none yet';
   const box = $('seeds');
-  if (!n) { box.innerHTML = '<p class="empty">When an elf’s wisps go out, they pass into the Ancestor Grove as a tree holding every song they sang. The trees drop lore leaves for others to gather.</p>'; return; }
+  if (!n) { box.innerHTML = '<p class="empty">When a robot’s wisps go out, they pass into the Ancestor Grove as a tree holding every song they sang. The trees drop lore leaves for others to gather.</p>'; return; }
   box.innerHTML = world.seeds.slice().reverse().map(s => `<details class="seed"><summary><span class="sname" style="color:hsl(${s.hue} 80% 74%)">${s.name}</span><span class="smeta">${s.gens} gen${s.gens === 1 ? '' : 's'} · ${s.equations.length} equation${s.equations.length === 1 ? '' : 's'}</span></summary><ol class="eqs">${s.equations.map(e => `<li><span class="by ${e.by}">${BY[e.by] || esc(String(e.by))}</span><code>${esc(e.eq)}</code></li>`).join('')}</ol></details>`).join('');
 }
 // condensed genes hold a slow ring around the middle of the void
@@ -2235,30 +2217,22 @@ function updateAtom(dt, E) {
   atom.bound = bound; atom.avgR = sum / electrons.length;
   return 0.002 * rad;
 }
-function drawElectrons(cx, cy, mean, hue, glow, first = true) {
+function drawElectrons(cx, cy, mean, hue, glow) {
   electrons.forEach((e, i) => {
     const shell = mean * SHELL(i, electrons.length), R = shell * e.r;
     const cr = Math.cos(e.rot), sr = Math.sin(e.rot);
-    // the orbit it would hold with energy to spare
-    ctx.strokeStyle = `hsla(${hue}, 70%, 75%, ${0.05 + 0.08 * glow})`; ctx.lineWidth = 0.7;
-    ctx.beginPath(); ctx.ellipse(cx, cy, Math.max(1, shell), Math.max(1, shell * e.ci), e.rot, 0, 6.283); ctx.stroke();
     const lx = Math.cos(e.ang) * R, ly = Math.sin(e.ang) * R * e.ci;
     const x = lx * cr - ly * sr, y = lx * sr + ly * cr;
-    if (first) { e.trail.push(x, y); if (e.trail.length > 80) e.trail.splice(0, 2); }
-    for (let j = 2; j < e.trail.length; j += 2) {
-      ctx.strokeStyle = `hsla(${hue + 30}, 90%, 80%, ${0.5 * j / e.trail.length})`; ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.moveTo(cx + e.trail[j - 2], cy + e.trail[j - 1]); ctx.lineTo(cx + e.trail[j], cy + e.trail[j + 1]); ctx.stroke();
-    }
     if (e.r > 0.08) {
-      const g = ctx.createRadialGradient(cx + x, cy + y, 0, cx + x, cy + y, 7);
+      const g = ctx.createRadialGradient(cx + x, cy + y, 0, cx + x, cy + y, 6);
       g.addColorStop(0, `hsla(${hue + 40}, 100%, 92%, 0.95)`); g.addColorStop(1, `hsla(${hue}, 90%, 60%, 0)`);
-      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx + x, cy + y, 7, 0, 6.283); ctx.fill();
-    } else if (first) e.trail.length = Math.max(0, e.trail.length - 4);
-    // the flash of an electron falling into the nucleus
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx + x, cy + y, 6, 0, 6.283); ctx.fill();
+    }
+    // a wisp going out shows as a fading glow at the heart
     if (e.fell && wall - e.fell < 0.8) {
-      const k = (wall - e.fell) / 0.8;
-      ctx.strokeStyle = `hsla(${hue + 40}, 100%, 85%, ${0.8 * (1 - k)})`; ctx.lineWidth = 1.5;
-      ctx.beginPath(); ctx.arc(cx, cy, 4 + 22 * k, 0, 6.283); ctx.stroke();
+      const k = (wall - e.fell) / 0.8, g = ctx.createRadialGradient(cx, cy, 0, cx, cy, 6 + 18 * k);
+      g.addColorStop(0, `hsla(${hue + 40}, 100%, 85%, ${0.6 * (1 - k)})`); g.addColorStop(1, `hsla(${hue}, 100%, 70%, 0)`);
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, 6 + 18 * k, 0, 6.283); ctx.fill();
     }
   });
 }
@@ -2339,21 +2313,6 @@ function stepWorld(dt) {
     c.vx *= 1 - 0.5 * dt; c.vy *= 1 - 0.5 * dt;
     const v = Math.hypot(c.vx, c.vy), cap = c.chasing ? 72 : c.fleeing || c.seeking ? 60 : 36; if (v > cap) { c.vx *= cap / v; c.vy *= cap / v; }
     moveOnLand(c, dt);
-  }
-}
-function drawHarmony() {
-  for (const ps of pairs.values()) {
-    if (!ps.a || ps.h <= HARMONY || ps.cool > 0 || ps.d > ps.reach * 5 || !pop.includes(ps.a) || !pop.includes(ps.b)) continue;
-    const a = ps.a, b = ps.b, dx = wrapD(b.x - a.x, MW), dy = b.y - a.y, d = Math.hypot(dx, dy) || 1;
-    const nx = -dy / d, ny = dx / d, nodes = 2 + Math.round(ps.h * 4), amp = (3 + 7 * ps.p) * Math.sin(wall * 5);
-    ctx.strokeStyle = `hsla(${(a.hue + b.hue) / 2}, 85%, 78%, ${0.1 + 0.55 * ps.p})`; ctx.lineWidth = 1 + ps.p;
-    ctx.beginPath(); let on = false;
-    for (let i = 0; i <= 30; i++) {
-      const t = i / 30, w = Math.sin(nodes * Math.PI * t) * amp, q = proj(a.x + dx * t + nx * w, a.y + dy * t + ny * w, 0.01);
-      if (q.z < 0.03) { on = false; continue; }
-      on ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y); on = true;
-    }
-    ctx.stroke();
   }
 }
 
@@ -2479,7 +2438,6 @@ function stepChemistry(dt) {
 }
 function drawChemistry() {
   ctx.lineWidth = 1.2; ctx.strokeStyle = 'rgba(230, 194, 127, 0.6)';
-  for (const p of particles) for (const o of p.bonds) if (p.id < o.id) strokeSurface(p.x, p.y, wrapD(o.x - p.x, MW), o.y - p.y, 4);
   ctx.font = '10px "IBM Plex Mono", monospace';
   for (const pa of particles) {
     const el = world.elements[pa.k], p = proj(pa.x, pa.y); if (p.z < 0.05) continue;
@@ -2497,8 +2455,9 @@ function drawChemistry() {
     const f = flashes[i], k = (wall - f.t) / 1.4;
     if (k > 1) { flashes.splice(i, 1); continue; }
     const p = proj(f.x, f.y); if (p.z < 0.05) continue;
-    ctx.strokeStyle = `hsla(${f.hue}, 100%, 85%, ${0.8 * (1 - k)})`; ctx.lineWidth = 2 * (1 - k) + 0.5;
-    ctx.beginPath(); ctx.arc(p.x, p.y, (6 + 50 * k) * p.k, 0, 6.283); ctx.stroke();
+    const r = (6 + 50 * k) * p.k, g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, r);
+    g.addColorStop(0, `hsla(${f.hue}, 100%, 85%, ${0.5 * (1 - k)})`); g.addColorStop(1, `hsla(${f.hue}, 100%, 70%, 0)`);
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, 6.283); ctx.fill();
   }
 }
 function renderChem() {
@@ -2506,12 +2465,12 @@ function renderChem() {
   const s = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
   $('chemcount').textContent = els.length ? `${s(els.length, 'material')} · ${s(comps.length, 'ware')}` : '';
   $('chem').textContent = els.length ? `${s(els.length, 'material')} · ${s(comps.length, 'ware')}` : 'none yet';
-  if (!els.length) { $('ptable').innerHTML = '<p class="empty">When two elves find harmony, they sing together and craft a new material from their genes. Its potency is the total lobe count of those genes, and that sets how many bonds it can make. Materials with free bonds join into enchanted wares.</p>'; $('comps').innerHTML = ''; return; }
+  if (!els.length) { $('ptable').innerHTML = '<p class="empty">When two robots find harmony, they sing together and craft a new material from their genes. Its potency is the total lobe count of those genes, and that sets how many bonds it can make. Materials with free bonds join into enchanted wares.</p>'; $('comps').innerHTML = ''; return; }
   $('ptable').innerHTML = els.map(el => `<div class="el"><div class="tile" style="--h:${el.hue}"><span class="z">${el.Z}</span><b>${esc(el.sym)}</b><span class="a">${el.A}</span></div><div><div class="nm">${esc(el.name)} <span class="cnt">×${el.count}</span></div><div class="props">potency ${el.Z} · weight ${el.A} · ${el.val ? `${el.val} bond${el.val === 1 ? '' : 's'}` : 'inert, complete'} · from ${el.parents.join(' + ')}</div><div class="gl">${el.genes.map(g => `<code>${esc(g)}</code>`).join(' · ') || 'no genes'}</div></div></div>`).join('');
   $('comps').innerHTML = comps.length ? `<ul class="comps">${comps.map(c => `<li><b>${c.formula}</b>${c.atoms} atoms · formed ${c.count}×</li>`).join('')}</ul>` : '';
 }
 
-/* ---------- village huts and elves ---------- */
+/* ---------- village huts and robots ---------- */
 function drawHut(b, x, y, s) {
   b.fillStyle = 'rgba(0, 0, 0, 0.35)'; b.beginPath(); b.ellipse(x, y + s * 0.55, s * 1.15, s * 0.26, 0, 0, 6.283); b.fill();
   b.fillStyle = '#2b2319';
@@ -2522,27 +2481,54 @@ function drawHut(b, x, y, s) {
   b.fillStyle = '#120d08';
   b.beginPath(); b.moveTo(x - s * 0.2, y + s * 0.52); b.lineTo(x - s * 0.2, y + s * 0.14); b.arc(x, y + s * 0.14, s * 0.2, Math.PI, 0); b.lineTo(x + s * 0.2, y + s * 0.52); b.closePath(); b.fill();
 }
-// an elf: hooded cloak, pale face, pointed ears, hair the colour of their aura
+// a little mechanoid: boxy head with a glowing visor and an antenna, a chest light for its heart,
+// stubby arms and walking legs. It bobs as it walks and looks the way it is heading.
 function drawElf(cx, cy, s, hue, glow, face) {
-  const dir = Math.cos(face || 0) >= 0 ? 1 : -1;
-  ctx.save(); ctx.translate(cx, cy + s * 0.08);
-  // cloak
-  ctx.fillStyle = `hsla(${hue}, 32%, 20%, 0.96)`;
-  ctx.strokeStyle = `hsla(${hue}, 70%, 74%, ${0.45 + 0.4 * Math.min(1, glow)})`; ctx.lineWidth = 1;
-  ctx.beginPath(); ctx.moveTo(-s * 0.16, -s * 0.1); ctx.quadraticCurveTo(-s * 0.34, s * 0.38, -s * 0.3, s * 0.52); ctx.quadraticCurveTo(0, s * 0.58, s * 0.3, s * 0.52); ctx.quadraticCurveTo(s * 0.34, s * 0.38, s * 0.16, -s * 0.1); ctx.closePath(); ctx.fill(); ctx.stroke();
-  // clasp
-  ctx.fillStyle = `hsla(${hue + 20}, 90%, 80%, 0.9)`; ctx.beginPath(); ctx.arc(0, -s * 0.06, s * 0.025, 0, 6.283); ctx.fill();
-  const hy = -s * 0.24, hr = s * 0.12;
-  // ears
-  ctx.fillStyle = 'hsl(38, 32%, 80%)';
-  for (const side of [-1, 1]) { ctx.beginPath(); ctx.moveTo(side * hr * 0.75, hy - hr * 0.05); ctx.lineTo(side * hr * 2.1, hy - hr * 1.05); ctx.lineTo(side * hr * 0.6, hy - hr * 0.5); ctx.closePath(); ctx.fill(); }
-  // face
-  ctx.beginPath(); ctx.arc(0, hy, hr, 0, 6.283); ctx.fill();
-  // hair, falling toward the back of the head
-  ctx.fillStyle = `hsla(${hue + 30}, 45%, 72%, 0.95)`;
-  ctx.beginPath(); ctx.arc(0, hy - hr * 0.15, hr * 1.02, Math.PI * 1.05, Math.PI * 1.95); ctx.quadraticCurveTo(-dir * hr * 1.4, hy + hr * 0.6, -dir * hr * 0.9, hy + hr * 1.6); ctx.lineTo(-dir * hr * 0.6, hy + hr * 0.2); ctx.closePath(); ctx.fill();
-  // eye, on the side it faces
-  ctx.fillStyle = `hsla(${hue}, 80%, 35%, 0.9)`; ctx.beginPath(); ctx.arc(dir * hr * 0.4, hy + hr * 0.05, hr * 0.13, 0, 6.283); ctx.fill();
+  const dir = Math.cos(face || 0) >= 0 ? 1 : -1, look = clamp(Math.cos(face || 0), -1, 1);
+  const step = reduce ? 0 : Math.sin(wall * 9 + cx * 0.05), bob = Math.abs(step) * s * 0.025;
+  const rr = (x, y, w, h, r) => { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); };
+  const metal = (l) => `hsl(${hue}, 10%, ${l}%)`;
+  ctx.save(); ctx.translate(cx, cy - bob);
+  // legs
+  ctx.fillStyle = metal(32);
+  for (const side of [-1, 1]) { const lift = side * step * s * 0.03; rr(side * 0.1 * s - 0.04 * s, 0.24 * s - lift, 0.08 * s, 0.24 * s, 0.02 * s); ctx.fill(); }
+  ctx.fillStyle = metal(24);
+  for (const side of [-1, 1]) { const lift = side * step * s * 0.03; rr(side * 0.1 * s - 0.06 * s, 0.45 * s - lift, 0.12 * s, 0.05 * s, 0.02 * s); ctx.fill(); }
+  // arms, swinging opposite the legs
+  ctx.fillStyle = metal(40);
+  for (const side of [-1, 1]) { ctx.save(); ctx.translate(side * 0.24 * s, -0.02 * s); ctx.rotate(-side * step * 0.35); rr(-0.035 * s, 0, 0.07 * s, 0.22 * s, 0.03 * s); ctx.fill(); ctx.restore(); }
+  // body
+  const bg = ctx.createLinearGradient(-0.2 * s, 0, 0.2 * s, 0);
+  bg.addColorStop(0, metal(68)); bg.addColorStop(0.6, metal(52)); bg.addColorStop(1, metal(38));
+  ctx.fillStyle = bg; rr(-0.2 * s, -0.1 * s, 0.4 * s, 0.36 * s, 0.06 * s); ctx.fill();
+  // chest light: its heart
+  ctx.globalCompositeOperation = 'lighter';
+  const hg = ctx.createRadialGradient(0, 0.08 * s, 0, 0, 0.08 * s, 0.13 * s);
+  hg.addColorStop(0, `hsla(${hue + 20}, 100%, 85%, ${0.5 + 0.4 * Math.min(1, glow)})`); hg.addColorStop(1, `hsla(${hue}, 100%, 60%, 0)`);
+  ctx.fillStyle = hg; ctx.beginPath(); ctx.arc(0, 0.08 * s, 0.13 * s, 0, 6.283); ctx.fill();
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.fillStyle = `hsl(${hue + 20}, 90%, ${60 + 25 * Math.min(1, glow)}%)`; ctx.beginPath(); ctx.arc(0, 0.08 * s, 0.045 * s, 0, 6.283); ctx.fill();
+  // neck and head
+  ctx.fillStyle = metal(30); ctx.fillRect(-0.04 * s, -0.15 * s, 0.08 * s, 0.06 * s);
+  const hgd = ctx.createLinearGradient(-0.18 * s, 0, 0.18 * s, 0);
+  hgd.addColorStop(0, metal(74)); hgd.addColorStop(0.6, metal(58)); hgd.addColorStop(1, metal(42));
+  ctx.fillStyle = hgd; rr(-0.18 * s, -0.43 * s, 0.36 * s, 0.29 * s, 0.07 * s); ctx.fill();
+  // visor, with an eye that looks where it is going
+  ctx.fillStyle = 'hsl(220, 25%, 10%)'; rr(-0.14 * s, -0.36 * s, 0.28 * s, 0.13 * s, 0.05 * s); ctx.fill();
+  ctx.globalCompositeOperation = 'lighter';
+  const ex = look * 0.06 * s;
+  for (const off of [-0.045, 0.045]) {
+    const eg = ctx.createRadialGradient(ex + off * s, -0.295 * s, 0, ex + off * s, -0.295 * s, 0.05 * s);
+    eg.addColorStop(0, `hsla(${hue}, 100%, 85%, 0.95)`); eg.addColorStop(1, `hsla(${hue}, 100%, 60%, 0)`);
+    ctx.fillStyle = eg; ctx.beginPath(); ctx.arc(ex + off * s, -0.295 * s, 0.05 * s, 0, 6.283); ctx.fill();
+  }
+  ctx.globalCompositeOperation = 'source-over';
+  // antenna, its tip blinking
+  ctx.fillStyle = metal(36); ctx.fillRect(-0.012 * s, -0.53 * s, 0.024 * s, 0.1 * s);
+  const blink = reduce ? 0.8 : 0.4 + 0.6 * Math.max(0, Math.sin(wall * 4 + cx));
+  ctx.fillStyle = `hsla(${hue + 40}, 100%, ${55 + 30 * blink}%, 1)`; ctx.beginPath(); ctx.arc(0, -0.55 * s, 0.035 * s, 0, 6.283); ctx.fill();
+  // a bolt on the side of the head, on the side it faces away from
+  ctx.fillStyle = metal(30); ctx.beginPath(); ctx.arc(-dir * 0.18 * s, -0.29 * s, 0.03 * s, 0, 6.283); ctx.fill();
   ctx.restore();
 }
 
@@ -2574,7 +2560,7 @@ function renderVillage() {
 }
 
 /* ---------- the council of Ithilwen: factions, elections, laws ---------- */
-// Every elf belongs to a faction, read from their own genes: the five personality traits and
+// Every robot belongs to a faction, read from their own genes: the five personality traits and
 // the strength of their rival and circle genes. Every term the village elects an Elder; the
 // Elder's faction puts its law in force, and the law changes how the village works. Approval
 // is tracked, and if it falls too low the council forces a new election.
@@ -2583,11 +2569,11 @@ const FACTIONS = [
   { id: 'old', name: 'The Old Song', hue: 42, creed: 'Honor the ancestors and keep the old songs.',
     law: { id: 'tithe', name: 'Grove Tithe', effect: 'Lore leaves fall twice as often. Challenges cost the challenger 0.1 vigor.' } },
   { id: 'bright', name: 'The Bright Path', hue: 195, creed: 'Seek new songs and bold questions.',
-    law: { id: 'inquiry', name: 'Open Questions', effect: 'Musings come faster, and elves try more experiments.' } },
-  { id: 'free', name: 'The Free Glade', hue: 8, creed: 'Let every elf rise by their own strength.',
-    law: { id: 'challenge', name: 'Right of Challenge', effect: 'Elves may challenge across a smaller gap in standing, and more often.' } },
-  { id: 'accord', name: 'The Accord', hue: 150, creed: 'Share the hearth. No elf left fading.',
-    law: { id: 'hearth', name: 'Common Hearth', effect: 'All elves slowly pool their vigor. Challenges are forbidden.' } },
+    law: { id: 'inquiry', name: 'Open Questions', effect: 'Musings come faster, and robots try more experiments.' } },
+  { id: 'free', name: 'The Free Glade', hue: 8, creed: 'Let every robot rise by their own strength.',
+    law: { id: 'challenge', name: 'Right of Challenge', effect: 'Robots may challenge across a smaller gap in standing, and more often.' } },
+  { id: 'accord', name: 'The Accord', hue: 150, creed: 'Share the hearth. No robot left fading.',
+    law: { id: 'hearth', name: 'Common Hearth', effect: 'All robots slowly pool their vigor. Challenges are forbidden.' } },
 ];
 const FACTION = Object.fromEntries(FACTIONS.map(f => [f.id, f]));
 function lawIs(id) { return world.politics?.law === id; }
@@ -2612,7 +2598,7 @@ function addHistory(text) { const P = politics(); P.history.unshift({ text }); P
 function affinity(v, k) {
   let a = ideoSim(v, k);
   if (v === k) a += 0.5;
-  if (k === leader) a += 0.2;                                  // elves are swayed by beauty
+  if (k === leader) a += 0.2;                                  // robots are swayed by beauty
   if (inHive(v) && inHive(k)) a += 0.3;                        // the Circle votes together
   const ps = pairs.get(Math.min(v.s.id, k.s.id) + ':' + Math.max(v.s.id, k.s.id));
   if (ps && ps.h > HARMONY) a += 0.15;
@@ -2673,15 +2659,6 @@ function stepPolitics(dt) {
   P.low = P.approval < 0.35 && TERM - P.timer > 30 ? P.low + dt : 0;
   if (P.low > 15) { addHistory(`The council lost confidence in ${elder.s.name} (approval ${(P.approval * 100).toFixed(0)}%).`); holdElection('after a vote of no confidence'); }
 }
-function drawVotes() {
-  for (const v of votes) {
-    const k = (wall - v.t) / VOTE_SHOW;
-    if (k > 1 || !pop.includes(v.from) || !pop.includes(v.to) || v.from === v.to) continue;
-    const f = factionOf(v.to), g = Math.min(1, k * 3);
-    ctx.strokeStyle = `hsla(${f.hue}, 80%, 72%, ${0.75 * (1 - k)})`; ctx.lineWidth = 1.6;
-    strokeSurface(v.from.x, v.from.y, wrapD(v.to.x - v.from.x, MW) * g, (v.to.y - v.from.y) * g, 14, 0.02);
-  }
-}
 function renderCouncil() {
   const P = politics(), elder = elderOf(), f = elder ? FACTION[P.faction] : null;
   const pct = x => `${Math.round(x * 100)}%`;
@@ -2699,16 +2676,14 @@ function renderCouncil() {
   const me = focus, mf = me.factionObj || factionOf(me);
   $('mypol').textContent = `${me.s.name} belongs to ${mf.name}${me.s.votedFor ? ` and last voted for ${me.s.votedFor}` : ''}${elder && me !== elder ? `. Approval of the Elder: ${pct(me.approval ?? 0)}.` : elder === me ? '. They are the Elder.' : '.'}`;
 }
-// a gold circlet for the Elder, drawn over the elf's head
+// the Elder wears a small gold crest on its head
 function drawCirclet(cx, cy, s) {
-  const hy = cy + s * 0.08 - s * 0.24 - s * 0.1;
-  ctx.strokeStyle = 'rgba(240, 205, 120, 0.95)'; ctx.lineWidth = 1.6;
-  ctx.beginPath(); ctx.ellipse(cx, hy, s * 0.15, s * 0.05, 0, Math.PI, 2 * Math.PI); ctx.stroke();
-  ctx.fillStyle = 'rgba(255, 225, 150, 0.95)';
-  for (const dx of [-0.1, 0, 0.1]) { ctx.beginPath(); ctx.arc(cx + dx * s, hy - s * 0.045 - (dx ? 0 : s * 0.02), s * 0.022, 0, 6.283); ctx.fill(); }
+  const step = reduce ? 0 : Math.sin(wall * 9 + cx * 0.05), bob = Math.abs(step) * s * 0.025, y = cy - bob - 0.45 * s;
+  ctx.fillStyle = 'rgba(240, 205, 120, 0.95)';
+  ctx.beginPath(); ctx.moveTo(cx - 0.13 * s, y); ctx.lineTo(cx - 0.13 * s, y - 0.06 * s); ctx.lineTo(cx - 0.065 * s, y - 0.025 * s); ctx.lineTo(cx, y - 0.09 * s); ctx.lineTo(cx + 0.065 * s, y - 0.025 * s); ctx.lineTo(cx + 0.13 * s, y - 0.06 * s); ctx.lineTo(cx + 0.13 * s, y); ctx.closePath(); ctx.fill();
 }
 
-/* ---------- choosing which elf to watch ---------- */
+/* ---------- choosing which robot to watch ---------- */
 let popSig = '';
 function renderPop() {
   const box = $('pop'), sig = pop.map(c => c.s.id).join(',') + '|' + focus.s.id + '|' + (leader?.s.id ?? '');
@@ -2736,9 +2711,9 @@ function switchFocus(c) {
 $('pop').addEventListener('click', e => { const b = e.target.closest('.chip'); if (b) switchFocus(pop.find(c => c.s.id === +b.dataset.id)); });
 
 
-/* ---------- the cursor: elves notice you ---------- */
-// Elves near the cursor turn to look at it. Curious ones (open, outgoing) come closer and sing;
-// anxious ones edge away. Hovering an elf shows who they are; clicking watches them.
+/* ---------- the cursor: robots notice you ---------- */
+// Robots near the cursor turn to look at it. Curious ones (open, outgoing) come closer and sing;
+// anxious ones edge away. Hovering a robot shows who they are; clicking watches them.
 let cursor = null, hovered = null, drag = null;
 const tip = $('tip');
 function elfAtScreen(sx, sy) {
@@ -2796,7 +2771,7 @@ function setFollow(on) { cam.follow = on; $('follow').setAttribute('aria-pressed
 $('zoomin').addEventListener('click', () => setZoom(cam.zoom * 1.3));
 $('zoomout').addEventListener('click', () => setZoom(cam.zoom / 1.3));
 $('follow').addEventListener('click', () => setFollow(!cam.follow));
-// the camera: follow the watched elf, or turn slowly on its own
+// the camera: follow the watched robot, or turn slowly on its own
 function stepCamera(dt) {
   if (!cam.ready && world.village) { cam.ready = true; cam.yaw = world.village.x / RW; cam.pitch = clamp((MH / 2 - world.village.y) / RW, -0.8, 0.8); }
   cam.idle += dt;
@@ -2906,81 +2881,30 @@ function drawBodyAt(c, cx, cy, R0, mean, first) {
   const glow = Math.max(clamp(E / 1.2, 0.08, 1.2), flare * 1.1);
   ctx.globalCompositeOperation = 'lighter';
   // halo
-  const haloR = Math.max(R0 * 0.6, mean * 2.6);
+  const haloR = Math.max(R0 * 0.6, mean * 2.4);
   const halo = ctx.createRadialGradient(cx, cy, 0, cx, cy, haloR);
-  halo.addColorStop(0, `hsla(${hue}, 70%, 55%, ${0.1 * glow})`);
-  halo.addColorStop(1, `hsla(${hue}, 80%, 40%, 0)`);
+  halo.addColorStop(0, `hsla(${hue}, 70%, 55%, ${0.1 * glow})`); halo.addColorStop(1, `hsla(${hue}, 80%, 40%, 0)`);
   ctx.fillStyle = halo; ctx.beginPath(); ctx.arc(cx, cy, haloR, 0, 6.283); ctx.fill();
-
-  // tendrils grow at its peaks, one more per generation
-  const peaks = [];
-  for (let i = 0; i < DRAW_N; i++) {
-    const a = pts[(i - 1 + DRAW_N) % DRAW_N], b = pts[i], n = pts[(i + 1) % DRAW_N];
-    if (b > a && b >= n && b > mean * 1.03) peaks.push(i);
-  }
-  peaks.sort((p, q) => pts[q] - pts[p]);
-  const nT = Math.min(peaks.length, state.gen, 14);
-  const tLen = R0 * (0.2 + 0.35 * Math.min(E, 1.4)) * (0.6 + 0.07 * Math.min(state.gen, 12));
-  ctx.lineCap = 'round';
-  for (let p = 0; p < nT; p++) {
-    const i = peaks[p], th = 2 * Math.PI * i / DRAW_N;
-    let x = cx + Math.cos(th) * pts[i], y = cy + Math.sin(th) * pts[i], ang = th;
-    const segs = 14, sl = tLen / segs;
-    for (let s = 0; s < segs; s++) {
-      ang += Math.sin(T * 1.6 + i * 0.37 + s * 0.45) * 0.09 + Math.sin(wall * 0.4 + p) * 0.012;
-      const nx = x + Math.cos(ang) * sl, ny = y + Math.sin(ang) * sl;
-      const k = 1 - s / segs;
-      ctx.strokeStyle = `hsla(${hue + s * 3}, 85%, ${light + 10}%, ${0.55 * k * glow})`;
-      ctx.lineWidth = 0.4 + 2.2 * k;
-      ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(nx, ny); ctx.stroke();
-      x = nx; y = ny;
-    }
-    ctx.fillStyle = `hsla(${hue + 40}, 90%, 80%, ${0.7 * glow})`;
-    ctx.beginPath(); ctx.arc(x, y, 1.6, 0, 6.283); ctx.fill();
-  }
-
-  // membrane: the edge of a mostly empty atom
+  // its song, drawn as a soft energy field with no outline
   ctx.beginPath();
-  for (let i = 0; i <= DRAW_N; i++) {
-    const j = i % DRAW_N, th = 2 * Math.PI * j / DRAW_N;
-    const x = cx + Math.cos(th) * pts[j], y = cy + Math.sin(th) * pts[j];
-    i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
-  }
+  for (let i = 0; i <= DRAW_N; i++) { const j = i % DRAW_N, th = 2 * Math.PI * j / DRAW_N; const x = cx + Math.cos(th) * pts[j], y = cy + Math.sin(th) * pts[j]; i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
   ctx.closePath();
-  const body = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(4, mean * 1.6));
-  body.addColorStop(0, `hsla(${hue + 30}, 85%, ${light}%, ${0.12 * glow})`);
-  body.addColorStop(0.7, `hsla(${hue}, 80%, ${light - 15}%, ${0.05 * glow})`);
-  body.addColorStop(1, `hsla(${hue - 20}, 80%, 35%, ${0.03 * glow})`);
-  ctx.fillStyle = body; ctx.fill();
-  ctx.shadowColor = `hsla(${hue}, 90%, 65%, ${0.9 * glow})`;
-  ctx.shadowBlur = 8 * glow;
-  ctx.strokeStyle = `hsla(${hue}, 90%, ${light + 15}%, ${0.75 * Math.max(glow, 0.25)})`;
-  ctx.lineWidth = 1.2; ctx.stroke();
+  const field = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(4, mean * 1.5));
+  field.addColorStop(0, `hsla(${hue + 30}, 85%, ${light}%, ${0.26 * glow})`);
+  field.addColorStop(0.65, `hsla(${hue}, 80%, ${light - 10}%, ${0.16 * glow})`);
+  field.addColorStop(1, `hsla(${hue - 20}, 80%, 40%, ${0.1 * glow})`);
+  ctx.shadowColor = `hsla(${hue}, 90%, 60%, ${0.8 * glow})`; ctx.shadowBlur = 10 * glow;
+  ctx.fillStyle = field; ctx.fill();
   ctx.shadowBlur = 0;
-
-  // genes it has eaten, reacting where they meet
+  // lore it carries, and wisps of light, one per gene
   drawCarried(c, cx, cy, mean);
-  // electrons, one per gene, on Coulomb orbits
   drawElectrons(cx, cy, mean, hue, glow, first);
-
-  // nucleus: tiny and dense, almost all of its mass, charge +Z
-  const beat = 1 + 0.12 * Math.sin(T * 3.1) * Math.min(E, 1.2);
-  const coreR = Math.max(1.5, mean * 0.02) * (0.8 + 0.3 * Math.min(E, 1.5)) * beat * (phase === 'condensing' ? 1 + flare : 1);
-  const cg = ctx.createRadialGradient(cx, cy, 0, cx, cy, coreR * 5);
-  cg.addColorStop(0, `hsla(${hue + 60}, 100%, 96%, ${Math.min(1, 0.6 + 0.6 * glow)})`);
-  cg.addColorStop(0.25, `hsla(${hue + 40}, 95%, 72%, ${0.5 * Math.max(glow, 0.4)})`);
-  cg.addColorStop(1, `hsla(${hue}, 90%, 50%, 0)`);
-  ctx.fillStyle = cg; ctx.beginPath(); ctx.arc(cx, cy, coreR * 5, 0, 6.283); ctx.fill();
-
-  // the elf, over their aura; their heart-light shows at the chest
+  // the robot itself
   ctx.globalCompositeOperation = 'source-over';
-  const elfS = R0 * 1.2 * (phase === 'condensing' ? 1 - Math.min(1, phaseT / CONDENSE_S) : 1);
-  drawElf(cx, cy, elfS, hue, glow, c.phi);
-  if (world.politics?.elder === state.id) drawCirclet(cx, cy, elfS);
+  const botS = R0 * 1.2 * (phase === 'condensing' ? 1 - Math.min(1, phaseT / CONDENSE_S) : 1);
+  drawElf(cx, cy, botS, hue, glow, c.phi);
+  if (world.politics?.elder === state.id) drawCirclet(cx, cy, botS);
   ctx.globalCompositeOperation = 'lighter';
-  { const hr = ctx.createRadialGradient(cx, cy + R0 * 0.07, 0, cx, cy + R0 * 0.07, R0 * 0.16);
-    hr.addColorStop(0, `hsla(${hue + 20}, 100%, 85%, ${0.5 + 0.4 * Math.min(1, glow)})`); hr.addColorStop(1, `hsla(${hue}, 90%, 60%, 0)`);
-    ctx.fillStyle = hr; ctx.beginPath(); ctx.arc(cx, cy + R0 * 0.07, R0 * 0.16, 0, 6.283); ctx.fill(); }
   // condensing: everything it was streams into one point
   if (phase === 'condensing') {
     const k = Math.min(1, phaseT / CONDENSE_S);
@@ -2990,33 +2914,30 @@ function drawBodyAt(c, cx, cy, R0, mean, first) {
       ctx.beginPath(); ctx.arc(cx + Math.cos(a) * r, cy + Math.sin(a) * r, 1.3, 0, 6.283); ctx.fill();
     }
     const sr = 2 + 7 * k, sg = ctx.createRadialGradient(cx, cy, 0, cx, cy, sr * 4);
-    sg.addColorStop(0, `hsla(${hue + 50}, 100%, 95%, ${0.4 + 0.6 * k})`);
-    sg.addColorStop(1, `hsla(${hue}, 90%, 60%, 0)`);
+    sg.addColorStop(0, `hsla(${hue + 50}, 100%, 95%, ${0.4 + 0.6 * k})`); sg.addColorStop(1, `hsla(${hue}, 90%, 60%, 0)`);
     ctx.fillStyle = sg; ctx.beginPath(); ctx.arc(cx, cy, sr * 4, 0, 6.283); ctx.fill();
   }
-  // the ring of a division
+  // a burst of light when a new robot is built
   if (wall - c.flash < 1.3) {
-    const k = (wall - c.flash) / 1.3;
-    ctx.strokeStyle = `hsla(${hue + 40}, 100%, 85%, ${0.8 * (1 - k)})`; ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.arc(cx, cy, mean * (1 + 1.2 * k), 0, 6.283); ctx.stroke();
+    const k = (wall - c.flash) / 1.3, g = ctx.createRadialGradient(cx, cy, 0, cx, cy, mean * (1 + 1.4 * k));
+    g.addColorStop(0, `hsla(${hue + 40}, 100%, 85%, ${0.45 * (1 - k)})`); g.addColorStop(1, `hsla(${hue}, 100%, 70%, 0)`);
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, mean * (1 + 1.4 * k), 0, 6.283); ctx.fill();
   }
   ctx.globalCompositeOperation = 'source-over';
-
-  // its name, and brackets around the one you are watching
+  // its name; the one you are watching gets a glowing pad under its feet
   const me = c === focus;
-  ctx.font = '10px "IBM Plex Mono", monospace'; ctx.textAlign = 'center';
-  ctx.fillStyle = `hsla(${hue}, 60%, 82%, ${me ? 0.9 : 0.45})`;
-  ctx.fillText(state.name, cx, cy + mean * 1.25 + 16);
-  if (c.mood && c.mood !== 'watching') { ctx.font = '13px "Cormorant Garamond", serif'; ctx.textAlign = 'center'; ctx.fillStyle = c.mood === 'curious' ? 'rgba(255, 224, 150, 0.95)' : 'rgba(200, 210, 230, 0.8)'; ctx.fillText(c.mood === 'curious' ? '♪' : '…', cx + Math.sin(wall * 3) * 2, cy - R0 * 0.75 - 4); ctx.font = '10px "IBM Plex Mono", monospace'; ctx.textAlign = 'start'; }
-  if (c.factionObj) { ctx.fillStyle = `hsla(${c.factionObj.hue}, 75%, 65%, ${me ? 0.95 : 0.55})`; ctx.beginPath(); ctx.arc(cx - ctx.measureText(state.name).width / 2 - 6, cy + mean * 1.25 + 12.5, 2.5, 0, 6.283); ctx.fill(); }
-  ctx.textAlign = 'start';
   if (me) {
-    const s = mean * 1.3 + 10, l = Math.max(6, s * 0.22);
-    ctx.strokeStyle = `hsla(${hue}, 80%, 80%, 0.55)`; ctx.lineWidth = 1;
-    ctx.beginPath();
-    for (const [sx, sy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) { ctx.moveTo(cx + sx * s, cy + sy * (s - l)); ctx.lineTo(cx + sx * s, cy + sy * s); ctx.lineTo(cx + sx * (s - l), cy + sy * s); }
-    ctx.stroke();
+    const g = ctx.createRadialGradient(cx, cy + botS * 0.52, 0, cx, cy + botS * 0.52, botS * 0.45);
+    g.addColorStop(0, `hsla(${hue}, 90%, 75%, 0.55)`); g.addColorStop(1, `hsla(${hue}, 90%, 60%, 0)`);
+    ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(cx, cy + botS * 0.52, botS * 0.45, botS * 0.14, 0, 0, 6.283); ctx.fill();
   }
+  ctx.font = '10px "IBM Plex Mono", monospace'; ctx.textAlign = 'center';
+  ctx.fillStyle = `hsla(${hue}, 60%, 82%, ${me ? 0.95 : 0.5})`;
+  const ny = cy + Math.max(mean * 1.2, botS * 0.6) + 12;
+  ctx.fillText(state.name, cx, ny);
+  if (c.mood && c.mood !== 'watching') { ctx.font = '13px "Cormorant Garamond", serif'; ctx.fillStyle = c.mood === 'curious' ? 'rgba(255, 224, 150, 0.95)' : 'rgba(200, 210, 230, 0.8)'; ctx.fillText(c.mood === 'curious' ? '♪' : '…', cx + Math.sin(wall * 3) * 2, cy - botS * 0.62 - 4); ctx.font = '10px "IBM Plex Mono", monospace'; }
+  if (c.factionObj) { ctx.fillStyle = `hsla(${c.factionObj.hue}, 75%, 65%, ${me ? 0.95 : 0.55})`; ctx.beginPath(); ctx.arc(cx - ctx.measureText(state.name).width / 2 - 6, ny - 3.5, 2.5, 0, 6.283); ctx.fill(); }
+  ctx.textAlign = 'start';
 }
 function frame(now) {
   const dt = Math.min(0.05, (now - last) / 1000); last = now; wall += dt;
@@ -3042,16 +2963,11 @@ function frame(now) {
   drawVillage();
   drawSeeds();
   drawFood();
-  ctx.globalCompositeOperation = 'lighter';
-  drawHive();
-  drawHarmony();
-  ctx.globalCompositeOperation = 'source-over';
   drawChase();
   drawChemistry();
-  // nearer elves are drawn last
+  // nearer robots are drawn last
   for (const c of pop.slice().sort((a, b) => proj(a.x, a.y).z - proj(b.x, b.y).z)) { enter(c); drawCreature(c); leave(c); }
   drawCrown();
-  drawVotes();
 
   enter(focus);
   if (uiDirty) { uiDirty = false; refreshFocusUI(); }
