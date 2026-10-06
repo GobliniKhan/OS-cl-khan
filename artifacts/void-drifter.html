@@ -92,6 +92,27 @@ h1 { margin: 0; font-family: var(--display); font-weight: 500; font-size: 34px; 
 .by.you { color: var(--ink); }
 .by.self, .by.dormant { color: var(--live); }
 .lineage .empty { margin: 0; color: var(--dim); font-size: 11px; line-height: 1.5; }
+.pop { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+.chip { --h: 230; display: inline-flex; align-items: center; gap: 7px; font: 11px var(--mono); color: var(--dim); background: var(--panel); border: 1px solid var(--faint); border-radius: 999px; padding: 4px 10px 4px 8px; cursor: pointer; }
+.chip .dot { width: 7px; height: 7px; border-radius: 50%; background: hsl(var(--h) 80% 72%); }
+.chip .eb { width: 28px; height: 3px; background: var(--faint); border-radius: 2px; overflow: hidden; }
+.chip .eb i { display: block; height: 100%; background: hsl(var(--h) 80% 72%); }
+.chip.on { color: var(--ink); border-color: hsl(var(--h) 80% 72% / 0.6); }
+.chip:focus-visible { outline: 1px solid var(--live); outline-offset: 2px; }
+.who { font: 500 11px var(--mono); font-style: normal; color: var(--dim); letter-spacing: 0.08em; margin-right: 8px; vertical-align: 3px; }
+#ptable { display: grid; gap: 10px; }
+.el { display: grid; grid-template-columns: 50px minmax(0, 1fr); gap: 10px; align-items: start; }
+.tile { --h: 230; position: relative; width: 50px; height: 50px; border: 1px solid hsl(var(--h) 70% 70% / 0.5); border-radius: 3px; display: grid; place-items: center; background: hsl(var(--h) 60% 50% / 0.08); }
+.tile b { font: 500 22px var(--display); color: hsl(var(--h) 80% 84%); }
+.tile .z { position: absolute; top: 2px; left: 4px; font-size: 9px; color: var(--dim); }
+.tile .a { position: absolute; bottom: 2px; right: 4px; font-size: 9px; color: var(--dim); }
+.el .nm { font-size: 11.5px; }
+.el .cnt { color: var(--dim); font-size: 10px; }
+.el .props, .el .gl { font-size: 10.5px; color: var(--dim); line-height: 1.45; }
+.el .gl code { color: var(--ink); overflow-wrap: anywhere; }
+.comps { list-style: none; margin: 0; padding: 10px 0 0; border-top: 1px solid var(--faint); display: grid; gap: 4px; font-size: 10.5px; color: var(--dim); }
+.comps b { color: var(--ink); font-weight: 500; font-size: 13px; margin-right: 8px; }
+.chemistry .empty { margin: 0; color: var(--dim); font-size: 11px; line-height: 1.5; }
 .instinct { display: grid; gap: 4px; padding-top: 10px; border-top: 1px solid var(--faint); font-size: 10.5px; color: var(--dim); }
 .instinct .ttl { letter-spacing: 0.14em; text-transform: uppercase; font-size: 10px; margin-bottom: 2px; }
 .inst { display: grid; grid-template-columns: 1fr 70px; gap: 8px; align-items: center; }
@@ -115,7 +136,7 @@ form.eq { width: min(780px, 100%); background: var(--panel); backdrop-filter: bl
 @media (max-width: 720px) {
   .top { flex-direction: column; justify-content: flex-start; gap: 10px; overflow-y: auto; pointer-events: auto; }
   .col { width: 100%; max-height: none; overflow: visible; gap: 10px; }
-  .journal, .instinct, .lineage, .vitals .wide { display: none; }
+  .journal, .instinct, .lineage, .chemistry, .vitals .wide { display: none; }
   .genome { padding: 10px 12px; gap: 8px; }
   #genes { display: flex; gap: 14px; overflow-x: auto; scrollbar-width: none; }
   .gene { min-width: 250px; }
@@ -142,17 +163,18 @@ form.eq { width: min(780px, 100%); background: var(--panel); backdrop-filter: bl
   <div class="top">
     <div class="col left">
       <div class="id">
-        <div class="eyebrow">Specimen <span id="spec">VD-01</span> · deep field</div>
+        <div class="eyebrow">Watching <span id="spec">VD-01</span> · closed void</div>
         <h1>Void Drifter</h1>
-        <p class="lede">Built like Rutherford’s atom: a tiny, dense nucleus with one electron per gene orbiting through empty space. Orbiting electrons radiate and spiral inward, and only its own energy holds them out. Its body is the equation below, the only way to reach it. It learns from your tries and rewrites itself. When its atom collapses, it condenses into a gene its successors learn from.</p>
+        <p class="lede">A closed void whose edges loop back on themselves. Its creatures are built like Rutherford’s atom: a tiny nucleus, with one electron per gene orbiting through empty space. Electrons radiate and spiral inward, and only a creature’s own energy holds them out. At full energy a creature splits in two. Two creatures in harmony fuse a new element from their genes, and elements bond into compounds. The equation below is the only way to reach the creature you are watching.</p>
         <dl class="vitals">
           <dt>Gen</dt><dd id="gen">0</dd>
           <dt class="wide">Rewrites</dt><dd class="wide" id="rw">0</dd>
           <dt class="wide">Memory</dt><dd class="wide" id="mem">no tries yet</dd>
           <dt class="wide">Lineage</dt><dd class="wide" id="lin">none yet</dd>
+          <dt>Population</dt><dd id="popn">1 of 6</dd>
+          <dt>Chemistry</dt><dd id="chem">none yet</dd>
           <dt>Nucleus</dt><dd id="nuc">+1</dd>
           <dt>Electrons</dt><dd id="orb">1/1 in orbit</dd>
-          <dt class="wide">α foil</dt><dd class="wide" id="foil">0 through</dd>
           <dt>State</dt><dd id="mood">Steady</dd>
           <dt>Energy</dt><dd><span id="energy">0.80</span><div class="ebar"><i id="ebar"></i></div></dd>
         </dl>
@@ -176,14 +198,20 @@ form.eq { width: min(780px, 100%); background: var(--panel); backdrop-filter: bl
         <div id="genes"></div>
         <div class="instinct" id="instinct"></div>
       </section>
+      <section class="panel chemistry" aria-label="Elements and compounds">
+        <h2><span>Elements · compounds</span><span id="chemcount"></span></h2>
+        <div id="ptable"></div>
+        <div id="comps"></div>
+      </section>
     </div>
   </div>
   <div class="bottom">
+    <div class="pop" id="pop" aria-label="Creatures in the void"></div>
     <p class="signal" id="signal" aria-live="polite"></p>
     <p class="hint" id="hint"></p>
     <form class="eq" id="form" autocomplete="off">
       <div class="line">
-        <label for="eq">r(θ,t) =</label>
+        <label for="eq"><span class="who" id="eqname">VD-01</span>r(θ,t) =</label>
         <input id="eq" type="text" spellcheck="false" autocapitalize="off" autocorrect="off" aria-describedby="status">
       </div>
       <div class="meta">
@@ -389,35 +417,6 @@ const HINTS = {
   reach: 'Raise a term to a power, or use abs(), to sharpen peaks: 0.6 abs(sin(3θ))^4.',
 };
 
-let state = {
-  eq: '1 + 0.3 sin(3θ + t)·E + 0.05 sin(11θ - 2t)',
-  gen: 0, E: 0.8, rewrites: 0, tries: 0,
-  memory: [], origins: {}, instinct: {},
-  needs: [
-    { key: 'mass', target: 1.15, w: 1 },
-    { key: 'symmetry', target: 5, w: 1.3 },
-    { key: 'pulse', target: 0.45, w: 1 },
-    { key: 'intricacy', target: 4, w: 0.8 },
-  ],
-  log: [{ g: 0, text: 'Found drifting. <b>Symmetry 5</b> is its first want.' }],
-};
-const SAVE_KEY = 'void-drifter-v1';
-try { const s = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); if (s && s.eq && Array.isArray(s.needs)) state = s; } catch (_) {}
-// the world outlives each creature: it holds the genes they condense into
-const WORLD_KEY = 'void-drifter-world';
-let world = { specimen: 1, seeds: [] };
-try { const w = JSON.parse(localStorage.getItem(WORLD_KEY) || 'null'); if (w && Array.isArray(w.seeds)) world = w; } catch (_) {}
-const hotData = window.claude?.hot?.data;
-if (hotData && hotData.state && hotData.state.eq) { state = hotData.state; if (hotData.world) world = hotData.world; }
-else if (hotData && hotData.eq) state = hotData;
-function save() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); localStorage.setItem(WORLD_KEY, JSON.stringify(world)); } catch (_) {} }
-for (const [k, d] of [['memory', []], ['origins', {}], ['instinct', {}], ['tries', 0], ['rewrites', 0], ['history', null]]) if (state[k] == null) state[k] = d ?? [{ eq: state.eq, by: 'origin', g: state.gen }];
-window.claude?.hot?.snapshot?.(() => ({ state, world }));
-
-let cur, curAst, committedF, committedAst, prev = null, morph = 1;
-{ let c; try { c = compile(state.eq); } catch (_) { state.eq = '1 + 0.3 sin(3θ + t)·E'; c = compile(state.eq); } cur = committedF = c.f; curAst = committedAst = c.ast; }
-let committedEq = state.eq;
-
 /* ---------- canvas ---------- */
 const cv = $('void'), ctx = cv.getContext('2d');
 let W = 0, H = 0, DPR = 1;
@@ -453,7 +452,6 @@ function R(theta, t) {
   if (prev && morph < 1) { const b = safe(prev(env)); a = lerp(b, a, ease(morph)); }
   return a;
 }
-const traits = { mass: 1, symmetry: 0, pulse: 0, intricacy: 0, reach: 1 };
 const raw = { mass: 1, symmetry: 0, pulse: 0, intricacy: 0, reach: 1 };
 // measure any body: sample(theta, t) -> radius
 function measure(sample, T) {
@@ -611,7 +609,7 @@ function score(f, size) {
   return fitOf(acc) - 0.003 * size;
 }
 const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-let rewriteClock = 0, lastKeyAt = -1e9;
+let lastKeyAt = -1e9;
 function selfRewrite(dormant) {
   const size = nodes(curAst).length;
   const base = score(cur, size);
@@ -643,12 +641,11 @@ function selfRewrite(dormant) {
     : { k: 'self', label: g && g.whole ? `self · from ${g.anc || '#' + g.try}` : 'self' });
   state.rewrites = (state.rewrites || 0) + 1;
   recordEq(dormant ? 'dormant' : 'self');
-  input.value = best.src;
-  input.classList.remove('rewritten'); void input.offsetWidth; input.classList.add('rewritten');
+  if (isFocus()) { input.value = best.src; input.classList.remove('rewritten'); void input.offsetWidth; input.classList.add('rewritten'); }
   const tag = dormant ? '<i>Rewrote itself while dormant:</i>' : '<i>Rewrote itself:</i>';
   const body = esc(best.what).replace(/(your try #\d+, which failed)/, '<em>$1</em>').replace(/(ancestor VD-\d+)/, '<span class="anc">$1</span>');
   addLog(`${tag} ${body}${improves ? '.' : ', as a blind experiment.'}`);
-  setStatus(`It rewrote its own equation${dormant ? ' in its sleep' : ''}: ${best.what}.`);
+  if (isFocus()) setStatus(`It rewrote its own equation${dormant ? ' in its sleep' : ''}: ${best.what}.`);
   save(); buildNeeds();
 }
 /* ---------- memory: every equation you try ---------- */
@@ -857,7 +854,6 @@ function evolve() {
   state.E = Math.min(1.7, state.E + 0.06 * fitness());
   save(); buildNeeds();
 }
-let contentFor = 0;
 function restless(dt, fit) {
   contentFor = fit > 0.8 ? contentFor + dt : 0;
   if (contentFor > 22) {
@@ -870,9 +866,89 @@ function restless(dt, fit) {
   }
 }
 
+/* ---------- the population ---------- */
+// Every creature carries its own state. The simulation steps through them one at a time:
+// enter(c) loads a creature into the working variables the rest of this script uses, and
+// leave(c) stores them back. Between frames the creature you are watching is entered, so the
+// equation field always edits that one.
+const MAX_POP = 6;
+const specName = n => 'VD-' + String(n).padStart(2, '0');
+let state, cur, curAst, committedF, committedAst, committedEq, prev = null, morph = 1;
+let traits, electrons, atom, T = 0, rewriteClock = 0, contentFor = 0, collapseFor = 0, phase = 'alive', phaseT = 0;
+let active = null, focus = null;
+const pop = [];
+const isFocus = () => active === focus;
+function enter(c) {
+  active = c; state = c.s; cur = c.cur; curAst = c.curAst; committedF = c.committedF; committedAst = c.committedAst; committedEq = c.committedEq;
+  prev = c.prev; morph = c.morph; traits = c.traits; electrons = c.electrons; atom = c.atom; T = c.T;
+  rewriteClock = c.rewriteClock; contentFor = c.contentFor; collapseFor = c.collapseFor; phase = c.phase; phaseT = c.phaseT;
+  env.E = state.E; env.g = state.gen; env.Z = atom.Z;
+}
+function leave(c) {
+  c.cur = cur; c.curAst = curAst; c.committedF = committedF; c.committedAst = committedAst; c.committedEq = committedEq;
+  c.prev = prev; c.morph = morph; c.T = T; c.rewriteClock = rewriteClock; c.contentFor = contentFor; c.collapseFor = collapseFor;
+  c.phase = phase; c.phaseT = phaseT;
+}
+function makeCreature(s, at = {}) {
+  let k; try { k = compile(s.eq); } catch (_) { s.eq = '1 + 0.3 sin(3θ + t)'; k = compile(s.eq); }
+  const p = s.pos || {};
+  return {
+    s, cur: k.f, curAst: k.ast, committedF: k.f, committedAst: k.ast, committedEq: s.eq, prev: null, morph: 1,
+    traits: { mass: 1, symmetry: 0, pulse: 0, intricacy: 0, reach: 1, ...(at.traits || {}) },
+    electrons: [], atom: { Z: 1, bound: 1, avgR: 1 },
+    T: Math.random() * 20, rewriteClock: Math.random() * 6, contentFor: 0, collapseFor: 0, phase: at.phase || 'alive', phaseT: 0,
+    x: at.x ?? (p.x != null ? p.x * W : Math.random() * W), y: at.y ?? (p.y != null ? p.y * H : Math.random() * H),
+    vx: at.vx ?? 0, vy: at.vy ?? 0, wander: Math.random() * 6.283,
+    hue: 230, fit: 0.5, radius: 40, bodyScale: 1, flare: 0, maxFor: 0, flash: -9, harmony: null,
+  };
+}
+const FIRST = {
+  eq: '1 + 0.3 sin(3θ + t)·E + 0.05 sin(11θ - 2t)',
+  gen: 0, E: 0.8, rewrites: 0, tries: 0, memory: [], origins: {}, instinct: {},
+  needs: [
+    { key: 'mass', target: 1.15, w: 1 },
+    { key: 'symmetry', target: 5, w: 1.3 },
+    { key: 'pulse', target: 0.45, w: 1 },
+    { key: 'intricacy', target: 4, w: 0.8 },
+  ],
+  log: [{ g: 0, text: 'Found drifting. <b>Symmetry 5</b> is its first want.' }],
+};
+// load the population, or the single creature saved before populations existed
+const SAVE_KEY = 'void-drifter-v2', OLD_KEY = 'void-drifter-v1', WORLD_KEY = 'void-drifter-world';
+let world = { seeds: [], elements: {}, compounds: {}, particles: [] };
+let saved = null;
+try { saved = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); } catch (_) {}
+try { const w = JSON.parse(localStorage.getItem(WORLD_KEY) || 'null'); if (w && Array.isArray(w.seeds)) world = Object.assign(world, w); } catch (_) {}
+const hotData = window.claude?.hot?.data;
+if (hotData && hotData.v2) { saved = hotData.v2; if (hotData.world) world = Object.assign(world, hotData.world); }
+let states = saved && Array.isArray(saved.creatures) && saved.creatures.length ? saved.creatures : null;
+if (!states) {
+  let old = null; try { old = JSON.parse(localStorage.getItem(OLD_KEY) || 'null'); } catch (_) {}
+  states = [old && old.eq && Array.isArray(old.needs) ? old : FIRST];
+}
+if (world.next == null) world.next = world.specimen || 1; // before populations, `specimen` was the living creature's number
+for (const s of states) {
+  for (const [k, d] of [['memory', []], ['origins', {}], ['instinct', {}], ['tries', 0], ['rewrites', 0], ['log', []]]) if (s[k] == null) s[k] = d;
+  if (s.history == null) s.history = [{ eq: s.eq, by: 'origin', g: s.gen }];
+  if (s.id == null) { s.id = world.next++; s.name = specName(s.id); }
+  pop.push(makeCreature(s));
+}
+focus = pop.find(c => c.s.id === saved?.focus) || pop[0];
+enter(focus);
+function save() {
+  try {
+    for (const c of pop) { c.s.pos = { x: +(c.x / W).toFixed(4), y: +(c.y / H).toFixed(4) }; c.s.orbits = c.electrons.map(e => +e.r.toFixed(3)); }
+    world.particles = particles.map(p => ({ k: p.k, x: +(p.x / W).toFixed(4), y: +(p.y / H).toFixed(4), b: p.bonds.map(o => particles.indexOf(o)) }));
+    localStorage.setItem(SAVE_KEY, JSON.stringify({ creatures: pop.map(c => c.s), focus: focus.s.id }));
+    localStorage.setItem(WORLD_KEY, JSON.stringify(world));
+  } catch (_) {}
+}
+window.claude?.hot?.snapshot?.(() => ({ v2: { creatures: pop.map(c => c.s), focus: focus.s.id }, world }));
+
 /* ---------- panel ---------- */
 const needEls = {};
 function buildNeeds() {
+  if (!isFocus()) return;
   const list = $('needlist'); list.innerHTML = '';
   for (const n of state.needs) {
     const d = NEED_DEFS[n.key];
@@ -909,7 +985,7 @@ function updatePanel(fit) {
   $('fit').textContent = 'fit ' + fit.toFixed(2);
   $('nuc').textContent = `+${atom.Z} · mass ${traits.mass.toFixed(2)}`;
   $('orb').textContent = `${atom.bound}/${atom.Z} in orbit · r ${atom.avgR.toFixed(2)}`;
-  $('foil').textContent = `${foil.passed} through · ${foil.deflected} >10° · ${foil.back} >90°`;
+  $('popn').textContent = `${pop.length} of ${MAX_POP}`;
   const E = state.E;
   $('energy').textContent = E.toFixed(2);
   $('ebar').style.width = (E / 1.7 * 100).toFixed(1) + '%';
@@ -924,10 +1000,12 @@ function updatePanel(fit) {
     key = urgent.key;
   }
   if (phase === 'alive' && atom.avgR < 0.55 && E >= 0.15) { sig = 'Its electrons radiate as they orbit and are spiraling toward the nucleus. It needs energy to hold them out.'; key = 'spiral'; }
+  if (phase === 'alive' && focus.harmony) { sig = `It has found harmony with ${focus.harmony.with.s.name}. Together they are fusing an element (${Math.round(focus.harmony.p * 100)}%).`; key = 'harmony'; }
+  else if (phase === 'alive' && E >= 1.65) { sig = pop.length < MAX_POP ? 'It is at full energy and about to split in two.' : 'It is at full energy, but the void is full, so it cannot split.'; key = 'split'; }
   if (phase === 'condensing') { sig = `Its orbits have collapsed into the nucleus. It is condensing into a gene that holds all ${state.history.length} of its equations.`; key = 'condense'; }
-  else if (phase === 'birth') { sig = 'A blank creature forms in the void and takes over.'; key = 'birth'; }
+  else if (phase === 'birth') { sig = 'A blank creature forms in the void.'; key = 'birth'; }
   $('signal').textContent = sig;
-  if (key !== lastSignalKey) { lastSignalKey = key; $('hint').textContent = HINTS[key] || (key === 'birth' ? 'Its equation starts as a plain 1. Give it its first form.' : key === 'condense' ? 'Its gene is listed under Lineage.' : key === 'spiral' ? 'A form that meets its needs gives it the energy to lift its electrons back out.' : key === 'dormant' ? 'If every electron falls into the nucleus, the atom collapses and it condenses into a gene.' : 'Change any term to give it something new.'); }
+  if (key !== lastSignalKey) { lastSignalKey = key; $('hint').textContent = HINTS[key] || (key === 'birth' ? 'Its equation starts as a plain 1. Give it its first form.' : key === 'condense' ? 'Its gene is listed under Lineage.' : key === 'harmony' ? 'Creatures harmonize when their lobe counts form a simple ratio, like 1:1 or 2:1, and they move at a similar pulse.' : key === 'split' ? 'At full energy a creature divides, and its daughter’s genes vary a little.' : key === 'spiral' ? 'A form that meets its needs gives it the energy to lift its electrons back out.' : key === 'dormant' ? 'If every electron falls into the nucleus, the atom collapses and it condenses into a gene.' : 'Change any term to give it something new.'); }
 }
 
 /* ---------- the only interface: the equation ---------- */
@@ -975,12 +1053,11 @@ input.addEventListener('input', () => {
 });
 $('form').addEventListener('submit', e => { e.preventDefault(); clearTimeout(parseTimer); if (phase === 'alive') commit(); });
 
-/* ---------- life cycle: at zero energy it condenses into a gene ---------- */
+/* ---------- life cycle ---------- */
 const CONDENSE_S = 4, BIRTH_S = 3;
-let phase = 'alive', phaseT = 0, lastHue = 230, lastCx = 0, lastCy = 0;
 const seedAnim = new Map(), seedFns = new Map();
-const specName = n => 'VD-' + String(n).padStart(2, '0');
-const BY = { you: 'you', self: 'self', dormant: 'asleep', birth: 'birth', origin: 'origin' };
+const BY = { you: 'you', self: 'self', dormant: 'asleep', birth: 'birth', origin: 'origin', split: 'split' };
+let uiDirty = false;
 function recordEq(by) {
   state.history.push({ eq: state.eq, by, g: state.gen });
   if (state.history.length > 300) state.history.splice(1, state.history.length - 300);
@@ -996,7 +1073,9 @@ function inheritInstinct() {
   return out;
 }
 function blankState() {
+  const id = world.next++;
   return {
+    id, name: specName(id),
     eq: '1', gen: 0, E: 0.8, rewrites: 0, tries: 0, memory: [], origins: { 1: { k: 'self', label: 'blank start' } }, instinct: inheritInstinct(),
     history: [{ eq: '1', by: 'birth', g: 0 }],
     needs: [
@@ -1008,49 +1087,81 @@ function blankState() {
     log: [],
   };
 }
-function adopt() {
-  const c = compile(state.eq);
-  cur = committedF = c.f; curAst = committedAst = c.ast; committedEq = state.eq; prev = null; morph = 1;
-  input.value = state.eq; genomeEq = null; glyphs = []; contentFor = 0; rewriteClock = 0;
-  electrons.length = 0; syncElectrons();
-  analyze(T, 1);
-  buildNeeds();
-  $('spec').textContent = specName(world.specimen);
-}
+// world events, whichever creature you are watching
+function announce(text) { status.textContent = text; status.classList.remove('err'); input.classList.remove('bad'); }
 function startCondense() {
   phase = 'condensing'; phaseT = 0;
-  clearTimeout(parseTimer); clearTimeout(commitTimer);
-  input.readOnly = true;
-  setStatus(`Its energy is gone. ${specName(world.specimen)} is condensing into a gene.`);
+  if (isFocus()) { clearTimeout(parseTimer); clearTimeout(commitTimer); input.readOnly = true; }
+  announce(`${state.name}'s atom has collapsed. It is condensing into a gene.`);
 }
-function finishCondense() {
-  const n = world.specimen;
+// runs between creatures, outside enter/leave
+function finishCondense(c) {
+  const s = c.s;
   const seed = {
-    id: n, name: specName(n), eq: state.eq, equations: state.history.slice(), gens: state.gen,
-    rewrites: state.rewrites, tries: state.tries, hue: Math.round(lastHue), instinct: { ...state.instinct },
+    id: s.id, name: s.name, eq: s.eq, equations: s.history.slice(), gens: s.gen,
+    rewrites: s.rewrites, tries: s.tries, hue: Math.round(c.hue), instinct: { ...s.instinct },
     a: Math.random() * 6.283, d: 0.8 + Math.random() * 0.5, died: Date.now(),
   };
-  world.seeds.push(seed); world.specimen++;
-  seedAnim.set(seed.id, { t0: wall, sx: lastCx, sy: lastCy });
-  state = blankState();
-  const ancN = world.seeds.reduce((t, sd) => t + ancestralGenes(sd).length, 0);
-  state.log = [{ g: 0, text: `Formed blank in the void after <b>${seed.name}</b> condensed into a gene of ${seed.equations.length} equation${seed.equations.length === 1 ? '' : 's'}. It can learn from <span class="anc">${ancN} ancestral genes</span>${Object.keys(state.instinct).length ? ' and starts with instincts inherited from them' : ''}.` }];
-  adopt();
-  phase = 'birth'; phaseT = 0; collapseFor = 0;
-  setStatus(`${seed.name} condensed into a gene. A blank creature has taken over.`);
-  renderLineage(); save();
+  world.seeds.push(seed);
+  seedAnim.set(seed.id, { t0: wall, sx: c.x, sy: c.y });
+  pop.splice(pop.indexOf(c), 1);
+  let msg = `${s.name} condensed into a gene of ${seed.equations.length} equation${seed.equations.length === 1 ? '' : 's'}.`;
+  if (!pop.length) {
+    const nb = makeCreature(blankState(), { x: c.x, y: c.y, phase: 'birth' });
+    const ancN = world.seeds.reduce((t, sd) => t + ancestralGenes(sd).length, 0);
+    nb.s.log = [{ g: 0, text: `Formed blank in the void after <b>${s.name}</b> condensed into a gene. It can learn from <span class="anc">${ancN} ancestral genes</span>${Object.keys(nb.s.instinct).length ? ' and starts with instincts inherited from them' : ''}.` }];
+    pop.push(nb);
+    msg += ` The void was empty, so a blank creature, ${nb.s.name}, has formed.`;
+  }
+  if (focus === c) focus = pop[0];
+  uiDirty = true;
+  renderLineage(); announce(msg); save();
+}
+// at full energy a creature divides; its daughter's genes vary a little in the copy
+function split(c) {
+  const s = c.s;
+  s.E = 0.85;
+  const d = JSON.parse(JSON.stringify(s));
+  d.id = world.next++; d.name = specName(d.id);
+  d.history = d.history.slice(-60);
+  d.log = [{ g: d.gen, text: `Split from <b>${s.name}</b> at full energy.` }];
+  s.log.unshift({ g: s.gen, text: `Reached full energy and <b>split in two</b>. Its daughter is <b>${d.name}</b>.` }); s.log = s.log.slice(0, 6);
+  const a = Math.random() * 6.283, off = c.radius * 0.8;
+  const dc = makeCreature(d, { x: (c.x + Math.cos(a) * off + W) % W, y: (c.y + Math.sin(a) * off + H) % H, vx: c.vx + Math.cos(a) * 30, vy: c.vy + Math.sin(a) * 30, traits: c.traits });
+  c.vx -= Math.cos(a) * 30; c.vy -= Math.sin(a) * 30;
+  dc.T = c.T; dc.hue = c.hue; dc.radius = c.radius;
+  c.flash = dc.flash = wall;
+  pop.push(dc);
+  enter(dc);
+  analyze(T, 1);
+  for (let i = 0; i < 8; i++) {
+    let res = null; try { res = MUTATIONS[pick(BASIC_OPS)](clone(curAst)); } catch (_) {}
+    if (!res) continue;
+    const src = show(res.ast);
+    let k; try { k = compile(src); } catch (_) { continue; }
+    cur = committedF = k.f; curAst = committedAst = k.ast; state.eq = committedEq = src;
+    claimOrigins(curAst, () => ({ k: 'self', label: 'varied in split' }));
+    addLog(`Its genes varied in the split: ${esc(res.what)}.`);
+    break;
+  }
+  recordEq('split');
+  for (const n of state.needs) if (Math.random() < 0.5) shiftTarget(n, 0.4);
+  leave(dc);
+  uiDirty = true;
+  announce(`${s.name} reached full energy and split in two. ${d.name} is its daughter.`);
+  save();
 }
 function renderLineage() {
   const n = world.seeds.length;
   $('lcount').textContent = n ? `${n} gene${n === 1 ? '' : 's'}` : '';
   $('lin').textContent = n ? `${n} gene${n === 1 ? '' : 's'}` : 'none yet';
   const box = $('seeds');
-  if (!n) { box.innerHTML = '<p class="empty">When a creature’s energy reaches zero, it condenses into a gene holding every equation it had. The gene is kept here and drifts in the void.</p>'; return; }
+  if (!n) { box.innerHTML = '<p class="empty">When a creature’s atom collapses, it condenses into a gene holding every equation it had. The gene is kept here and drifts in the void.</p>'; return; }
   box.innerHTML = world.seeds.slice().reverse().map(s => `<details class="seed"><summary><span class="sname" style="color:hsl(${s.hue} 80% 74%)">${s.name}</span><span class="smeta">${s.gens} gen${s.gens === 1 ? '' : 's'} · ${s.equations.length} equation${s.equations.length === 1 ? '' : 's'}</span></summary><ol class="eqs">${s.equations.map(e => `<li><span class="by ${e.by}">${BY[e.by] || esc(String(e.by))}</span><code>${esc(e.eq)}</code></li>`).join('')}</ol></details>`).join('');
 }
-// condensed genes hold a slow ring around whoever is alive now
+// condensed genes hold a slow ring around the middle of the void
 function drawSeeds(ox, oy, R0) {
-  const e = { theta: 0, t: T * 0.4, E: 0.5, g: 1, Z: 2 };
+  const e = { theta: 0, t: wall * 0.4, E: 0.5, g: 1, Z: 2 };
   for (const s of world.seeds) {
     if (!seedFns.has(s.id)) { let f; try { f = compile(s.eq).f; } catch (_) { f = () => 1; } seedFns.set(s.id, f); }
     const f = seedFns.get(s.id), an = seedAnim.get(s.id);
@@ -1081,9 +1192,6 @@ function drawSeeds(ox, oy, R0) {
 // Only the creature's own energy lifts its electrons back out. When every electron has fallen
 // into the nucleus the atom has collapsed, and the creature condenses into a gene.
 const KAPPA = 0.012, SHELL = (i, n) => 0.35 + 0.65 * (i + 1) / n;
-const electrons = [];
-const atom = { Z: 1, bound: 1, avgR: 1 };
-let collapseFor = 0;
 const strHash = s => { let h = 7; for (const c of s) h = (h * 31 + c.codePointAt(0)) >>> 0; return h; };
 function syncElectrons() {
   const genes = addends(curAst).filter(x => x.n.k !== 'num').map(x => show(x.n));
@@ -1113,7 +1221,7 @@ function updateAtom(dt, E) {
   atom.bound = bound; atom.avgR = sum / electrons.length;
   return 0.002 * rad;
 }
-function drawElectrons(cx, cy, mean, hue, glow) {
+function drawElectrons(cx, cy, mean, hue, glow, first = true) {
   electrons.forEach((e, i) => {
     const shell = mean * SHELL(i, electrons.length), R = shell * e.r;
     const cr = Math.cos(e.rot), sr = Math.sin(e.rot);
@@ -1122,7 +1230,7 @@ function drawElectrons(cx, cy, mean, hue, glow) {
     ctx.beginPath(); ctx.ellipse(cx, cy, Math.max(1, shell), Math.max(1, shell * e.ci), e.rot, 0, 6.283); ctx.stroke();
     const lx = Math.cos(e.ang) * R, ly = Math.sin(e.ang) * R * e.ci;
     const x = lx * cr - ly * sr, y = lx * sr + ly * cr;
-    e.trail.push(x, y); if (e.trail.length > 80) e.trail.splice(0, 2);
+    if (first) { e.trail.push(x, y); if (e.trail.length > 80) e.trail.splice(0, 2); }
     for (let j = 2; j < e.trail.length; j += 2) {
       ctx.strokeStyle = `hsla(${hue + 30}, 90%, 80%, ${0.5 * j / e.trail.length})`; ctx.lineWidth = 1;
       ctx.beginPath(); ctx.moveTo(cx + e.trail[j - 2], cy + e.trail[j - 1]); ctx.lineTo(cx + e.trail[j], cy + e.trail[j + 1]); ctx.stroke();
@@ -1131,7 +1239,7 @@ function drawElectrons(cx, cy, mean, hue, glow) {
       const g = ctx.createRadialGradient(cx + x, cy + y, 0, cx + x, cy + y, 7);
       g.addColorStop(0, `hsla(${hue + 40}, 100%, 92%, 0.95)`); g.addColorStop(1, `hsla(${hue}, 90%, 60%, 0)`);
       ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx + x, cy + y, 7, 0, 6.283); ctx.fill();
-    } else e.trail.length = Math.max(0, e.trail.length - 4);
+    } else if (first) e.trail.length = Math.max(0, e.trail.length - 4);
     // the flash of an electron falling into the nucleus
     if (e.fell && wall - e.fell < 0.8) {
       const k = (wall - e.fell) / 0.8;
@@ -1141,62 +1249,275 @@ function drawElectrons(cx, cy, mean, hue, glow) {
   });
 }
 
-/* ---------- α particles: the gold-foil experiment, run on each creature ---------- */
-// A faint beam crosses the void. Each α is repelled by the nucleus (charge +2 against +Z).
-// Most pass straight through the empty atom; a rare few come close and bounce back.
-const alphas = [], foil = { passed: 0, deflected: 0, back: 0 };
-let alphaClock = 0;
-function stepAlphas(dt, nx, ny, R0) {
-  const v0 = 240, span = R0 * 3;
-  const d = R0 * 0.015 * atom.Z; // distance of closest approach for a head-on hit
-  const k = d * v0 * v0 / 2;
-  alphaClock += dt;
-  const every = reduce ? 0.9 : 0.3;
-  while (alphaClock > every) {
-    alphaClock -= every;
-    if (alphas.length < 50) alphas.push({ x: -10, y: ny + (Math.random() * 2 - 1) * span, vx: v0, vy: 0, trail: [] });
+/* ---------- a closed void: the edges loop ---------- */
+// Leaving one edge brings you back on the opposite edge, so distances are measured the short way round.
+const wrapD = (d, L) => d - L * Math.round(d / L);
+const gcd = (a, b) => b ? gcd(b, a % b) : a;
+function genesOf(c) {
+  if (c.geneEq !== c.s.eq) {
+    c.geneEq = c.s.eq;
+    const list = addends(c.curAst);
+    c.genes = list.filter(x => x.n.k !== 'num').map(x => ({ src: show(x.n), sign: x.sign }));
+    c.nucleus = list.filter(x => x.n.k === 'num').reduce((t, x) => t + x.sign * x.n.v, 0);
   }
-  for (let i = alphas.length - 1; i >= 0; i--) {
-    const a = alphas[i];
-    const near = Math.hypot(a.x - nx, a.y - ny) < d * 4;
-    const n = near ? 16 : 2, h = dt / n;
-    for (let s = 0; s < n; s++) {
-      const rx = a.x - nx, ry = a.y - ny, r2 = rx * rx + ry * ry + 1, r = Math.sqrt(r2);
-      const acc = k / r2;
-      a.vx += acc * rx / r * h; a.vy += acc * ry / r * h;
-      a.x += a.vx * h; a.y += a.vy * h;
+  return c.genes;
+}
+// Harmony works like consonance: lobe counts in a simple ratio (1:1, 2:1, 3:2) and a shared tempo.
+// Shared genes, as between a parent and its daughter, deepen it.
+const HARMONY = 0.55;
+function harmonyOf(a, b) {
+  const ka = a.traits.symmetry, kb = b.traits.symmetry;
+  let cons;
+  if (!ka || !kb) cons = ka === kb ? 0.7 : 0.25;
+  else { const g = gcd(ka, kb); cons = 2 / (ka / g + kb / g); }
+  const tempo = Math.exp(-Math.abs(a.traits.pulse - b.traits.pulse) / 0.4);
+  const mine = new Set(genesOf(a).map(g => g.src)), shared = genesOf(b).some(g => mine.has(g.src)) ? 1.2 : 1;
+  return clamp(cons * (0.45 + 0.55 * tempo) * shared, 0, 1);
+}
+const pairs = new Map();
+function stepWorld(dt) {
+  for (const c of pop) {
+    c.wander += (Math.random() - 0.5) * dt * 1.2;
+    const sp = (reduce ? 4 : 9) * (0.4 + Math.min(c.s.E, 1.4));
+    c.vx += Math.cos(c.wander) * sp * dt; c.vy += Math.sin(c.wander) * sp * dt;
+    c.harmony = null;
+  }
+  for (let i = 0; i < pop.length; i++) for (let j = i + 1; j < pop.length; j++) {
+    const a = pop[i], b = pop[j];
+    const dx = wrapD(b.x - a.x, W), dy = wrapD(b.y - a.y, H), d = Math.hypot(dx, dy) || 1, ux = dx / d, uy = dy / d;
+    const reach = a.radius + b.radius;
+    if (d < reach * 0.95) { const push = (reach * 0.95 - d) * 2 * dt; a.vx -= ux * push; a.vy -= uy * push; b.vx += ux * push; b.vy += uy * push; }
+    const key = Math.min(a.s.id, b.s.id) + ':' + Math.max(a.s.id, b.s.id);
+    let ps = pairs.get(key); if (!ps) { ps = { p: 0, cool: 0 }; pairs.set(key, ps); }
+    ps.a = a; ps.b = b; ps.d = d; ps.reach = reach;
+    ps.cool = Math.max(0, ps.cool - dt);
+    const h = ps.h = a.phase === 'alive' && b.phase === 'alive' ? harmonyOf(a, b) : 0;
+    let bonding = false;
+    if (h > HARMONY && ps.cool <= 0 && d < reach * 5) {
+      const pull = 5 * h * dt; a.vx += ux * pull; a.vy += uy * pull; b.vx -= ux * pull; b.vy -= uy * pull;
+      if (d < reach * 1.6 && a.s.E > 0.45 && b.s.E > 0.45) {
+        bonding = true;
+        ps.p += dt * h / 6;
+        a.harmony = { with: b, p: ps.p }; b.harmony = { with: a, p: ps.p };
+        if (ps.p >= 1) {
+          ps.p = 0; ps.cool = 30;
+          fuse(a, b, a.x + dx / 2, a.y + dy / 2);
+          a.vx -= ux * 25; a.vy -= uy * 25; b.vx += ux * 25; b.vy += uy * 25;
+        }
+      }
     }
-    a.trail.push(a.x, a.y); if (a.trail.length > 24) a.trail.splice(0, 2);
-    if (a.x < -40 || a.x > W + 40 || a.y < -40 || a.y > H + 40) {
-      const ang = Math.abs(Math.atan2(a.vy, a.vx)) * 180 / Math.PI;
-      foil.passed++; if (ang > 10) foil.deflected++; if (ang > 90) foil.back++;
-      alphas.splice(i, 1);
-    }
+    if (!bonding) ps.p = Math.max(0, ps.p - dt * 0.15);
+  }
+  for (const c of pop) {
+    c.vx *= 1 - 0.5 * dt; c.vy *= 1 - 0.5 * dt;
+    const v = Math.hypot(c.vx, c.vy); if (v > 36) { c.vx *= 36 / v; c.vy *= 36 / v; }
+    c.x = ((c.x + c.vx * dt) % W + W) % W; c.y = ((c.y + c.vy * dt) % H + H) % H;
   }
 }
-function drawAlphas() {
-  ctx.lineWidth = 1;
-  for (const a of alphas) {
-    const t = a.trail;
-    for (let j = 2; j < t.length; j += 2) {
-      ctx.strokeStyle = `rgba(230, 194, 127, ${0.32 * j / t.length})`;
-      ctx.beginPath(); ctx.moveTo(t[j - 2], t[j - 1]); ctx.lineTo(t[j], t[j + 1]); ctx.stroke();
+function drawHarmony() {
+  for (const ps of pairs.values()) {
+    if (!ps.a || ps.h <= HARMONY || ps.cool > 0 || ps.d > ps.reach * 5 || !pop.includes(ps.a) || !pop.includes(ps.b)) continue;
+    const a = ps.a, b = ps.b, dx = wrapD(b.x - a.x, W), dy = wrapD(b.y - a.y, H), d = Math.hypot(dx, dy) || 1;
+    const nx = -dy / d, ny = dx / d, nodes = 2 + Math.round(ps.h * 4), amp = (3 + 7 * ps.p) * Math.sin(wall * 5);
+    ctx.strokeStyle = `hsla(${(a.hue + b.hue) / 2}, 85%, 78%, ${0.08 + 0.55 * ps.p})`; ctx.lineWidth = 1 + ps.p;
+    ctx.beginPath();
+    for (let i = 0; i <= 40; i++) {
+      const t = i / 40, w = Math.sin(nodes * Math.PI * t) * amp;
+      const x = a.x + dx * t + nx * w, y = a.y + dy * t + ny * w;
+      i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
     }
+    ctx.stroke();
   }
 }
 
+/* ---------- chemistry: elements and compounds ---------- */
+// Two creatures in harmony fuse part of themselves into a new element, defined by their genes:
+// its atomic number Z is the total lobe count of those genes, its symbol and name are coined
+// from them, and its valence follows from filling electron shells (2, 8, 8, 18) with Z electrons.
+// Elements that meet with free valence bond into compounds.
+const SHELLS = [2, 8, 8, 18, 18, 32];
+function valenceOf(Z) {
+  let left = Z;
+  for (const cap of SHELLS) { if (left <= cap) return cap === 2 ? (left === 2 ? 0 : 1) : Math.min(left, cap - left, 4); left -= cap; }
+  return 1;
+}
+const CONS = 'bdfgklmnprstvxz', VOWS = 'aeiou';
+function coinName(h) {
+  const taken = new Set(Object.values(world.elements).map(e => e.name));
+  for (let salt = 0; ; salt++) {
+    let x = (h + salt * 2654435761) >>> 0, s = '';
+    const syl = 2 + (x % 2); x = Math.floor(x / 2);
+    for (let i = 0; i < syl; i++) { s += CONS[x % CONS.length]; x = Math.floor(x / CONS.length); s += VOWS[x % 5]; x = Math.floor(x / 5) || (h >>> (i + 3)); }
+    const name = s[0].toUpperCase() + s.slice(1).replace(/[aeiou]$/, '') + 'ium';
+    if (!taken.has(name) || salt > 20) return name;
+  }
+}
+function coinSymbol(name) {
+  const taken = new Set(Object.values(world.elements).map(e => e.sym));
+  for (const ch of name.slice(1).replace(/[aeiou]/g, '') + name.slice(1) + 'qwyjzx') { const s = name[0] + ch; if (!taken.has(s)) return s; }
+  return name[0] + taken.size;
+}
+const SUB = '₀₁₂₃₄₅₆₇₈₉', sub = n => String(n).replace(/\d/g, d => SUB[d]);
+const particles = [], flashes = [];
+let pid = 0;
+for (const q of world.particles || []) if (world.elements[q.k]) particles.push({ id: pid++, k: q.k, x: q.x * W, y: q.y * H, vx: 0, vy: 0, bonds: [], _b: q.b || [] });
+for (const p of particles) { p.bonds = p._b.map(i => particles[i]).filter(Boolean); delete p._b; }
+function logTo(c, text) { c.s.log.unshift({ g: c.s.gen, text }); c.s.log = c.s.log.slice(0, 6); }
+function fuse(a, b, x, y) {
+  const uniq = new Map();
+  for (const g of [...genesOf(a), ...genesOf(b)]) uniq.set((g.sign < 0 ? '-' : '') + g.src, g);
+  const list = [...uniq.entries()].sort((p, q) => p[0] < q[0] ? -1 : 1);
+  const key = list.map(e => e[0]).join(' | ') || 'bare';
+  // its atomic number is the total lobe count of the genes it was fused from
+  const Z = Math.max(1, list.reduce((t, [, g]) => t + lobesOf(g.src), 0));
+  let el = world.elements[key];
+  const fresh = !el;
+  if (!el) {
+    const name = coinName(strHash(key));
+    const nucleus = Math.max(0.1, (a.nucleus ?? 1) + (b.nucleus ?? 1));
+    let eq = '1';
+    try { eq = show(parse([fmtNum(nucleus / 2), ...list.map(([, g]) => `${g.sign < 0 ? '-' : '+'} ${g.src}`)].join(' '))); } catch (_) {}
+    el = world.elements[key] = {
+      key, name, sym: coinSymbol(name), Z, A: 2 * Z + Math.round(nucleus * 2), val: valenceOf(Z),
+      genes: list.map(e => e[0]), parents: [a.s.name, b.s.name], hue: Math.round((a.hue + b.hue) / 2), eq, count: 0,
+      n: Object.keys(world.elements).length + 1,
+    };
+  }
+  el.count++;
+  a.s.E = Math.max(0, a.s.E - 0.35); b.s.E = Math.max(0, b.s.E - 0.35);
+  spawnParticle(key, x, y);
+  flashes.push({ x, y, t: wall, hue: el.hue });
+  const what = `<b>${el.sym}</b> (${el.name}, Z ${el.Z})`;
+  logTo(a, `Found harmony with <b>${b.s.name}</b> and fused ${fresh ? 'a new element' : 'an atom of'} ${what}.`);
+  logTo(b, `Found harmony with <b>${a.s.name}</b> and fused ${fresh ? 'a new element' : 'an atom of'} ${what}.`);
+  announce(fresh
+    ? `${a.s.name} and ${b.s.name} found harmony and made a new element: ${el.name} (${el.sym}), Z ${el.Z}, from ${el.genes.length} gene${el.genes.length === 1 ? '' : 's'}.`
+    : `${a.s.name} and ${b.s.name} found harmony and made another atom of ${el.name} (${el.sym}).`);
+  uiDirty = true;
+  renderChem(); save();
+}
+function lobesOf(src) {
+  let ast; try { ast = parse(src); } catch (_) { return 1; }
+  const trig = nodes(ast).find(h => isTrig(h.n));
+  if (!trig) return 1;
+  const L = linear(trig.n.args[0]);
+  return clamp(Math.round(Math.abs(L.th)) || 1, 1, 16);
+}
+function spawnParticle(k, x, y) {
+  const a = Math.random() * 6.283;
+  particles.push({ id: pid++, k, x, y, vx: Math.cos(a) * 25, vy: Math.sin(a) * 25, bonds: [] });
+  if (particles.length > 40) {
+    let i = particles.findIndex(p => !p.bonds.length); if (i < 0) i = 0;
+    const [gone] = particles.splice(i, 1);
+    for (const o of gone.bonds) o.bonds = o.bonds.filter(z => z !== gone);
+  }
+}
+function component(p) {
+  const seen = new Set([p]), q = [p];
+  while (q.length) for (const o of q.pop().bonds) if (!seen.has(o)) { seen.add(o); q.push(o); }
+  return [...seen];
+}
+function formulaOf(atoms) {
+  const n = {};
+  for (const p of atoms) { const s = world.elements[p.k].sym; n[s] = (n[s] || 0) + 1; }
+  return Object.keys(n).sort().map(s => s + (n[s] > 1 ? sub(n[s]) : '')).join('');
+}
+const freeVal = p => world.elements[p.k].val - p.bonds.length;
+function stepChemistry(dt) {
+  for (const p of particles) { p.vx += (Math.random() - 0.5) * 30 * dt; p.vy += (Math.random() - 0.5) * 30 * dt; }
+  for (let i = 0; i < particles.length; i++) for (let j = i + 1; j < particles.length; j++) {
+    const a = particles[i], b = particles[j];
+    const dx = wrapD(b.x - a.x, W), dy = wrapD(b.y - a.y, H), d = Math.hypot(dx, dy) || 1, ux = dx / d, uy = dy / d;
+    const bonded = a.bonds.includes(b);
+    let f = 0;
+    const free = !bonded && freeVal(a) > 0 && freeVal(b) > 0;
+    if (bonded) f = (d - 16) * 6;
+    else if (d < 11) f = -(11 - d) * 10;
+    else if (free && d < 280) f = 22; // chemical affinity: free valence draws atoms together
+    if (free && d < 14 && !component(a).includes(b)) {
+      a.bonds.push(b); b.bonds.push(a);
+      const atoms = component(a), formula = formulaOf(atoms);
+      const entry = world.compounds[formula] || (world.compounds[formula] = { formula, atoms: atoms.length, count: 0, first: Date.now() });
+      if (!entry.count) announce(`A new compound formed in the void: ${formula}.`);
+      entry.count++;
+      renderChem();
+    }
+    a.vx += ux * f * dt; a.vy += uy * f * dt; b.vx -= ux * f * dt; b.vy -= uy * f * dt;
+  }
+  for (const p of particles) {
+    p.vx *= 1 - 1.2 * dt; p.vy *= 1 - 1.2 * dt;
+    p.x = ((p.x + p.vx * dt) % W + W) % W; p.y = ((p.y + p.vy * dt) % H + H) % H;
+  }
+}
+function drawChemistry() {
+  ctx.lineWidth = 1.2;
+  for (const p of particles) for (const o of p.bonds) if (p.id < o.id) {
+    const dx = wrapD(o.x - p.x, W), dy = wrapD(o.y - p.y, H);
+    ctx.strokeStyle = 'rgba(230, 194, 127, 0.5)';
+    ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x + dx, p.y + dy); ctx.moveTo(o.x, o.y); ctx.lineTo(o.x - dx, o.y - dy); ctx.stroke();
+  }
+  ctx.font = '10px "IBM Plex Mono", monospace';
+  for (const p of particles) {
+    const el = world.elements[p.k];
+    const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, 12);
+    g.addColorStop(0, `hsla(${el.hue}, 90%, 75%, 0.5)`); g.addColorStop(1, `hsla(${el.hue}, 90%, 50%, 0)`);
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(p.x, p.y, 12, 0, 6.283); ctx.fill();
+    ctx.fillStyle = `hsla(${el.hue + 30}, 100%, 92%, 0.95)`; ctx.beginPath(); ctx.arc(p.x, p.y, 2.4, 0, 6.283); ctx.fill();
+    ctx.fillStyle = `hsla(${el.hue}, 80%, 85%, 0.85)`; ctx.fillText(el.sym, p.x + 5, p.y - 5);
+  }
+  for (let i = flashes.length - 1; i >= 0; i--) {
+    const f = flashes[i], k = (wall - f.t) / 1.4;
+    if (k > 1) { flashes.splice(i, 1); continue; }
+    ctx.strokeStyle = `hsla(${f.hue}, 100%, 85%, ${0.8 * (1 - k)})`; ctx.lineWidth = 2 * (1 - k) + 0.5;
+    ctx.beginPath(); ctx.arc(f.x, f.y, 6 + 50 * k, 0, 6.283); ctx.stroke();
+  }
+}
+function renderChem() {
+  const els = Object.values(world.elements).sort((a, b) => a.n - b.n), comps = Object.values(world.compounds).sort((a, b) => b.count - a.count);
+  const s = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
+  $('chemcount').textContent = els.length ? `${s(els.length, 'element')} · ${s(comps.length, 'compound')}` : '';
+  $('chem').textContent = els.length ? `${s(els.length, 'element')} · ${s(comps.length, 'compound')}` : 'none yet';
+  if (!els.length) { $('ptable').innerHTML = '<p class="empty">When two creatures find harmony, they fuse a new element from their genes. Its atomic number is the total lobe count of those genes, and that sets its valence. Elements with free valence bond into compounds.</p>'; $('comps').innerHTML = ''; return; }
+  $('ptable').innerHTML = els.map(el => `<div class="el"><div class="tile" style="--h:${el.hue}"><span class="z">${el.Z}</span><b>${esc(el.sym)}</b><span class="a">${el.A}</span></div><div><div class="nm">${esc(el.name)} <span class="cnt">×${el.count}</span></div><div class="props">Z ${el.Z} · A ${el.A} · ${el.val ? `valence ${el.val}` : 'inert, shell full'} · from ${el.parents.join(' + ')}</div><div class="gl">${el.genes.map(g => `<code>${esc(g)}</code>`).join(' · ') || 'no genes'}</div></div></div>`).join('');
+  $('comps').innerHTML = comps.length ? `<ul class="comps">${comps.map(c => `<li><b>${c.formula}</b>${c.atoms} atoms · formed ${c.count}×</li>`).join('')}</ul>` : '';
+}
+
+/* ---------- choosing which creature to watch ---------- */
+let popSig = '';
+function renderPop() {
+  const box = $('pop'), sig = pop.map(c => c.s.id).join(',') + '|' + focus.s.id;
+  if (sig !== popSig) {
+    popSig = sig;
+    box.innerHTML = pop.map(c => `<button type="button" class="chip${c === focus ? ' on' : ''}" data-id="${c.s.id}" aria-pressed="${c === focus}"><i class="dot"></i><span>${c.s.name}</span><span class="eb"><i></i></span></button>`).join('');
+  }
+  pop.forEach((c, i) => { const b = box.children[i]; if (!b) return; b.style.setProperty('--h', c.hue.toFixed(0)); b.querySelector('.eb i').style.width = (c.s.E / 1.7 * 100).toFixed(0) + '%'; });
+}
+function refreshFocusUI() {
+  genomeEq = null; buildNeeds(); renderGenome();
+  input.value = state.eq; input.readOnly = phase !== 'alive';
+  $('spec').textContent = state.name; $('eqname').textContent = state.name;
+  lastSignalKey = ''; renderPop();
+}
+function switchFocus(c) {
+  if (!c || c === focus) return;
+  clearTimeout(parseTimer); clearTimeout(commitTimer);
+  if (state.eq !== committedEq) { state.eq = committedEq; cur = committedF; curAst = committedAst; } // drop an uncommitted edit
+  leave(focus); focus = c; enter(focus);
+  refreshFocusUI();
+  setStatus(`Watching ${state.name}. The equation below is its body.`);
+}
+$('pop').addEventListener('click', e => { const b = e.target.closest('.chip'); if (b) switchFocus(pop.find(c => c.s.id === +b.dataset.id)); });
+cv.addEventListener('click', e => {
+  let best = null, bd = Infinity;
+  for (const c of pop) { const d = Math.hypot(wrapD(e.clientX - c.x, W), wrapD(e.clientY - c.y, H)); if (d < c.radius * 1.6 + 12 && d < bd) { bd = d; best = c; } }
+  switchFocus(best);
+});
+
 /* ---------- drawing ---------- */
-let T = 0, wall = 0, last = performance.now(), panelTick = 0, saveTick = 0;
+let wall = 0, last = performance.now(), panelTick = 0, saveTick = 0;
 const DRAW_N = 200;
 const pts = new Float32Array(DRAW_N);
-function layout() {
-  const bottom = document.querySelector('.bottom').getBoundingClientRect();
-  const narrow = W <= 720;
-  const y0 = narrow ? document.querySelector('.right').getBoundingClientRect().bottom : 90, y1 = bottom.top;
-  const sideW = narrow ? 0 : 320;
-  const availW = W - sideW * 2, availH = Math.max(120, y1 - y0);
-  return { cx: W / 2, cy: y0 + availH / 2, R0: Math.max(30, Math.min(availW, availH) * 0.21) };
-}
+const baseR0 = () => clamp(Math.min(W, H) * 0.06, 22, 54);
 function drawStars(dt) {
   for (const s of stars) {
     s.x -= s.z * dt * (reduce ? 0.0006 : 0.0025);
@@ -1206,23 +1527,22 @@ function drawStars(dt) {
     ctx.beginPath(); ctx.arc(s.x * W, s.y * H, s.r, 0, 6.283); ctx.fill();
   }
 }
-function frame(now) {
-  const dt = Math.min(0.05, (now - last) / 1000); last = now; wall += dt;
+// one step of one creature's life; runs inside enter(c)/leave(c)
+function simulate(c, dt) {
   let E = state.E;
   // its clock runs on its own energy
   T += dt * (0.25 + 0.8 * E) * (reduce ? 0.5 : 1);
   if (morph < 1) { morph = Math.min(1, morph + dt / 1.4); if (morph >= 1) prev = null; }
   env.E = E; env.g = state.gen;
-
   if (phase !== 'alive') phaseT += dt;
-  if (phase === 'condensing' && phaseT >= CONDENSE_S) finishCondense();
-  if (phase === 'birth' && phaseT >= BIRTH_S) { phase = 'alive'; input.readOnly = false; setStatus('Edit the equation. Press Enter, or pause, to let it absorb the change.'); }
+  if (phase === 'condensing' && phaseT >= CONDENSE_S) { c.dead = true; return; }
+  if (phase === 'birth' && phaseT >= BIRTH_S) { phase = 'alive'; if (isFocus()) input.readOnly = false; }
   const alive = phase === 'alive';
-  const bodyScale = phase === 'condensing' ? 1 - ease(Math.min(1, phaseT / CONDENSE_S)) : phase === 'birth' ? ease(Math.min(1, phaseT / BIRTH_S)) : 1;
-  const flare = phase === 'condensing' ? Math.sin(Math.min(1, phaseT / CONDENSE_S) * Math.PI) : 0;
+  c.bodyScale = phase === 'condensing' ? 1 - ease(Math.min(1, phaseT / CONDENSE_S)) : phase === 'birth' ? ease(Math.min(1, phaseT / BIRTH_S)) : 1;
+  c.flare = phase === 'condensing' ? Math.sin(Math.min(1, phaseT / CONDENSE_S) * Math.PI) : 0;
 
   analyze(T);
-  const fit = fitness();
+  const fit = c.fit = fitness();
   // metabolism: self-generated core energy + nourishment from a form that fits its needs - the cost of carrying that form
   const core = 0.06 * E * (1.7 - E);
   // dormant, its metabolism slows to a crawl, which buys time for a better form to wake it again
@@ -1237,40 +1557,34 @@ function frame(now) {
     // every electron has spiraled into the nucleus: the atom has collapsed
     collapseFor = atom.bound === 0 ? collapseFor + dt : 0;
     if (collapseFor > 1.5) startCondense();
+    // full energy: it divides
+    c.maxFor = E >= 1.69 ? c.maxFor + dt : 0;
+    if (c.maxFor > 4 && pop.length < MAX_POP) { c.maxFor = 0; c.wantsSplit = true; }
   }
   // when it has energy to spare and you are not mid-edit, it rewrites its own equation
-  const busy = wall - lastKeyAt < 7 || (document.activeElement === input && wall - lastKeyAt < 15) || state.eq !== committedEq || input.classList.contains('bad');
+  const busy = isFocus() && (wall - lastKeyAt < 7 || (document.activeElement === input && wall - lastKeyAt < 15) || state.eq !== committedEq || input.classList.contains('bad'));
   const dormant = E < 0.15;
   if (alive && !busy && morph >= 1) { rewriteClock += dt * (dormant ? 1.5 : 0.4 + E); if (rewriteClock > 9) { rewriteClock = 0; selfRewrite(dormant); } }
-
-  const { cx: bx, cy: by, R0: baseR0 } = layout();
-  const R0 = baseR0 * Math.max(0.001, bodyScale);
-  const drift = reduce ? 0.3 : 1;
-  const cx = bx + Math.sin(wall * 0.05) * R0 * 0.35 * drift;
-  const cy = by + Math.sin(wall * 0.071 + 1) * R0 * 0.18 * drift;
-  lastCx = cx; lastCy = cy;
-
-  ctx.globalCompositeOperation = 'source-over';
-  ctx.fillStyle = '#03040a'; ctx.fillRect(0, 0, W, H);
-  drawStars(dt);
-  ctx.globalCompositeOperation = 'lighter';
-  drawSeeds(bx, by, baseR0);
-  stepAlphas(dt, cx, cy, baseR0);
-  drawAlphas();
-  ctx.globalCompositeOperation = 'source-over';
-
-  const hue = 205 + fit * 105;
-  const light = 45 + Math.min(E, 1.4) * 18;
-  const glow = Math.max(clamp(E / 1.2, 0.08, 1.2), flare * 1.1);
-  lastHue = hue;
-  liveColor = `hsl(${hue.toFixed(0)} 80% 74%)`;
-  document.documentElement.style.setProperty('--live', liveColor);
-
+  c.hue = 205 + fit * 105;
+}
+// runs inside enter(c); draws the creature, plus copies across any edge it straddles
+function drawCreature(c) {
+  const R0 = baseR0() * Math.max(0.001, c.bodyScale);
   for (let i = 0; i < DRAW_N; i++) pts[i] = R(2 * Math.PI * i / DRAW_N, T) * R0;
   let mean = 0; for (let i = 0; i < DRAW_N; i++) mean += pts[i]; mean /= DRAW_N;
-
-  // halo
+  c.radius = Math.max(10, mean);
+  const ext = mean * 1.8 + R0 * 1.2;
+  const ox = c.x < ext ? W : c.x > W - ext ? -W : 0, oy = c.y < ext ? H : c.y > H - ext ? -H : 0;
+  const offs = [[0, 0]];
+  if (ox) offs.push([ox, 0]); if (oy) offs.push([0, oy]); if (ox && oy) offs.push([ox, oy]);
+  offs.forEach(([dx, dy], k) => drawBodyAt(c, c.x + dx, c.y + dy, R0, mean, k === 0));
+}
+function drawBodyAt(c, cx, cy, R0, mean, first) {
+  const E = state.E, hue = c.hue, flare = c.flare;
+  const light = 45 + Math.min(E, 1.4) * 18;
+  const glow = Math.max(clamp(E / 1.2, 0.08, 1.2), flare * 1.1);
   ctx.globalCompositeOperation = 'lighter';
+  // halo
   const haloR = Math.max(R0 * 0.6, mean * 2.6);
   const halo = ctx.createRadialGradient(cx, cy, 0, cx, cy, haloR);
   halo.addColorStop(0, `hsla(${hue}, 80%, 60%, ${0.16 * glow})`);
@@ -1280,8 +1594,8 @@ function frame(now) {
   // tendrils grow at its peaks, one more per generation
   const peaks = [];
   for (let i = 0; i < DRAW_N; i++) {
-    const a = pts[(i - 1 + DRAW_N) % DRAW_N], b = pts[i], c = pts[(i + 1) % DRAW_N];
-    if (b > a && b >= c && b > mean * 1.03) peaks.push(i);
+    const a = pts[(i - 1 + DRAW_N) % DRAW_N], b = pts[i], n = pts[(i + 1) % DRAW_N];
+    if (b > a && b >= n && b > mean * 1.03) peaks.push(i);
   }
   peaks.sort((p, q) => pts[q] - pts[p]);
   const nT = Math.min(peaks.length, state.gen, 14);
@@ -1304,7 +1618,7 @@ function frame(now) {
     ctx.beginPath(); ctx.arc(x, y, 1.6, 0, 6.283); ctx.fill();
   }
 
-  // membrane
+  // membrane: the edge of a mostly empty atom
   ctx.beginPath();
   for (let i = 0; i <= DRAW_N; i++) {
     const j = i % DRAW_N, th = 2 * Math.PI * j / DRAW_N;
@@ -1318,39 +1632,28 @@ function frame(now) {
   body.addColorStop(1, `hsla(${hue - 20}, 80%, 35%, ${0.03 * glow})`);
   ctx.fillStyle = body; ctx.fill();
   ctx.shadowColor = `hsla(${hue}, 90%, 65%, ${0.9 * glow})`;
-  ctx.shadowBlur = 18 * glow;
+  ctx.shadowBlur = 14 * glow;
   ctx.strokeStyle = `hsla(${hue}, 90%, ${light + 15}%, ${0.75 * Math.max(glow, 0.25)})`;
-  ctx.lineWidth = 1.3; ctx.stroke();
+  ctx.lineWidth = 1.2; ctx.stroke();
   ctx.shadowBlur = 0;
 
-  // inner membrane echo
-  ctx.beginPath();
-  for (let i = 0; i <= DRAW_N; i++) {
-    const j = i % DRAW_N, th = 2 * Math.PI * j / DRAW_N, r = pts[j] * (0.62 + 0.05 * Math.sin(T * 2));
-    const x = cx + Math.cos(th) * r, y = cy + Math.sin(th) * r;
-    i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
-  }
-  ctx.strokeStyle = `hsla(${hue + 20}, 70%, 70%, ${0.18 * glow})`; ctx.lineWidth = 0.8; ctx.stroke();
-
-  // electrons, one per gene, on Coulomb orbits through mostly empty space
-  drawElectrons(cx, cy, mean, hue, glow);
+  // electrons, one per gene, on Coulomb orbits
+  drawElectrons(cx, cy, mean, hue, glow, first);
 
   // nucleus: tiny and dense, almost all of its mass, charge +Z
   const beat = 1 + 0.12 * Math.sin(T * 3.1) * Math.min(E, 1.2);
-  const coreR = Math.max(2.2, mean * 0.03) * (0.8 + 0.3 * Math.min(E, 1.5)) * beat * (phase === 'condensing' ? 1 + flare : 1);
+  const coreR = Math.max(2, mean * 0.03) * (0.8 + 0.3 * Math.min(E, 1.5)) * beat * (phase === 'condensing' ? 1 + flare : 1);
   const cg = ctx.createRadialGradient(cx, cy, 0, cx, cy, coreR * 5);
   cg.addColorStop(0, `hsla(${hue + 60}, 100%, 96%, ${Math.min(1, 0.6 + 0.6 * glow)})`);
   cg.addColorStop(0.25, `hsla(${hue + 40}, 95%, 72%, ${0.5 * Math.max(glow, 0.4)})`);
   cg.addColorStop(1, `hsla(${hue}, 90%, 50%, 0)`);
   ctx.fillStyle = cg; ctx.beginPath(); ctx.arc(cx, cy, coreR * 5, 0, 6.283); ctx.fill();
-  ctx.fillStyle = `hsla(${hue + 60}, 100%, 85%, 0.75)`; ctx.font = '10px "IBM Plex Mono", monospace';
-  ctx.fillText(`+${atom.Z}`, cx + coreR * 2 + 3, cy - coreR * 2 - 2);
 
   // condensing: everything it was streams into one point
   if (phase === 'condensing') {
     const k = Math.min(1, phaseT / CONDENSE_S);
-    for (let i = 0; i < 48; i++) {
-      const u = (wall * 0.7 + i * 0.137) % 1, a = i * 2.39996 + wall * 0.3, r = baseR0 * 1.5 * (1 - u) * (1 - k * 0.6);
+    for (let i = 0; i < 40; i++) {
+      const u = (wall * 0.7 + i * 0.137) % 1, a = i * 2.39996 + wall * 0.3, r = baseR0() * 1.5 * (1 - u) * (1 - k * 0.6);
       ctx.fillStyle = `hsla(${hue + 30}, 90%, 80%, ${0.7 * u * flare})`;
       ctx.beginPath(); ctx.arc(cx + Math.cos(a) * r, cy + Math.sin(a) * r, 1.3, 0, 6.283); ctx.fill();
     }
@@ -1359,15 +1662,60 @@ function frame(now) {
     sg.addColorStop(1, `hsla(${hue}, 90%, 60%, 0)`);
     ctx.fillStyle = sg; ctx.beginPath(); ctx.arc(cx, cy, sr * 4, 0, 6.283); ctx.fill();
   }
+  // the ring of a division
+  if (wall - c.flash < 1.3) {
+    const k = (wall - c.flash) / 1.3;
+    ctx.strokeStyle = `hsla(${hue + 40}, 100%, 85%, ${0.8 * (1 - k)})`; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(cx, cy, mean * (1 + 1.2 * k), 0, 6.283); ctx.stroke();
+  }
   ctx.globalCompositeOperation = 'source-over';
 
-  panelTick += dt; if (panelTick > 0.2) { panelTick = 0; updatePanel(fit); if (genomeEq !== state.eq) renderGenome(); drawGlyphs(); }
-  saveTick += dt; if (saveTick > 5) { saveTick = 0; state.orbits = electrons.map(e => +e.r.toFixed(3)); save(); }
+  // its name, and brackets around the one you are watching
+  const me = c === focus;
+  ctx.font = '10px "IBM Plex Mono", monospace'; ctx.textAlign = 'center';
+  ctx.fillStyle = `hsla(${hue}, 60%, 82%, ${me ? 0.9 : 0.45})`;
+  ctx.fillText(`${state.name} · +${atom.Z}`, cx, cy + mean * 1.25 + 16);
+  ctx.textAlign = 'start';
+  if (me) {
+    const s = mean * 1.3 + 10, l = Math.max(6, s * 0.22);
+    ctx.strokeStyle = `hsla(${hue}, 80%, 80%, 0.55)`; ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (const [sx, sy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) { ctx.moveTo(cx + sx * s, cy + sy * (s - l)); ctx.lineTo(cx + sx * s, cy + sy * s); ctx.lineTo(cx + sx * (s - l), cy + sy * s); }
+    ctx.stroke();
+  }
+}
+function frame(now) {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now; wall += dt;
+  leave(focus);
+  for (const c of pop) { enter(c); simulate(c, dt); leave(c); }
+  for (const c of pop.filter(c => c.dead)) finishCondense(c);
+  for (const c of pop.filter(c => c.wantsSplit)) { c.wantsSplit = false; if (pop.length < MAX_POP) split(c); }
+  stepWorld(dt);
+  stepChemistry(dt);
+
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.fillStyle = '#03040a'; ctx.fillRect(0, 0, W, H);
+  drawStars(dt);
+  ctx.globalCompositeOperation = 'lighter';
+  drawSeeds(W / 2, H / 2, Math.min(W, H) * 0.16);
+  drawHarmony();
+  drawChemistry();
+  ctx.globalCompositeOperation = 'source-over';
+  for (const c of pop) { enter(c); drawCreature(c); leave(c); }
+
+  enter(focus);
+  if (uiDirty) { uiDirty = false; refreshFocusUI(); }
+  liveColor = `hsl(${focus.hue.toFixed(0)} 80% 74%)`;
+  document.documentElement.style.setProperty('--live', liveColor);
+  panelTick += dt; if (panelTick > 0.2) { panelTick = 0; updatePanel(focus.fit); if (genomeEq !== state.eq) renderGenome(); drawGlyphs(); renderPop(); }
+  saveTick += dt; if (saveTick > 5) { saveTick = 0; save(); }
   requestAnimationFrame(frame);
 }
 renderLineage();
-$('spec').textContent = specName(world.specimen);
+renderChem();
+refreshFocusUI();
 updatePanel(0);
 requestAnimationFrame(frame);
 })();
 </script>
+
