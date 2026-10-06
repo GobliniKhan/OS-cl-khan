@@ -108,6 +108,17 @@ h1 { margin: 0; font-family: var(--display); font-weight: 500; font-size: 34px; 
 .insights:empty { display: none; }
 .insights .iq { color: var(--ink); font-style: italic; }
 .log li code { color: var(--ancestral); font-size: 10.5px; }
+.trait { display: grid; gap: 3px; }
+#traits { display: grid; gap: 8px; }
+.trait .row { display: flex; justify-content: space-between; font-size: 11.5px; }
+.trait .row b { font-weight: 500; font-variant-numeric: tabular-nums; }
+.tbar { height: 3px; background: var(--faint); border-radius: 2px; overflow: hidden; }
+.tbar i { display: block; height: 100%; background: var(--ancestral); }
+.teff { font-size: 10px; color: var(--dim); }
+.chain { display: grid; gap: 3px; padding-top: 10px; border-top: 1px solid var(--faint); font-size: 11px; }
+.chain .k { display: inline-block; width: 6.5em; color: var(--dim); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; }
+.chain .links { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 2px; color: var(--err); font-size: 10.5px; }
+.chain .links span { color: var(--dim); }
 .pop { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
 .chip { --h: 230; display: inline-flex; align-items: center; gap: 7px; font: 11px var(--mono); color: var(--dim); background: var(--panel); border: 1px solid var(--faint); border-radius: 999px; padding: 4px 10px 4px 8px; cursor: pointer; }
 .chip .dot { width: 7px; height: 7px; border-radius: 50%; background: hsl(var(--h) 80% 72%); }
@@ -152,7 +163,7 @@ form.eq { width: min(780px, 100%); background: var(--panel); backdrop-filter: bl
 @media (max-width: 720px) {
   .top { flex-direction: column; justify-content: flex-start; gap: 10px; overflow-y: auto; pointer-events: auto; }
   .col { width: 100%; max-height: none; overflow: visible; gap: 10px; }
-  .journal, .instinct, .lineage, .chemistry, .vitals .wide, .insights, .qmeta { display: none; }
+  .journal, .instinct, .lineage, .chemistry, .psyche, .vitals .wide, .insights, .qmeta { display: none; }
   .ambition { padding: 10px 12px; gap: 6px; }
   .ambition h2 { display: none; }
   .question { font-size: 15px; }
@@ -184,7 +195,7 @@ form.eq { width: min(780px, 100%); background: var(--panel); backdrop-filter: bl
       <div class="id">
         <div class="eyebrow">Watching <span id="spec">VD-01</span> · closed void</div>
         <h1>Void Drifter</h1>
-        <details class="about"><summary>About this void</summary><p class="lede">A closed void whose edges loop. Its creatures are built like Rutherford’s atom, with one electron per gene. Each has two drive genes: <code>seek(θ)</code> hunts the ancestral genes that drift loose as food, and <code>grow(t)</code> lets eaten and invented genes reshape it. Eaten genes that meet inside it make energy. At full energy it splits, and two in harmony fuse elements. It asks itself questions and tests them. The equation below is the only way to reach the one you are watching.</p></details>
+        <details class="about"><summary>About this void</summary><p class="lede">A closed void whose edges loop. Its creatures are built like Rutherford’s atom, with one electron per gene. Drive genes run their lives: <code>seek(θ)</code> hunts ancestral genes as food, <code>grow(t)</code> lets new genes reshape them, and <code>predator(θ)</code> places them on a food chain. A <code>psyche</code> gene carries the five human personality traits. Eaten genes that meet inside a creature make energy. At full energy it splits, two in harmony fuse elements, and each asks itself questions and tests them. The equation below is the only way to reach the one you are watching.</p></details>
         <dl class="vitals">
           <dt>Gen</dt><dd id="gen">0</dd>
           <dt class="wide">Rewrites</dt><dd class="wide" id="rw">0</dd>
@@ -192,6 +203,7 @@ form.eq { width: min(780px, 100%); background: var(--panel); backdrop-filter: bl
           <dt class="wide">Lineage</dt><dd class="wide" id="lin">none yet</dd>
           <dt>Population</dt><dd id="popn">1 of 6</dd>
           <dt class="wide">Chemistry</dt><dd class="wide" id="chem">none yet</dd>
+          <dt>Food chain</dt><dd id="foodrole">grazer</dd>
           <dt>Carrying</dt><dd id="carry">nothing</dd>
           <dt class="wide">Growth</dt><dd class="wide" id="growth">G 0</dd>
           <dt>Insights</dt><dd id="insn">0</dd>
@@ -222,6 +234,11 @@ form.eq { width: min(780px, 100%); background: var(--panel); backdrop-filter: bl
         <h2><span>Needs</span><span id="fit">fit 0.00</span></h2>
         <div id="needlist" style="display:contents"></div>
       </aside>
+      <section class="panel psyche" aria-label="Personality and food chain">
+        <h2><span>Psyche · food chain</span><span id="rank"></span></h2>
+        <div id="traits"></div>
+        <div class="chain" id="chain"></div>
+      </section>
       <section class="panel genome" aria-label="Genome">
         <h2><span>Genome · factors of r</span><span id="gcount"></span></h2>
         <div id="genes"></div>
@@ -245,7 +262,7 @@ form.eq { width: min(780px, 100%); background: var(--panel); backdrop-filter: bl
       </div>
       <div class="meta">
         <span id="status">Edit the equation. Press Enter, or pause, to let it absorb the change. Leave it alone and it edits itself.</span>
-        <span class="ref"><code>θ</code>/<code>theta</code> angle · <code>t</code> its clock · <code>E</code> its energy · <code>g</code> generation · <code>Z</code> nuclear charge · <code>seek(θ) grow(t)</code> drive genes · <code>sin cos tan abs sqrt exp log pow min max mod noise(x,y)</code></span>
+        <span class="ref"><code>θ</code>/<code>theta</code> angle · <code>t</code> its clock · <code>E</code> its energy · <code>g</code> generation · <code>Z</code> nuclear charge · <code>seek(θ) grow(t) predator(θ)</code> drive genes · <code>psyche(θ, O, C, E, A, N)</code> traits · <code>sin cos tan abs sqrt exp log pow min max mod noise(x,y)</code></span>
       </div>
     </form>
   </div>
@@ -277,6 +294,9 @@ const FUNCS = {
   min: [Math.min, 1, 8], max: [Math.max, 1, 8], noise: [vnoise, 1, 2],
   // drive genes: a snout toward food, and the growth level
   seek: [x => Math.max(0, Math.cos(x - env.phi)) ** 3, 1, 1], grow: [x => env.G * (1 + 0.08 * Math.sin(x)), 1, 1],
+  // mandibles aimed at its prey, and the Big Five personality traits
+  predator: [x => { const d = x - env.phiP; return Math.max(0, Math.cos(d)) ** 2 * Math.abs(Math.sin(2 * d)); }, 1, 1],
+  psyche: [(x, o, c, e, a, n) => (o * Math.sin(5 * x) + c * Math.cos(4 * x) + e * Math.sin(3 * x) + a * Math.cos(2 * x) - n * Math.abs(Math.sin(7 * x))) / 3, 6, 6],
 };
 const NAMES = { theta: 'theta', 'θ': 'theta', th: 'theta', t: 't', E: 'E', g: 'g', Z: 'Z', pi: 'pi', 'π': 'pi' };
 
@@ -474,7 +494,7 @@ const N = 128, KMAX = 32;
 const COS = [], SIN = [];
 for (let k = 0; k <= KMAX; k++) { COS[k] = new Float32Array(N); SIN[k] = new Float32Array(N); for (let j = 0; j < N; j++) { const a = 2 * Math.PI * k * j / N; COS[k][j] = Math.cos(a); SIN[k][j] = Math.sin(a); } }
 const rA = new Float32Array(N), rB = new Float32Array(N);
-const env = { theta: 0, t: 0, E: 0.8, g: 0, Z: 1, phi: 0, G: 0 };
+const env = { theta: 0, t: 0, E: 0.8, g: 0, Z: 1, phi: 0, phiP: 0, G: 0 };
 const ease = k => k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
 function safe(v) { v = Math.abs(v); return Number.isFinite(v) ? Math.min(v, 2.6) : 0; }
 function R(theta, t) {
@@ -661,13 +681,14 @@ function selfRewrite(dormant) {
     const src = show(res.ast);
     if (src === state.eq) continue;
     let c; try { c = compile(src); } catch (_) { continue; } // it must be able to read what it wrote
-    if ((growAmp && !driveAmp(c.ast, 'grow')) || (hadSeek && !driveAmp(c.ast, 'seek'))) continue; // it keeps its drive genes
+    if (DRIVES.some(d => driveAmp(curAst, d) && !driveAmp(c.ast, d))) continue; // it keeps its drive and trait genes
     const sc = score(c.f, nodes(c.ast).length);
     if (!best || sc > best.sc) best = { sc, src, c, op, what: res.what, gene: res.gene, carried: res.carried };
   }
   if (!best) return;
   const improves = best.sc > base + 0.004;
-  if (!improves && Math.random() > (dormant ? 0.25 : 0.12)) { learn(best.op, -1); if (!dormant) state.E = Math.max(0, state.E - 0.01); return; }
+  const explore = clamp(0.04 + 0.16 * P().o - 0.06 * P().c, 0.02, 0.25);
+  if (!improves && Math.random() > (dormant ? 0.25 : explore)) { learn(best.op, -1); if (!dormant) state.E = Math.max(0, state.E - 0.01); return; }
   learn(best.op, improves ? 1 : 0, 0.15);
   if (!dormant) state.E = Math.max(0, state.E - 0.04); // awake, rewriting itself costs energy
   prev = cur; cur = best.c.f; curAst = best.c.ast; morph = 0;
@@ -801,7 +822,7 @@ function linear(arg) {
 function factorKind(f) {
   if (f.k === 'num') return 'amp';
   if (f.k === 'var' && f.n === 'E') return 'energy';
-  if (f.k === 'call' && (f.f === 'seek' || f.f === 'grow')) return 'drive';
+  if (f.k === 'call' && DRIVES.includes(f.f)) return 'drive';
   let w = f; if (w.k === 'bin' && w.op === '^') w = w.a; if (w.k === 'call' && w.f === 'abs') w = w.args[0];
   return isTrig(w) || (w.k === 'call' && w.f === 'noise') ? 'wave' : 'other';
 }
@@ -815,6 +836,8 @@ function decode(n) {
     if (w.k === 'bin' && w.op === '^' && w.b.k === 'num') { sharp = w.b.v; w = w.a; }
     if (w.k === 'call' && w.f === 'abs') w = w.args[0];
     if (w.k === 'call' && w.f === 'seek') { parts.push('drive: hunts ancestral genes'); continue; }
+    if (w.k === 'call' && w.f === 'predator') { parts.push('drive: predation, sets its food-chain rank'); continue; }
+    if (w.k === 'call' && w.f === 'psyche') { const v = w.args.slice(1).map(a => a.k === 'num' ? fmtNum(a.v) : '?'); parts.push(`traits: O ${v[0]} C ${v[1]} E ${v[2]} A ${v[3]} N ${v[4]}`); continue; }
     if (w.k === 'call' && w.f === 'grow') { parts.push(`drive: growth G ${(state.G || 0).toFixed(2)}`); continue; }
     if (isTrig(w)) {
       const L = linear(w.args[0]);
@@ -837,7 +860,7 @@ function renderGenome() {
     const el = document.createElement('div');
     el.className = 'gene' + (old.size && !old.has(src) ? ' fresh' : '');
     const facs = factorsOf(x.n).map(f => `<span class="fac ${factorKind(f)}" title="${esc(show(f))}">${esc(show(f))}</span>`).join('<span class="x">×</span>');
-    const drive = nodes(x.n).find(h => h.n.k === 'call' && (h.n.f === 'seek' || h.n.f === 'grow'));
+    const drive = nodes(x.n).find(h => h.n.k === 'call' && DRIVES.includes(h.n.f));
     const role = x.n.k === 'num' ? 'nucleus' : drive ? drive.n.f : `e⁻${++eIdx}`;
     el.innerHTML = `<canvas width="80" height="80" aria-hidden="true"></canvas><div><div class="facs"><span class="role">${role}</span>${x.sign < 0 ? '<span class="sg">−</span>' : ''}${facs}</div><div class="gmeta"><span class="dec">${esc(decode(x.n))}</span><span class="origin ${o.k}">${esc(o.label)}</span></div></div>`;
     box.appendChild(el);
@@ -925,7 +948,7 @@ function enter(c) {
   active = c; state = c.s; cur = c.cur; curAst = c.curAst; committedF = c.committedF; committedAst = c.committedAst; committedEq = c.committedEq;
   prev = c.prev; morph = c.morph; traits = c.traits; electrons = c.electrons; atom = c.atom; T = c.T;
   rewriteClock = c.rewriteClock; contentFor = c.contentFor; collapseFor = c.collapseFor; phase = c.phase; phaseT = c.phaseT;
-  env.E = state.E; env.g = state.gen; env.Z = atom.Z; env.phi = c.phi || 0; env.G = state.G || 0;
+  env.E = state.E; env.g = state.gen; env.Z = atom.Z; env.phi = c.phi || 0; env.phiP = c.phiP ?? (c.phi || 0); env.G = state.G || 0;
 }
 function leave(c) {
   c.cur = cur; c.curAst = curAst; c.committedF = committedF; c.committedAst = committedAst; c.committedEq = committedEq;
@@ -958,7 +981,7 @@ const FIRST = {
 };
 // load the population, or the single creature saved before populations existed
 const SAVE_KEY = 'void-drifter-v2', OLD_KEY = 'void-drifter-v1', WORLD_KEY = 'void-drifter-world';
-let world = { seeds: [], elements: {}, compounds: {}, particles: [] };
+let world = { seeds: [], elements: {}, compounds: {}, particles: [], chain: {} };
 let saved = null;
 try { saved = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); } catch (_) {}
 try { const w = JSON.parse(localStorage.getItem(WORLD_KEY) || 'null'); if (w && Array.isArray(w.seeds)) world = Object.assign(world, w); } catch (_) {}
@@ -980,6 +1003,16 @@ for (const s of states) {
     try { s.eq = show(parse(s.eq + add)); s.history.push({ eq: s.eq, by: 'origin', g: s.gen }); s.log.unshift({ g: s.gen, text: 'Received two drive genes: <b>seek(θ)</b>, to hunt ancestral genes, and <b>grow(t)</b>, to grow and let new genes reshape it.' }); } catch (_) {}
     for (const g of ['0.25 seek(θ)', '0.15 grow(t)']) s.origins[g] = { k: 'self', label: 'drive gene' };
   }
+  if (!/\bpredator\(/.test(s.eq) || !/\bpsyche\(/.test(s.eq)) {
+    const pg = /\bpredator\(/.test(s.eq) ? '' : predatorGene(), yg = /\bpsyche\(/.test(s.eq) ? '' : psycheGene();
+    try {
+      s.eq = show(parse(s.eq + (pg ? ' + ' + pg : '') + (yg ? ' + ' + yg : '')));
+      s.history.push({ eq: s.eq, by: 'origin', g: s.gen });
+      s.log.unshift({ g: s.gen, text: 'Received a <b>predator(θ)</b> gene, which places it on the food chain, and a <b>psyche</b> gene carrying the five human personality traits.' });
+      if (pg) s.origins[show(parse(pg))] = { k: 'self', label: 'drive gene' };
+      if (yg) s.origins[show(parse(yg))] = { k: 'self', label: 'trait gene' };
+    } catch (_) {}
+  }
   pop.push(makeCreature(s));
 }
 focus = pop.find(c => c.s.id === saved?.focus) || pop[0];
@@ -1000,7 +1033,7 @@ window.claude?.hot?.snapshot?.(() => ({ v2: { creatures: pop.map(c => c.s), focu
 // how hard the creature hunts. grow(t) is its growth level G, which builds while energy is high;
 // its coefficient is how strongly it wants to grow, and without it new genes cannot reshape the body.
 const DRIVE_GENES = ' + 0.25 seek(θ) + 0.15 grow(t)';
-const isDrive = src => /\b(seek|grow)\(/.test(src);
+const isDrive = src => /\b(seek|grow|predator|psyche)\(/.test(src);
 function driveAmp(ast, name) {
   let amp = 0;
   for (const x of addends(ast)) {
@@ -1010,6 +1043,7 @@ function driveAmp(ast, name) {
   return amp;
 }
 // structural changes need the grow gene
+const DRIVES = ['seek', 'grow', 'predator', 'psyche'];
 const STRUCTURAL = ['grow', 'recall', 'splice', 'replay', 'assimilate', 'sharpen', 'feed'];
 
 /* ---------- food: ancestral genes drifting loose in the void ---------- */
@@ -1057,9 +1091,38 @@ function drawFood() {
 // hunting runs once per frame for the whole population
 function stepHunt(dt) {
   for (const c of pop) {
-    c.seeking = null;
+    c.seeking = null; c.chasing = null; c.fleeing = null;
+    c.biteCool = Math.max(0, (c.biteCool || 0) - dt);
+    if (c.phase !== 'alive') continue;
+    const ps = c.psy || NEUTRAL, hunger = 1.4 - Math.min(c.s.E, 1.7) / 1.7;
+    // prey: flee anything that can eat it, harder the more anxious it is
+    let threat = null, td = Infinity, tdx = 0, tdy = 0;
+    for (const o of pop) {
+      if (!canEat(o, c)) continue;
+      const dx = wrapD(o.x - c.x, W), dy = wrapD(o.y - c.y, H), d = Math.hypot(dx, dy) || 1;
+      if (d < (o.radius + c.radius) * 6 && d < td) { threat = o; td = d; tdx = dx; tdy = dy; }
+    }
+    if (threat) { const acc = (14 + 60 * ps.n) * dt; c.vx -= tdx / td * acc; c.vy -= tdy / td * acc; c.fleeing = threat; }
+    // predator: hunt creatures below it on the food chain
+    if ((c.predAmp || 0) >= 0.08 && c.biteCool <= 0 && c.s.E < 1.3) {
+      let prey = null, pd = 150 + 700 * c.predAmp, pdx = 0, pdy = 0;
+      for (const o of pop) {
+        if (!canEat(c, o)) continue;
+        const dx = wrapD(o.x - c.x, W), dy = wrapD(o.y - c.y, H), d = Math.hypot(dx, dy) || 1;
+        if (d < pd) { prey = o; pd = d; pdx = dx; pdy = dy; }
+      }
+      if (prey) {
+        c.chasing = prey; c.phi = c.phiP = Math.atan2(pdy, pdx);
+        const acc = (16 + 80 * c.predAmp) * hunger * (1 - 0.7 * ps.a);
+        c.vx += pdx / pd * acc * dt; c.vy += pdy / pd * acc * dt;
+        if (pd < (c.radius + prey.radius) * 0.75) bite(c, prey);
+        continue;
+      }
+    }
+    // otherwise it grazes: seek loose ancestral genes
     const s = c.seekAmp || 0;
-    if (!(s > 0) || c.phase !== 'alive' || (c.s.carried || []).length >= 6) { c.phi = Math.atan2(c.vy, c.vx) || c.phi || 0; continue; }
+    c.phiP = undefined;
+    if (!(s > 0) || (c.s.carried || []).length >= 6) { c.phi = Math.atan2(c.vy, c.vx) || c.phi || 0; continue; }
     let best = null, bd = 120 + 900 * s, bdx = 0, bdy = 0;
     for (const f of food) {
       const dx = wrapD(f.x - c.x, W), dy = wrapD(f.y - c.y, H), d = Math.hypot(dx, dy);
@@ -1067,7 +1130,7 @@ function stepHunt(dt) {
     }
     if (!best) { c.phi = Math.atan2(c.vy, c.vx) || c.phi || 0; continue; }
     c.seeking = best; c.phi = Math.atan2(bdy, bdx);
-    const hunger = 1.4 - Math.min(c.s.E, 1.7) / 1.7, boost = c.s.question?.kind === 'ancestors' ? 1.6 : 1;
+    const boost = c.s.question?.kind === 'ancestors' ? 1.6 : 1;
     const acc = (12 + 70 * s) * hunger * boost;
     c.vx += Math.cos(c.phi) * acc * dt; c.vy += Math.sin(c.phi) * acc * dt;
     // it eats what its body reaches
@@ -1137,6 +1200,7 @@ OP_LABEL.assimilate = 'assimilate eaten genes';
 // others are goals it bends its rewriting toward. Each answer is an insight, and every insight
 // makes the next question bolder.
 const QUESTION_S = 120;
+const qLimit = () => QUESTION_S * (0.7 + 0.6 * P().c);
 function thetaCoefIn(ast, src) {
   const g = addends(ast).find(x => show(x.n) === src);
   if (!g) return null;
@@ -1144,7 +1208,7 @@ function thetaCoefIn(ast, src) {
   return h ? h.n.a : null;
 }
 function askQuestion(c) {
-  const amb = 1 + (state.insightCount || 0) * 0.3;
+  const amb = (1 + (state.insightCount || 0) * 0.3) * (0.8 + 0.6 * P().o);
   const genes = addends(curAst).filter(x => x.n.k !== 'num' && !isDrive(show(x.n))).map(x => show(x.n));
   const qs = [];
   for (const src of genes) {
@@ -1174,12 +1238,12 @@ function answerQuestion(text, good) {
   state.insightCount = (state.insightCount || 0) + 1;
   if (good) state.E = Math.min(1.7, state.E + 0.25);
   addLog(`<i>Answered:</i> ${esc(q.text)} <b>${esc(text)}</b>`);
-  state.question = null; state.qWait = 12;
+  state.question = null; state.qWait = 18 - 12 * P().o;
   if (isFocus()) uiDirty = true;
 }
 function dropQuestion(why) {
   addLog(`${why} It lets the question go: ${esc(state.question.text)}`);
-  state.question = null; state.qWait = 15;
+  state.question = null; state.qWait = 20 - 12 * P().o;
   if (isFocus()) uiDirty = true;
 }
 function applyEq(src, by) {
@@ -1241,7 +1305,7 @@ function stepQuestion(c, dt) {
     };
     return answerQuestion(A[q.kind], true);
   }
-  if (q.age > QUESTION_S) dropQuestion('It could not find the answer in time.');
+  if (q.age > qLimit()) dropQuestion('It could not find the answer in time.');
 }
 // questions bend its rewriting toward them
 function questionBias(op) {
@@ -1251,6 +1315,85 @@ function questionBias(op) {
   if (k === 'pace') return op === 'tempo' ? 3 : 1;
   if (k === 'size') return op === 'mass' ? 2 : 1;
   return 1;
+}
+
+/* ---------- the food chain: predator(θ) ---------- */
+// predator(θ) is a pair of mandibles pointing at its target. Its coefficient, scaled by size and
+// charge, sets a creature's rank on the food chain. A predator hunts creatures well below it;
+// prey flee anything that outranks them. Loose ancestral genes are the bottom of the chain.
+const rankOf = c => (c.predAmp || 0) * (0.5 + c.traits.mass) + 0.02 * c.atom.Z;
+// newborns get a short grace period, so a parent does not eat its daughter at birth
+const canEat = (p, q) => p !== q && p.phase === 'alive' && q.phase === 'alive' && !(wall - (q.bornAt ?? -99) < 20) && (p.predAmp || 0) >= 0.08 && (p.psy?.a ?? 0.5) < 0.85 && rankOf(p) > rankOf(q) * 1.3;
+const bites = [];
+function bite(p, q) {
+  q.s.E = Math.max(0, q.s.E - 0.45); p.s.E = Math.min(1.7, p.s.E + 0.3);
+  p.biteCool = 12;
+  let what = '';
+  const genes = genesOf(q);
+  if (genes.length && p.s.carried.length < 6) {
+    const g = pick(genes);
+    p.s.carried.push({ src: g.src, sign: g.sign, anc: q.s.name, hue: q.hue, charge: 1, x: 0, y: 0, vx: 0, vy: 0 });
+    what = ` and swallowed its gene <code>${esc(g.src)}</code>`;
+  }
+  const key = `${p.s.name} → ${q.s.name}`;
+  world.chain[key] = (world.chain[key] || 0) + 1;
+  bites.push({ x: q.x, y: q.y, t: wall });
+  logTo(p, `Hunted <b>${q.s.name}</b> and took 0.45 of its energy${what}.`);
+  logTo(q, `Was bitten by <b>${p.s.name}</b> and lost 0.45 energy.`);
+  announce(`${p.s.name} hunted ${q.s.name}.`);
+  if (p === focus || q === focus) uiDirty = true;
+}
+function drawChase() {
+  ctx.setLineDash([3, 5]); ctx.lineWidth = 1;
+  for (const c of pop) {
+    if (!c.chasing || !pop.includes(c.chasing)) continue;
+    const dx = wrapD(c.chasing.x - c.x, W), dy = wrapD(c.chasing.y - c.y, H);
+    ctx.strokeStyle = 'hsla(8, 90%, 70%, 0.4)';
+    ctx.beginPath(); ctx.moveTo(c.x, c.y); ctx.lineTo(c.x + dx, c.y + dy); ctx.stroke();
+  }
+  ctx.setLineDash([]);
+  for (let i = bites.length - 1; i >= 0; i--) {
+    const b = bites[i], k = (wall - b.t) / 1;
+    if (k > 1) { bites.splice(i, 1); continue; }
+    ctx.strokeStyle = `hsla(8, 95%, 70%, ${0.85 * (1 - k)})`; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(b.x, b.y, 8 + 34 * k, 0, 6.283); ctx.stroke();
+  }
+}
+
+/* ---------- human traits: psyche(θ, O, C, E, A, N) ---------- */
+// One gene carries the Big Five, the standard model psychologists use to describe human
+// personality. Each argument is a trait from 0 to 1, and each one changes how the creature lives.
+const NEUTRAL = { o: 0.5, c: 0.5, x: 0.5, a: 0.5, n: 0.5 };
+const TRAITS = [
+  ['o', 'Openness', 'curious: bolder questions, more experiments'],
+  ['c', 'Conscientiousness', 'disciplined: careful rewrites, thrifty metabolism, patient with questions'],
+  ['x', 'Extraversion', 'social: drawn to company, bonds faster'],
+  ['a', 'Agreeableness', 'kind: deeper harmony, shares energy, bites less'],
+  ['n', 'Neuroticism', 'anxious: flees predators harder'],
+];
+function randTrait() { return +(0.2 + Math.random() * 0.6).toFixed(2); }
+function psycheGene() { return `0.08 psyche(θ, ${randTrait()}, ${randTrait()}, ${randTrait()}, ${randTrait()}, ${randTrait()})`; }
+function predatorGene() { return `${+(0.05 + Math.random() * 0.25).toFixed(2)} predator(θ)`; }
+const P = () => active?.psy || NEUTRAL;
+function readPsyche(c) {
+  const ps = nodes(c.curAst).find(h => h.n.k === 'call' && h.n.f === 'psyche');
+  if (!ps) return NEUTRAL;
+  const v = i => { try { const x = build(ps.n.args[i])(env); return Number.isFinite(x) ? clamp(x, 0, 1) : 0.5; } catch (_) { return 0.5; } };
+  return { o: v(1), c: v(2), x: v(3), a: v(4), n: v(5) };
+}
+function roleOf(c) {
+  const hunts = pop.filter(o => canEat(c, o)), huntedBy = pop.filter(o => canEat(o, c));
+  const role = hunts.length && huntedBy.length ? 'middle of the chain' : hunts.length ? 'apex predator' : huntedBy.length ? 'prey' : (c.predAmp || 0) >= 0.08 ? 'predator, nothing in reach' : 'grazer';
+  return { role, hunts, huntedBy };
+}
+function renderPsyche() {
+  const p = focus.psy || NEUTRAL, r = roleOf(focus);
+  $('traits').innerHTML = TRAITS.map(([k, label, effect]) => `<div class="trait"><div class="row"><span>${label}</span><b>${p[k].toFixed(2)}</b></div><div class="tbar"><i style="width:${(p[k] * 100).toFixed(0)}%"></i></div><div class="teff">${effect}</div></div>`).join('');
+  $('rank').textContent = `rank ${rankOf(focus).toFixed(2)}`;
+  $('foodrole').textContent = r.role;
+  const links = Object.entries(world.chain).sort((a, b) => b[1] - a[1]).slice(0, 4);
+  $('chain').innerHTML = `<div><span class="k">Role</span> ${r.role}</div><div><span class="k">Can hunt</span> ${r.hunts.map(o => o.s.name).join(', ') || 'none'}</div><div><span class="k">Hunted by</span> ${r.huntedBy.map(o => o.s.name).join(', ') || 'none'}</div>`
+    + (links.length ? `<ul class="links">${links.map(([k, n]) => `<li>${k} <span>×${n}</span></li>`).join('')}</ul>` : '');
 }
 
 /* ---------- panel ---------- */
@@ -1283,7 +1426,7 @@ function renderQuestion() {
   $('qbar').style.width = ((q ? q.progress : 0) * 100).toFixed(0) + '%';
   $('qmeta').textContent = !q ? '' : q.kind === 'whatif'
     ? (q.stage === 'trying' ? `testing it on itself · ${Math.max(0, 10 - q.trialT).toFixed(0)}s left` : 'about to test it on itself')
-    : `working toward it · ${Math.max(0, QUESTION_S - q.age).toFixed(0)}s left`;
+    : `working toward it · ${Math.max(0, qLimit() - q.age).toFixed(0)}s left`;
   $('ins').textContent = `${state.insightCount || 0} insight${state.insightCount === 1 ? '' : 's'}`;
 }
 function renderInsights() {
@@ -1312,6 +1455,7 @@ function updatePanel(fit) {
   $('growth').textContent = driveAmp(curAst, 'grow') ? `G ${(state.G || 0).toFixed(2)}` : 'no grow gene';
   $('insn').textContent = state.insightCount || 0;
   renderQuestion();
+  renderPsyche();
   const E = state.E;
   $('energy').textContent = E.toFixed(2);
   $('ebar').style.width = (E / 1.7 * 100).toFixed(1) + '%';
@@ -1327,12 +1471,14 @@ function updatePanel(fit) {
   }
   if (phase === 'alive' && atom.avgR < 0.55 && E >= 0.15) { sig = 'Its electrons radiate as they orbit and are spiraling toward the nucleus. It needs energy to hold them out.'; key = 'spiral'; }
   if (phase === 'alive' && focus.harmony) { sig = `It has found harmony with ${focus.harmony.with.s.name}. Together they are fusing an element (${Math.round(focus.harmony.p * 100)}%).`; key = 'harmony'; }
+  else if (phase === 'alive' && focus.fleeing) { sig = `It is fleeing ${focus.fleeing.s.name}, which outranks it on the food chain.`; key = 'flee'; }
+  else if (phase === 'alive' && focus.chasing) { sig = `It is hunting ${focus.chasing.s.name}.`; key = 'hunt'; }
   else if (phase === 'alive' && focus.seeking && E < 0.6) { sig = `It is hungry, and hunting a gene from ${focus.seeking.anc}.`; key = 'seek'; }
   else if (phase === 'alive' && E >= 1.65) { sig = pop.length < MAX_POP ? 'It is at full energy and about to split in two.' : 'It is at full energy, but the void is full, so it cannot split.'; key = 'split'; }
   if (phase === 'condensing') { sig = `Its orbits have collapsed into the nucleus. It is condensing into a gene that holds all ${state.history.length} of its equations.`; key = 'condense'; }
   else if (phase === 'birth') { sig = 'A blank creature forms in the void.'; key = 'birth'; }
   $('signal').textContent = sig;
-  if (key !== lastSignalKey) { lastSignalKey = key; $('hint').textContent = HINTS[key] || (key === 'birth' ? 'Its equation starts as a plain 1. Give it its first form.' : key === 'condense' ? 'Its gene is listed under Lineage.' : key === 'seek' ? 'Eaten genes that drift close together inside it release energy.' : key === 'harmony' ? 'Creatures harmonize when their lobe counts form a simple ratio, like 1:1 or 2:1, and they move at a similar pulse.' : key === 'split' ? 'At full energy a creature divides, and its daughter’s genes vary a little.' : key === 'spiral' ? 'A form that meets its needs gives it the energy to lift its electrons back out.' : key === 'dormant' ? 'If every electron falls into the nucleus, the atom collapses and it condenses into a gene.' : 'Change any term to give it something new.'); }
+  if (key !== lastSignalKey) { lastSignalKey = key; $('hint').textContent = HINTS[key] || (key === 'birth' ? 'Its equation starts as a plain 1. Give it its first form.' : key === 'condense' ? 'Its gene is listed under Lineage.' : key === 'flee' ? 'The neuroticism value in psyche(θ, …) sets how hard it flees.' : key === 'hunt' ? 'The coefficient of predator(θ), with its size, sets its rank on the food chain.' : key === 'seek' ? 'Eaten genes that drift close together inside it release energy.' : key === 'harmony' ? 'Creatures harmonize when their lobe counts form a simple ratio, like 1:1 or 2:1, and they move at a similar pulse.' : key === 'split' ? 'At full energy a creature divides, and its daughter’s genes vary a little.' : key === 'spiral' ? 'A form that meets its needs gives it the energy to lift its electrons back out.' : key === 'dormant' ? 'If every electron falls into the nucleus, the atom collapses and it condenses into a gene.' : 'Change any term to give it something new.'); }
 }
 
 /* ---------- the only interface: the equation ---------- */
@@ -1401,12 +1547,13 @@ function inheritInstinct() {
 }
 function blankState() {
   const id = world.next++;
+  const pg = show(parse(predatorGene())), yg = show(parse(psycheGene())), eq = show(parse(`1 + 0.25 seek(θ) + 0.15 grow(t) + ${pg} + ${yg}`));
   return {
     id, name: specName(id),
-    eq: '1 + 0.25 seek(θ) + 0.15 grow(t)', gen: 0, E: 0.8, rewrites: 0, tries: 0, memory: [], instinct: inheritInstinct(),
-    origins: { 1: { k: 'self', label: 'blank start' }, '0.25 seek(θ)': { k: 'self', label: 'drive gene' }, '0.15 grow(t)': { k: 'self', label: 'drive gene' } },
+    eq, gen: 0, E: 0.8, rewrites: 0, tries: 0, memory: [], instinct: inheritInstinct(),
+    origins: { 1: { k: 'self', label: 'blank start' }, '0.25 seek(θ)': { k: 'self', label: 'drive gene' }, '0.15 grow(t)': { k: 'self', label: 'drive gene' }, [pg]: { k: 'self', label: 'drive gene' }, [yg]: { k: 'self', label: 'trait gene' } },
     G: 0, carried: [], digested: [], insights: [], question: null, qWait: 8,
-    history: [{ eq: '1 + 0.25 seek(θ) + 0.15 grow(t)', by: 'birth', g: 0 }],
+    history: [{ eq, by: 'birth', g: 0 }],
     needs: [
       { key: 'mass', target: +(0.8 + Math.random() * 0.6).toFixed(2), w: 1 },
       { key: 'symmetry', target: pick([2, 3, 4, 5, 6, 7]), w: 1.3 },
@@ -1460,7 +1607,7 @@ function split(c) {
   const a = Math.random() * 6.283, off = c.radius * 0.8;
   const dc = makeCreature(d, { x: (c.x + Math.cos(a) * off + W) % W, y: (c.y + Math.sin(a) * off + H) % H, vx: c.vx + Math.cos(a) * 30, vy: c.vy + Math.sin(a) * 30, traits: c.traits });
   c.vx -= Math.cos(a) * 30; c.vy -= Math.sin(a) * 30;
-  dc.T = c.T; dc.hue = c.hue; dc.radius = c.radius;
+  dc.T = c.T; dc.hue = c.hue; dc.radius = c.radius; dc.bornAt = wall;
   c.flash = dc.flash = wall;
   pop.push(dc);
   enter(dc);
@@ -1474,6 +1621,16 @@ function split(c) {
     claimOrigins(curAst, () => ({ k: 'self', label: 'varied in split' }));
     addLog(`Its genes varied in the split: ${esc(res.what)}.`);
     break;
+  }
+  {
+    const ast = clone(curAst), ps = nodes(ast).find(h => h.n.k === 'call' && h.n.f === 'psyche');
+    const i = 1 + Math.floor(Math.random() * 5), arg = ps && ps.n.args[i];
+    if (arg && arg.k === 'num') {
+      const old = arg.v; arg.v = +clamp(old + (Math.random() < 0.5 ? -1 : 1) * (0.05 + Math.random() * 0.1), 0, 1).toFixed(2);
+      const src = show(ast), k = compile(src);
+      cur = committedF = k.f; curAst = committedAst = k.ast; state.eq = committedEq = src;
+      addLog(`Its personality shifted in the split: ${TRAITS[i - 1][1].toLowerCase()} ${fmtNum(old)} → ${fmtNum(arg.v)}.`);
+    }
   }
   recordEq('split');
   for (const n of state.needs) if (Math.random() < 0.5) shiftTarget(n, 0.4);
@@ -1591,6 +1748,7 @@ function genesOf(c) {
     const list = addends(c.curAst);
     c.genes = list.filter(x => x.n.k !== 'num' && !isDrive(show(x.n))).map(x => ({ src: show(x.n), sign: x.sign }));
     c.seekAmp = driveAmp(c.curAst, 'seek'); c.growAmp = driveAmp(c.curAst, 'grow');
+    c.predAmp = driveAmp(c.curAst, 'predator'); c.psy = readPsyche(c);
     c.nucleus = list.filter(x => x.n.k === 'num').reduce((t, x) => t + x.sign * x.n.v, 0);
   }
   return c.genes;
@@ -1624,13 +1782,24 @@ function stepWorld(dt) {
     let ps = pairs.get(key); if (!ps) { ps = { p: 0, cool: 0 }; pairs.set(key, ps); }
     ps.a = a; ps.b = b; ps.d = d; ps.reach = reach;
     ps.cool = Math.max(0, ps.cool - dt);
-    const h = ps.h = a.phase === 'alive' && b.phase === 'alive' ? harmonyOf(a, b) : 0;
+    const pa = a.psy || NEUTRAL, pb = b.psy || NEUTRAL;
+    const h = ps.h = a.phase === 'alive' && b.phase === 'alive' ? clamp(harmonyOf(a, b) * (0.85 + 0.3 * (pa.a + pb.a) / 2), 0, 1) : 0;
+    // extraverts drift toward company
+    if (d < reach * 6 && !canEat(a, b) && !canEat(b, a)) { const pull = 3 * (pa.x + pb.x) / 2 * dt; a.vx += ux * pull; a.vy += uy * pull; b.vx -= ux * pull; b.vy -= uy * pull; }
+    // the agreeable share energy with a starving neighbour
+    for (const [g, r] of [[a, b], [b, a]]) {
+      const gp = g.psy || NEUTRAL;
+      if (gp.a > 0.6 && g.s.E > 1 && r.s.E < 0.3 && r.phase === 'alive' && d < reach * 2) {
+        const amt = 0.08 * dt; g.s.E -= amt; r.s.E += amt;
+        if (!ps['gave' + g.s.id]) { ps['gave' + g.s.id] = true; logTo(g, `Shared energy with <b>${r.s.name}</b>, which was starving.`); logTo(r, `<b>${g.s.name}</b> shared its energy.`); if (g === focus || r === focus) uiDirty = true; }
+      } else if (r.s.E > 0.5) ps['gave' + g.s.id] = false;
+    }
     let bonding = false;
     if (h > HARMONY && ps.cool <= 0 && d < reach * 5) {
       const pull = 5 * h * dt; a.vx += ux * pull; a.vy += uy * pull; b.vx -= ux * pull; b.vy -= uy * pull;
       if (d < reach * 1.6 && a.s.E > 0.45 && b.s.E > 0.45) {
         bonding = true;
-        ps.p += dt * h / 6;
+        ps.p += dt * h / 6 * (0.7 + 0.6 * (pa.x + pb.x) / 2);
         a.harmony = { with: b, p: ps.p }; b.harmony = { with: a, p: ps.p };
         if (ps.p >= 1) {
           ps.p = 0; ps.cool = 30;
@@ -1643,7 +1812,7 @@ function stepWorld(dt) {
   }
   for (const c of pop) {
     c.vx *= 1 - 0.5 * dt; c.vy *= 1 - 0.5 * dt;
-    const v = Math.hypot(c.vx, c.vy), cap = c.seeking ? 60 : 36; if (v > cap) { c.vx *= cap / v; c.vy *= cap / v; }
+    const v = Math.hypot(c.vx, c.vy), cap = c.chasing ? 72 : c.fleeing || c.seeking ? 60 : 36; if (v > cap) { c.vx *= cap / v; c.vy *= cap / v; }
     c.x = ((c.x + c.vx * dt) % W + W) % W; c.y = ((c.y + c.vy * dt) % H + H) % H;
   }
 }
@@ -1884,7 +2053,7 @@ function simulate(c, dt) {
   // dormant, its metabolism slows to a crawl, which buys time for a better form to wake it again
   const slow = E < 0.15 ? 0.3 : 1;
   const feed = 0.16 * (fit - 0.5) * (fit < 0.5 ? slow : 1);
-  const cost = (0.025 * traits.mass * (0.5 + traits.pulse) + 0.012 * traits.intricacy / 8) * slow;
+  const cost = (0.025 * traits.mass * (0.5 + traits.pulse) + 0.012 * traits.intricacy / 8) * slow * (1 - 0.3 * P().c);
   // its electrons radiate as they orbit; that energy is lost
   const radiated = updateAtom(dt, phase === 'condensing' ? 0 : E);
   if (alive) {
@@ -2047,6 +2216,7 @@ function frame(now) {
   drawSeeds(W / 2, H / 2, Math.min(W, H) * 0.16);
   drawFood();
   drawHarmony();
+  drawChase();
   drawChemistry();
   ctx.globalCompositeOperation = 'source-over';
   for (const c of pop) { enter(c); drawCreature(c); leave(c); }
