@@ -12,6 +12,7 @@
   --panel: rgba(8, 10, 20, 0.62);
   --err: #ff8f7a;
   --live: hsl(230 80% 72%);
+  --gold: #e6c27f;
   --display: "Cormorant Garamond", "Iowan Old Style", Georgia, serif;
   --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
   color-scheme: dark;
@@ -21,11 +22,14 @@ html, body { height: 100%; }
 body { background: var(--void); color: var(--ink); font-family: var(--mono); font-size: 13px; overflow: hidden; }
 #void { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
 
-.ui { position: fixed; inset: 0; pointer-events: none; padding: max(16px, env(safe-area-inset-top, 0px)) 16px max(16px, env(safe-area-inset-bottom, 0px)); display: grid; grid-template-rows: auto 1fr auto; gap: 12px; }
+.ui { position: fixed; inset: 0; pointer-events: none; padding: max(16px, env(safe-area-inset-top, 0px)) 16px max(16px, env(safe-area-inset-bottom, 0px)); display: grid; grid-template-rows: minmax(0, 1fr) auto; gap: 12px; }
 .ui > * { pointer-events: auto; min-width: 0; }
 
-.top { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
-.id { max-width: 34ch; display: grid; gap: 8px; }
+.top { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; min-height: 0; max-height: 100%; pointer-events: none; }
+.col { display: grid; gap: 12px; align-content: start; max-height: 100%; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--faint) transparent; pointer-events: auto; }
+.left { width: 290px; }
+.right { width: 310px; }
+.id { display: grid; gap: 8px; }
 .eyebrow { font-size: 10.5px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--dim); }
 h1 { margin: 0; font-family: var(--display); font-weight: 500; font-size: 34px; line-height: 1; letter-spacing: 0.01em; text-wrap: balance; }
 .lede { margin: 0; color: var(--dim); line-height: 1.55; font-size: 12px; }
@@ -35,8 +39,8 @@ h1 { margin: 0; font-family: var(--display); font-weight: 500; font-size: 34px; 
 .ebar { height: 3px; background: var(--faint); border-radius: 2px; overflow: hidden; width: 140px; margin-top: 4px; }
 .ebar i { display: block; height: 100%; width: 50%; background: var(--live); transition: width .3s linear; }
 
-.needs { width: 280px; background: var(--panel); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); border: 1px solid var(--faint); border-radius: 4px; padding: 14px 16px; display: grid; gap: 12px; }
-.needs h2 { margin: 0; font-size: 10.5px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; color: var(--dim); display: flex; justify-content: space-between; }
+.panel { background: var(--panel); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); border: 1px solid var(--faint); border-radius: 4px; padding: 14px 16px; display: grid; gap: 12px; }
+.panel h2 { margin: 0; font-size: 10.5px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; color: var(--dim); display: flex; justify-content: space-between; }
 .need { display: grid; gap: 5px; }
 .need .row { display: flex; justify-content: space-between; gap: 8px; font-variant-numeric: tabular-nums; }
 .need .lbl { letter-spacing: 0.04em; }
@@ -50,9 +54,30 @@ h1 { margin: 0; font-family: var(--display); font-weight: 500; font-size: 34px; 
 .track .cur { position: absolute; top: 0.5px; width: 5px; height: 5px; margin-left: -2.5px; border-radius: 50%; background: var(--ink); transition: left .25s linear; }
 .need.new { animation: arrive 2.4s ease-out; }
 @keyframes arrive { from { background: rgba(255,255,255,0.08); } to { background: transparent; } }
-.log { list-style: none; margin: 0; padding: 10px 0 0; border-top: 1px solid var(--faint); display: grid; gap: 5px; font-size: 11px; color: var(--dim); line-height: 1.45; }
+.log { list-style: none; margin: 0; padding: 0; display: grid; gap: 5px; font-size: 11px; color: var(--dim); line-height: 1.45; }
 .log li b { color: var(--ink); font-weight: 500; }
 .log li i { color: var(--live); font-style: normal; }
+.log li em { color: var(--gold); font-style: normal; }
+
+#genes { display: grid; gap: 10px; }
+.gene { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 10px; align-items: center; }
+.gene canvas { width: 40px; height: 40px; }
+.gene.fresh { animation: arrive 2.4s ease-out; }
+.facs { display: flex; flex-wrap: wrap; align-items: center; gap: 3px; font-size: 11.5px; }
+.fac { border: 1px solid var(--faint); border-radius: 3px; padding: 1px 5px; white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.fac.wave { color: var(--live); }
+.fac.energy { color: var(--gold); }
+.facs .x, .facs .sg { color: var(--dim); font-size: 10px; }
+.gmeta { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0 8px; margin-top: 3px; font-size: 10.5px; color: var(--dim); }
+.gmeta .dec { min-width: 0; }
+.origin { white-space: nowrap; }
+.origin.you { color: var(--ink); }
+.origin.stone { color: var(--gold); }
+.origin.self { color: var(--live); }
+.instinct { display: grid; gap: 4px; padding-top: 10px; border-top: 1px solid var(--faint); font-size: 10.5px; color: var(--dim); }
+.instinct .ttl { letter-spacing: 0.14em; text-transform: uppercase; font-size: 10px; margin-bottom: 2px; }
+.inst { display: grid; grid-template-columns: 1fr 70px; gap: 8px; align-items: center; }
+.inst i { display: block; height: 3px; background: var(--live); border-radius: 2px; opacity: 0.7; }
 #eq.rewritten { animation: rewrite 1.8s ease-out; }
 @keyframes rewrite { from { color: var(--live); text-shadow: 0 0 12px var(--live); } to { color: var(--ink); text-shadow: none; } }
 
@@ -70,22 +95,26 @@ form.eq { width: min(780px, 100%); background: var(--panel); backdrop-filter: bl
 .ref code { color: var(--ink); }
 
 @media (max-width: 720px) {
-  .top { flex-direction: column; gap: 10px; }
+  .top { flex-direction: column; justify-content: flex-start; gap: 10px; overflow-y: auto; pointer-events: auto; }
+  .col { width: 100%; max-height: none; overflow: visible; gap: 10px; }
+  .journal, .instinct { display: none; }
+  .genome { padding: 10px 12px; gap: 8px; }
+  #genes { display: flex; gap: 14px; overflow-x: auto; scrollbar-width: none; }
+  .gene { min-width: 250px; }
   h1 { font-size: 28px; }
   .lede { display: none; }
   .id { max-width: none; grid-template-columns: 1fr auto; align-items: center; }
   .id .eyebrow { grid-column: 1 / -1; }
   .ebar { width: 100px; }
-  .needs { width: 100%; padding: 10px 12px; grid-template-columns: 1fr 1fr; gap: 8px 14px; }
-  .needs h2, .log { grid-column: 1 / -1; }
-  .log { display: none; }
+  .needs { padding: 10px 12px; grid-template-columns: 1fr 1fr; gap: 8px 14px; }
+  .needs h2 { grid-column: 1 / -1; }
   .need .row { font-size: 11px; }
   .signal { font-size: 18px; }
   .hint { display: none; }
   .ref { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .need.new, #eq.rewritten { animation: none; }
+  .need.new, .gene.fresh, #eq.rewritten { animation: none; }
 }
 </style>
 
@@ -93,24 +122,36 @@ form.eq { width: min(780px, 100%); background: var(--panel); backdrop-filter: bl
 
 <div class="ui">
   <div class="top">
-    <div class="id">
-      <div class="eyebrow">Specimen VD‑01 · deep field</div>
-      <h1>Void Drifter</h1>
-      <p class="lede">It drifts alone in empty space and makes its own energy. Its body is the equation at the bottom of the screen, and that equation is the only way to reach it. Each form you give it changes what it needs next. When it has energy to spare, it rewrites the equation itself.</p>
-      <dl class="vitals">
-        <dt>Gen</dt><dd id="gen">0</dd>
-        <dt>Rewrites</dt><dd id="rw">0</dd>
-        <dt>State</dt><dd id="mood">Steady</dd>
-        <dt>Energy</dt><dd><span id="energy">0.80</span><div class="ebar"><i id="ebar"></i></div></dd>
-      </dl>
+    <div class="col left">
+      <div class="id">
+        <div class="eyebrow">Specimen VD‑01 · deep field</div>
+        <h1>Void Drifter</h1>
+        <p class="lede">It drifts alone in empty space and makes its own energy. Its body is the equation at the bottom of the screen, and that equation is the only way to reach it. It remembers every equation you try. Your misses become stepping stones it builds from when it rewrites itself, even while dormant.</p>
+        <dl class="vitals">
+          <dt>Gen</dt><dd id="gen">0</dd>
+          <dt>Rewrites</dt><dd id="rw">0</dd>
+          <dt>Memory</dt><dd id="mem">no tries yet</dd>
+          <dt>State</dt><dd id="mood">Steady</dd>
+          <dt>Energy</dt><dd><span id="energy">0.80</span><div class="ebar"><i id="ebar"></i></div></dd>
+        </dl>
+      </div>
+      <section class="panel journal" aria-label="Journal">
+        <h2><span>Journal</span></h2>
+        <ul class="log" id="log"></ul>
+      </section>
     </div>
-    <aside class="needs" aria-label="Current needs">
-      <h2><span>Needs</span><span id="fit">fit 0.00</span></h2>
-      <div id="needlist" style="display:contents"></div>
-      <ul class="log" id="log"></ul>
-    </aside>
+    <div class="col right">
+      <aside class="panel needs" aria-label="Current needs">
+        <h2><span>Needs</span><span id="fit">fit 0.00</span></h2>
+        <div id="needlist" style="display:contents"></div>
+      </aside>
+      <section class="panel genome" aria-label="Genome">
+        <h2><span>Genome · factors of r</span><span id="gcount"></span></h2>
+        <div id="genes"></div>
+        <div class="instinct" id="instinct"></div>
+      </section>
+    </div>
   </div>
-  <div></div>
   <div class="bottom">
     <p class="signal" id="signal" aria-live="polite"></p>
     <p class="hint" id="hint"></p>
@@ -324,7 +365,8 @@ const HINTS = {
 
 let state = {
   eq: '1 + 0.3 sin(3θ + t)·E + 0.05 sin(11θ - 2t)',
-  gen: 0, E: 0.8, rewrites: 0,
+  gen: 0, E: 0.8, rewrites: 0, tries: 0,
+  memory: [], origins: {}, instinct: {},
   needs: [
     { key: 'mass', target: 1.15, w: 1 },
     { key: 'symmetry', target: 5, w: 1.3 },
@@ -338,10 +380,11 @@ try { const s = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); if (s && s
 const hotData = window.claude?.hot?.data;
 if (hotData && hotData.eq) state = hotData;
 function save() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); } catch (_) {} }
+for (const [k, d] of [['memory', []], ['origins', {}], ['instinct', {}], ['tries', 0], ['rewrites', 0]]) if (state[k] == null) state[k] = d;
 window.claude?.hot?.snapshot?.(() => state);
 
-let cur, curAst, prev = null, morph = 1;
-{ let c; try { c = compile(state.eq); } catch (_) { state.eq = '1 + 0.3 sin(3θ + t)·E'; c = compile(state.eq); } cur = c.f; curAst = c.ast; }
+let cur, curAst, committedF, committedAst, prev = null, morph = 1;
+{ let c; try { c = compile(state.eq); } catch (_) { state.eq = '1 + 0.3 sin(3θ + t)·E'; c = compile(state.eq); } cur = committedF = c.f; curAst = committedAst = c.ast; }
 let committedEq = state.eq;
 
 /* ---------- canvas ---------- */
@@ -538,32 +581,189 @@ function score(f, size) {
 }
 const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 let rewriteClock = 0, lastKeyAt = -1e9;
-function selfRewrite() {
+function selfRewrite(dormant) {
   const size = nodes(curAst).length;
   const base = score(cur, size);
+  // asleep, it leans on memory: your old tries, failures first
+  const ops = size > 70 ? ['shed'] : Object.keys(MUTATIONS);
+  const w = op => (state.instinct[op] ?? 1) * (dormant && MEMORY_OPS.includes(op) ? 3 : 1);
   let best = null;
-  for (let i = 0; i < 10; i++) {
-    const m = size > 70 ? MUTATIONS.shed : pick(MUT_LIST);
-    let res = null; try { res = m(clone(curAst)); } catch (_) {}
+  for (let i = 0; i < 12; i++) {
+    const op = weightedPick(ops, w);
+    let res = null; try { res = MUTATIONS[op](clone(curAst)); } catch (_) {}
     if (!res) continue;
     const src = show(res.ast);
     if (src === state.eq) continue;
     let c; try { c = compile(src); } catch (_) { continue; } // it must be able to read what it wrote
     const sc = score(c.f, nodes(c.ast).length);
-    if (!best || sc > best.sc) best = { sc, src, c, what: res.what };
+    if (!best || sc > best.sc) best = { sc, src, c, op, what: res.what, gene: res.gene };
   }
   if (!best) return;
   const improves = best.sc > base + 0.004;
-  if (!improves && Math.random() > 0.12) { state.E = Math.max(0, state.E - 0.01); return; } // considered and rejected
-  state.E = Math.max(0, state.E - 0.04); // rewriting itself costs energy
+  if (!improves && Math.random() > (dormant ? 0.25 : 0.12)) { learn(best.op, -1); if (!dormant) state.E = Math.max(0, state.E - 0.01); return; }
+  learn(best.op, improves ? 1 : 0, 0.15);
+  if (!dormant) state.E = Math.max(0, state.E - 0.04); // awake, rewriting itself costs energy
   prev = cur; cur = best.c.f; curAst = best.c.ast; morph = 0;
-  state.eq = committedEq = best.src;
+  state.eq = committedEq = best.src; committedF = cur; committedAst = curAst;
+  const g = best.gene;
+  claimOrigins(curAst, src => g && !g.whole && g.src === src
+    ? { k: g.failed ? 'stone' : 'you', label: `${g.failed ? 'stone' : 'yours'} · try #${g.try}` }
+    : { k: 'self', label: g && g.whole ? `self · from #${g.try}` : 'self' });
   state.rewrites = (state.rewrites || 0) + 1;
   input.value = best.src;
   input.classList.remove('rewritten'); void input.offsetWidth; input.classList.add('rewritten');
-  addLog(`<i>Rewrote itself:</i> ${esc(best.what)}${improves ? '.' : ', as a blind experiment.'}`);
-  setStatus(`It rewrote its own equation: ${best.what}.`);
+  const tag = dormant ? '<i>Rewrote itself while dormant:</i>' : '<i>Rewrote itself:</i>';
+  const body = esc(best.what).replace(/(your try #\d+, which failed)/, '<em>$1</em>');
+  addLog(`${tag} ${body}${improves ? '.' : ', as a blind experiment.'}`);
+  setStatus(`It rewrote its own equation${dormant ? ' in its sleep' : ''}: ${best.what}.`);
   save(); buildNeeds();
+}
+/* ---------- memory: every equation you try ---------- */
+const OP_LABEL = {
+  retune: 'retune lobes', nudge: 'nudge numbers', grow: 'grow a term', shed: 'shed a term', tempo: 'change tempo', mass: 'resize its core',
+  sharpen: 'sharpen peaks', feed: 'feed on E', recall: 'borrow your genes', splice: 'swap in your genes', replay: 'rework your failed tries',
+};
+const MEMORY_OPS = ['recall', 'splice', 'replay'];
+function learn(op, d, amt = 0.25) {
+  const w = state.instinct[op] ?? 1;
+  state.instinct[op] = clamp(d > 0 ? w + amt : d < 0 ? w * 0.97 : w, 0.3, 4);
+}
+function weightedPick(arr, w) {
+  let tot = 0; for (const a of arr) tot += w(a);
+  let r = Math.random() * tot;
+  for (const a of arr) { r -= w(a); if (r <= 0) return a; }
+  return arr[arr.length - 1];
+}
+function genePool() {
+  const out = [];
+  for (const m of state.memory) for (const g of m.genes) out.push({ ...g, try: m.n, failed: m.failed });
+  return out;
+}
+const tryLabel = g => `your try #${g.try}${g.failed ? ', which failed' : ''}`;
+function poolFor(list) {
+  const have = new Set(list.map(x => show(x.n)));
+  return genePool().filter(g => !have.has(g.src) && !/^[\d.]+$/.test(g.src));
+}
+// failed tries weigh double: they are the stepping stones
+MUTATIONS.recall = ast => {
+  const list = addends(ast);
+  if (list.length >= 6) return null;
+  const pool = poolFor(list); if (!pool.length) return null;
+  const g = weightedPick(pool, g => g.failed ? 2 : 1);
+  list.push({ n: parse(g.src), sign: g.sign });
+  return { ast: join(list), what: `borrowed ${g.sign < 0 ? '-' : ''}${g.src} from ${tryLabel(g)}`, gene: g };
+};
+MUTATIONS.splice = ast => {
+  const list = addends(ast);
+  const idx = list.map((x, i) => i).filter(i => list[i].n.k !== 'num');
+  const pool = poolFor(list);
+  if (!idx.length || !pool.length) return null;
+  const g = weightedPick(pool, g => g.failed ? 2 : 1), i = pick(idx), old = show(list[i].n);
+  list[i] = { n: parse(g.src), sign: g.sign };
+  return { ast: join(list), what: `swapped ${old} for ${g.src} from ${tryLabel(g)}`, gene: g };
+};
+MUTATIONS.replay = () => {
+  const tries = state.memory.filter(m => m.eq !== state.eq);
+  if (!tries.length) return null;
+  const m = weightedPick(tries, m => m.failed ? 2.5 : 1);
+  const op = pick(BASIC_OPS), inner = MUTATIONS[op](parse(m.eq));
+  if (!inner) return null;
+  return { ast: inner.ast, what: `went back to your try #${m.n}${m.failed ? ', which failed,' : ''} and ${inner.what}`, gene: { try: m.n, failed: m.failed, whole: true } };
+};
+const BASIC_OPS = Object.keys(MUTATIONS).filter(k => !MEMORY_OPS.includes(k));
+
+// what kind of move did you make? it learns from the ones that worked
+function classify(a, b) {
+  const moves = new Set(), A = addends(a), B = addends(b);
+  if (B.length > A.length) moves.add('grow');
+  if (B.length < A.length) moves.add('shed');
+  const coef = (ast, name) => nodes(ast).filter(h => h.n.k === 'bin' && h.n.op === '*' && h.n.a.k === 'num' && h.n.b.k === 'var' && h.n.b.n === name).map(h => fmtNum(h.n.a.v)).sort().join();
+  const count = (ast, test) => nodes(ast).filter(h => test(h.n)).length;
+  if (coef(a, 'theta') !== coef(b, 'theta')) moves.add('retune');
+  if (coef(a, 't') !== coef(b, 't') || count(a, n => n.k === 'var' && n.n === 't') !== count(b, n => n.k === 'var' && n.n === 't')) moves.add('tempo');
+  const core = ast => addends(ast).filter(x => x.n.k === 'num').map(x => x.sign * x.n.v).join();
+  if (core(a) !== core(b)) moves.add('mass');
+  if (count(a, n => n.k === 'bin' && n.op === '^') !== count(b, n => n.k === 'bin' && n.op === '^')) moves.add('sharpen');
+  if (count(a, n => n.k === 'var' && n.n === 'E') !== count(b, n => n.k === 'var' && n.n === 'E')) moves.add('feed');
+  if (!moves.size) moves.add('nudge');
+  return [...moves];
+}
+function claimOrigins(ast, make) {
+  for (const x of addends(ast)) { const src = show(x.n); if (!state.origins[src]) state.origins[src] = make(src); }
+  const keep = new Set(addends(ast).map(x => show(x.n)));
+  for (const k of Object.keys(state.origins)) if (!keep.has(k)) delete state.origins[k];
+}
+
+/* ---------- genome: each term of r is a gene, shown as its factors ---------- */
+function factorsOf(n) { return n.k === 'bin' && n.op === '*' ? [...factorsOf(n.a), ...factorsOf(n.b)] : [n]; }
+function linear(arg) {
+  let th = 0, tt = 0, ok = true;
+  for (const { n, sign } of addends(arg)) {
+    const fs = factorsOf(n), k = fs.filter(f => f.k === 'num').reduce((p, f) => p * f.v, 1) * sign, vars = fs.filter(f => f.k !== 'num');
+    if (!vars.length) continue;
+    if (vars.length === 1 && isTheta(vars[0])) th += k;
+    else if (vars.length === 1 && vars[0].k === 'var' && vars[0].n === 't') tt += k;
+    else ok = false;
+  }
+  return { th, tt, ok };
+}
+function factorKind(f) {
+  if (f.k === 'num') return 'amp';
+  if (f.k === 'var' && f.n === 'E') return 'energy';
+  let w = f; if (w.k === 'bin' && w.op === '^') w = w.a; if (w.k === 'call' && w.f === 'abs') w = w.args[0];
+  return isTrig(w) || (w.k === 'call' && w.f === 'noise') ? 'wave' : 'other';
+}
+function decode(n) {
+  const facs = factorsOf(n), parts = [];
+  const amp = facs.filter(f => f.k === 'num').reduce((p, f) => p * f.v, 1);
+  for (const f of facs) {
+    if (f.k === 'num') continue;
+    if (f.k === 'var') { parts.push({ E: 'fed by E', t: 'grows over time', g: 'grows per gen', theta: 'spiral', pi: 'π' }[f.n]); continue; }
+    let w = f, sharp = 0;
+    if (w.k === 'bin' && w.op === '^' && w.b.k === 'num') { sharp = w.b.v; w = w.a; }
+    if (w.k === 'call' && w.f === 'abs') w = w.args[0];
+    if (isTrig(w)) {
+      const L = linear(w.args[0]);
+      if (L.ok) { const k = Math.abs(L.th); parts.push(`${fmtNum(k)} lobe${k === 1 ? '' : 's'}`); if (L.tt) parts.push(`turns ${fmtNum(L.tt)}`); }
+      else parts.push('wave');
+      if (sharp) parts.push(`sharp ^${fmtNum(sharp)}`);
+    } else if (w.k === 'call' && w.f === 'noise') parts.push('texture');
+    else parts.push('compound');
+  }
+  return parts.length ? `amp ${fmtNum(amp)} · ${parts.join(' · ')}` : `core ${fmtNum(amp)}`;
+}
+let genomeEq = null, glyphs = [], liveColor = 'hsl(230 80% 74%)';
+function renderGenome() {
+  genomeEq = state.eq;
+  const list = addends(curAst), old = new Set(glyphs.map(g => g.src));
+  $('gcount').textContent = `${list.length} gene${list.length === 1 ? '' : 's'}`;
+  const box = $('genes'); box.innerHTML = ''; glyphs = [];
+  for (const x of list) {
+    const src = show(x.n), o = state.origins[src] || { k: 'self', label: 'self' };
+    const el = document.createElement('div');
+    el.className = 'gene' + (old.size && !old.has(src) ? ' fresh' : '');
+    const facs = factorsOf(x.n).map(f => `<span class="fac ${factorKind(f)}" title="${esc(show(f))}">${esc(show(f))}</span>`).join('<span class="x">×</span>');
+    el.innerHTML = `<canvas width="80" height="80" aria-hidden="true"></canvas><div><div class="facs">${x.sign < 0 ? '<span class="sg">−</span>' : ''}${facs}</div><div class="gmeta"><span class="dec">${esc(decode(x.n))}</span><span class="origin ${o.k}">${esc(o.label)}</span></div></div>`;
+    box.appendChild(el);
+    glyphs.push({ src, f: build(x.n), sign: x.sign, cv: el.querySelector('canvas') });
+  }
+  const ranked = Object.entries(state.instinct).sort((a, b) => b[1] - a[1]).slice(0, 4);
+  const top = Math.max(...ranked.map(r => r[1]), 1);
+  $('instinct').innerHTML = `<div class="ttl">Learned instincts</div>` + ranked.map(([op, w]) => `<div class="inst"><span>${OP_LABEL[op]}</span><i style="width:${(w / top * 100).toFixed(0)}%"></i></div>`).join('');
+}
+function drawGlyphs() {
+  const e = { theta: 0, t: T, E: state.E, g: state.gen };
+  for (const g of glyphs) {
+    const c = g.cv.getContext('2d'), vals = [];
+    let mx = 1e-6;
+    for (let i = 0; i < 64; i++) { e.theta = i / 64 * 2 * Math.PI; let y = g.sign * g.f(e); if (!Number.isFinite(y)) y = 0; vals.push(y); mx = Math.max(mx, Math.abs(y)); }
+    c.clearRect(0, 0, 80, 80);
+    c.strokeStyle = 'rgba(150,165,200,0.18)'; c.lineWidth = 1;
+    c.beginPath(); c.arc(40, 40, 20, 0, 6.283); c.stroke();
+    c.beginPath();
+    for (let i = 0; i <= 64; i++) { const th = i / 64 * 2 * Math.PI, r = 20 + 16 * vals[i % 64] / mx; const x = 40 + Math.cos(th) * r, y = 40 + Math.sin(th) * r; i ? c.lineTo(x, y) : c.moveTo(x, y); }
+    c.strokeStyle = liveColor; c.lineWidth = 2; c.stroke();
+  }
 }
 
 /* ---------- evolution ---------- */
@@ -630,6 +830,8 @@ function buildNeeds() {
   $('log').innerHTML = state.log.map(l => `<li>Gen ${l.g} · ${l.text}</li>`).join('');
   $('gen').textContent = state.gen;
   $('rw').textContent = state.rewrites || 0;
+  const stones = state.memory.filter(m => m.failed).length;
+  $('mem').textContent = state.tries ? `${state.tries} tr${state.tries === 1 ? 'y' : 'ies'} · ${stones} stone${stones === 1 ? '' : 's'}` : 'no tries yet';
 }
 buildNeeds();
 const pct = (v, d) => (clamp((v - d.min) / (d.max - d.min), 0, 1) * 100).toFixed(1) + '%';
@@ -652,10 +854,10 @@ function updatePanel(fit) {
   const E = state.E;
   $('energy').textContent = E.toFixed(2);
   $('ebar').style.width = (E / 1.7 * 100).toFixed(1) + '%';
-  const mood = E < 0.12 ? 'Dormant' : E < 0.4 ? 'Hungry' : E < 0.85 ? 'Steady' : E < 1.3 ? 'Thriving' : 'Radiant';
+  const mood = E < 0.15 ? 'Dormant' : E < 0.4 ? 'Hungry' : E < 0.85 ? 'Steady' : E < 1.3 ? 'Thriving' : 'Radiant';
   $('mood').textContent = mood;
   let sig, key;
-  if (E < 0.12) { sig = 'Dormant. Its energy is nearly gone, and it waits for a form that suits it.'; key = 'dormant'; }
+  if (E < 0.15) { sig = state.memory.length ? 'Dormant. It is rewriting itself in its sleep, working through your old tries.' : 'Dormant. It is rewriting itself in its sleep, working blind.'; key = 'dormant'; }
   else if (fit > 0.8) { sig = 'Its needs are met. It is storing energy, and growing restless.'; key = 'content'; }
   else {
     const d = NEED_DEFS[urgent.key], up = urgent.target > traits[urgent.key];
@@ -686,7 +888,20 @@ function commit() {
   clearTimeout(commitTimer);
   if (!tryApply()) return;
   if (state.eq === committedEq) return;
-  committedEq = state.eq;
+  // judge your try against the needs it was made for, and remember it
+  const c = compile(state.eq);
+  const before = score(committedF, 0), after = score(c.f, 0);
+  const moves = classify(committedAst, c.ast);
+  const n = ++state.tries, failed = after < 0.6 || after < before - 0.02;
+  state.memory.unshift({ n, eq: state.eq, fit: +after.toFixed(2), failed, genes: addends(c.ast).map(x => ({ src: show(x.n), sign: x.sign })) });
+  state.memory = state.memory.slice(0, 24);
+  if (after > before + 0.02) for (const op of moves) learn(op, 1);
+  if (failed) for (const op of MEMORY_OPS) learn(op, 1, 0.1); // more stones to step on
+  claimOrigins(c.ast, () => ({ k: 'you', label: `yours · try #${n}` }));
+  committedEq = state.eq; committedF = c.f; committedAst = c.ast;
+  addLog(failed
+    ? `<b>Your try #${n}</b> missed (fit ${after.toFixed(2)}). <em>Its ${addends(c.ast).length} genes are kept as stepping stones.</em>`
+    : `<b>Your try #${n}</b> worked (fit ${after.toFixed(2)}). It learned to ${moves.map(m => OP_LABEL[m]).join(', ')}.`);
   evolve();
   setStatus(`Absorbed. Generation ${state.gen}.`);
 }
@@ -702,11 +917,10 @@ let T = 0, wall = 0, last = performance.now(), panelTick = 0, saveTick = 0;
 const DRAW_N = 200;
 const pts = new Float32Array(DRAW_N);
 function layout() {
-  const top = document.querySelector('.top').getBoundingClientRect();
   const bottom = document.querySelector('.bottom').getBoundingClientRect();
   const narrow = W <= 720;
-  const y0 = narrow ? top.bottom : 90, y1 = bottom.top;
-  const sideW = narrow ? 0 : 300;
+  const y0 = narrow ? document.querySelector('.right').getBoundingClientRect().bottom : 90, y1 = bottom.top;
+  const sideW = narrow ? 0 : 320;
   const availW = W - sideW * 2, availH = Math.max(120, y1 - y0);
   return { cx: W / 2, cy: y0 + availH / 2, R0: Math.max(30, Math.min(availW, availH) * 0.21) };
 }
@@ -732,12 +946,14 @@ function frame(now) {
   // metabolism: self-generated core energy + nourishment from a form that fits its needs - the cost of carrying that form
   const core = 0.06 * E * (1.7 - E);
   const feed = 0.16 * (fit - 0.5);
-  const cost = 0.025 * traits.mass * (0.5 + traits.pulse) + 0.012 * traits.intricacy / 8;
+  // dormant, its metabolism slows to a crawl so a good form can wake it again
+  const cost = (0.025 * traits.mass * (0.5 + traits.pulse) + 0.012 * traits.intricacy / 8) * (E < 0.15 ? 0.3 : 1);
   E = state.E = clamp(E + (core + feed - cost + 0.004) * dt, 0, 1.7);
   restless(dt, fit);
   // when it has energy to spare and you are not mid-edit, it rewrites its own equation
   const busy = wall - lastKeyAt < 7 || (document.activeElement === input && wall - lastKeyAt < 15) || state.eq !== committedEq || input.classList.contains('bad');
-  if (!busy && morph >= 1 && E > 0.25) { rewriteClock += dt * (0.4 + E); if (rewriteClock > 9) { rewriteClock = 0; selfRewrite(); } }
+  const dormant = E < 0.15;
+  if (!busy && morph >= 1) { rewriteClock += dt * (dormant ? 0.75 : 0.4 + E); if (rewriteClock > 9) { rewriteClock = 0; selfRewrite(dormant); } }
 
   const { cx: bx, cy: by, R0 } = layout();
   const drift = reduce ? 0.3 : 1;
@@ -751,7 +967,8 @@ function frame(now) {
   const hue = 205 + fit * 105;
   const light = 45 + Math.min(E, 1.4) * 18;
   const glow = clamp(E / 1.2, 0.08, 1.2);
-  document.documentElement.style.setProperty('--live', `hsl(${hue.toFixed(0)} 80% 74%)`);
+  liveColor = `hsl(${hue.toFixed(0)} 80% 74%)`;
+  document.documentElement.style.setProperty('--live', liveColor);
 
   for (let i = 0; i < DRAW_N; i++) pts[i] = R(2 * Math.PI * i / DRAW_N, T) * R0;
   let mean = 0; for (let i = 0; i < DRAW_N; i++) mean += pts[i]; mean /= DRAW_N;
@@ -838,7 +1055,7 @@ function frame(now) {
 
   ctx.globalCompositeOperation = 'source-over';
 
-  panelTick += dt; if (panelTick > 0.2) { panelTick = 0; updatePanel(fit); }
+  panelTick += dt; if (panelTick > 0.2) { panelTick = 0; updatePanel(fit); if (genomeEq !== state.eq) renderGenome(); drawGlyphs(); }
   saveTick += dt; if (saveTick > 5) { saveTick = 0; save(); }
   requestAnimationFrame(frame);
 }
