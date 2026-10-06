@@ -1,0 +1,622 @@
+<title>Void Drifter</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;1,400;1,500&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: full-bleed canvas of empty space; instruments float at the edges, the equation sits at the bottom like a console. */
+:root {
+  --void: #03040a;
+  --ink: #d6dbe8;
+  --dim: #7a8299;
+  --faint: rgba(150, 165, 200, 0.14);
+  --panel: rgba(8, 10, 20, 0.62);
+  --err: #ff8f7a;
+  --live: hsl(230 80% 72%);
+  --display: "Cormorant Garamond", "Iowan Old Style", Georgia, serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  color-scheme: dark;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html, body { height: 100%; }
+body { background: var(--void); color: var(--ink); font-family: var(--mono); font-size: 13px; overflow: hidden; }
+#void { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+
+.ui { position: fixed; inset: 0; pointer-events: none; padding: max(16px, env(safe-area-inset-top, 0px)) 16px max(16px, env(safe-area-inset-bottom, 0px)); display: grid; grid-template-rows: auto 1fr auto; gap: 12px; }
+.ui > * { pointer-events: auto; min-width: 0; }
+
+.top { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+.id { max-width: 34ch; display: grid; gap: 8px; }
+.eyebrow { font-size: 10.5px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--dim); }
+h1 { margin: 0; font-family: var(--display); font-weight: 500; font-size: 34px; line-height: 1; letter-spacing: 0.01em; text-wrap: balance; }
+.lede { margin: 0; color: var(--dim); line-height: 1.55; font-size: 12px; }
+.vitals { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; align-items: center; font-size: 11.5px; font-variant-numeric: tabular-nums; }
+.vitals dt { color: var(--dim); letter-spacing: 0.1em; text-transform: uppercase; font-size: 10px; }
+.vitals dd { margin: 0; }
+.ebar { height: 3px; background: var(--faint); border-radius: 2px; overflow: hidden; width: 140px; margin-top: 4px; }
+.ebar i { display: block; height: 100%; width: 50%; background: var(--live); transition: width .3s linear; }
+
+.needs { width: 280px; background: var(--panel); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); border: 1px solid var(--faint); border-radius: 4px; padding: 14px 16px; display: grid; gap: 12px; }
+.needs h2 { margin: 0; font-size: 10.5px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; color: var(--dim); display: flex; justify-content: space-between; }
+.need { display: grid; gap: 5px; }
+.need .row { display: flex; justify-content: space-between; gap: 8px; font-variant-numeric: tabular-nums; }
+.need .lbl { letter-spacing: 0.04em; }
+.need .val { color: var(--dim); }
+.need .val b { color: var(--ink); font-weight: 500; }
+.need.urgent .lbl::after { content: " ●"; color: var(--live); font-size: 9px; vertical-align: 1px; }
+.track { position: relative; height: 6px; }
+.track::before { content: ""; position: absolute; left: 0; right: 0; top: 2.5px; height: 1px; background: var(--faint); }
+.track .zone { position: absolute; top: 0; height: 6px; background: var(--live); opacity: 0.18; border-radius: 1px; }
+.track .tgt { position: absolute; top: -2px; width: 1px; height: 10px; background: var(--live); }
+.track .cur { position: absolute; top: 0.5px; width: 5px; height: 5px; margin-left: -2.5px; border-radius: 50%; background: var(--ink); transition: left .25s linear; }
+.need.new { animation: arrive 2.4s ease-out; }
+@keyframes arrive { from { background: rgba(255,255,255,0.08); } to { background: transparent; } }
+.log { list-style: none; margin: 0; padding: 10px 0 0; border-top: 1px solid var(--faint); display: grid; gap: 5px; font-size: 11px; color: var(--dim); line-height: 1.45; }
+.log li b { color: var(--ink); font-weight: 500; }
+
+.bottom { display: grid; gap: 10px; justify-items: center; }
+.signal { margin: 0; font-family: var(--display); font-style: italic; font-size: 21px; line-height: 1.3; text-align: center; max-width: 40ch; text-wrap: balance; min-height: 1.3em; color: var(--ink); }
+.hint { margin: -4px 0 0; font-size: 11px; color: var(--dim); text-align: center; max-width: 60ch; }
+form.eq { width: min(780px, 100%); background: var(--panel); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); border: 1px solid var(--faint); border-radius: 4px; padding: 12px 14px 10px; display: grid; gap: 8px; }
+.line { display: flex; align-items: baseline; gap: 10px; }
+.line label { font-family: var(--display); font-style: italic; font-size: 22px; white-space: nowrap; color: var(--live); }
+#eq { flex: 1; min-width: 0; background: transparent; border: 0; border-bottom: 1px solid var(--faint); color: var(--ink); font: 500 15px/1.6 var(--mono); padding: 4px 2px; outline: none; }
+#eq:focus-visible { border-bottom-color: var(--live); }
+#eq.bad { border-bottom-color: var(--err); }
+.meta { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 11px; color: var(--dim); }
+#status.err { color: var(--err); }
+.ref code { color: var(--ink); }
+
+@media (max-width: 720px) {
+  .top { flex-direction: column; gap: 10px; }
+  h1 { font-size: 28px; }
+  .lede { display: none; }
+  .id { max-width: none; grid-template-columns: 1fr auto; align-items: center; }
+  .id .eyebrow { grid-column: 1 / -1; }
+  .ebar { width: 100px; }
+  .needs { width: 100%; padding: 10px 12px; grid-template-columns: 1fr 1fr; gap: 8px 14px; }
+  .needs h2, .log { grid-column: 1 / -1; }
+  .log { display: none; }
+  .need .row { font-size: 11px; }
+  .signal { font-size: 18px; }
+  .hint { display: none; }
+  .ref { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .need.new { animation: none; }
+}
+</style>
+
+<canvas id="void" aria-label="A creature drifting in empty space, its body drawn by the equation below"></canvas>
+
+<div class="ui">
+  <div class="top">
+    <div class="id">
+      <div class="eyebrow">Specimen VD‑01 · deep field</div>
+      <h1>Void Drifter</h1>
+      <p class="lede">It drifts alone in empty space and makes its own energy. Its body is the equation at the bottom of the screen, and that equation is the only way to reach it. Each form you give it changes what it needs next.</p>
+      <dl class="vitals">
+        <dt>Gen</dt><dd id="gen">0</dd>
+        <dt>State</dt><dd id="mood">Steady</dd>
+        <dt>Energy</dt><dd><span id="energy">0.80</span><div class="ebar"><i id="ebar"></i></div></dd>
+      </dl>
+    </div>
+    <aside class="needs" aria-label="Current needs">
+      <h2><span>Needs</span><span id="fit">fit 0.00</span></h2>
+      <div id="needlist" style="display:contents"></div>
+      <ul class="log" id="log"></ul>
+    </aside>
+  </div>
+  <div></div>
+  <div class="bottom">
+    <p class="signal" id="signal" aria-live="polite"></p>
+    <p class="hint" id="hint"></p>
+    <form class="eq" id="form" autocomplete="off">
+      <div class="line">
+        <label for="eq">r(θ,t) =</label>
+        <input id="eq" type="text" spellcheck="false" autocapitalize="off" autocorrect="off" aria-describedby="status">
+      </div>
+      <div class="meta">
+        <span id="status">Edit the equation. Press Enter, or pause, to let it absorb the change.</span>
+        <span class="ref"><code>θ</code>/<code>theta</code> angle · <code>t</code> its clock · <code>E</code> its energy · <code>g</code> generation · <code>sin cos tan abs sqrt exp log pow min max mod noise(x,y)</code></span>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+(() => {
+'use strict';
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const $ = id => document.getElementById(id);
+const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+const lerp = (a, b, k) => a + (b - a) * k;
+
+/* ---------- smooth value noise ---------- */
+function hash(x, y) { let h = (x * 374761393 + y * 668265263) | 0; h = (h ^ (h >>> 13)) * 1274126177 | 0; return ((h ^ (h >>> 16)) >>> 0) / 4294967295; }
+function vnoise(x, y = 0) {
+  const xi = Math.floor(x), yi = Math.floor(y), xf = x - xi, yf = y - yi;
+  const u = xf * xf * (3 - 2 * xf), v = yf * yf * (3 - 2 * yf);
+  const a = hash(xi, yi), b = hash(xi + 1, yi), c = hash(xi, yi + 1), d = hash(xi + 1, yi + 1);
+  return (lerp(lerp(a, b, u), lerp(c, d, u), v)) * 2 - 1;
+}
+
+/* ---------- the equation language ---------- */
+const FUNCS = {
+  sin: [Math.sin, 1, 1], cos: [Math.cos, 1, 1], tan: [Math.tan, 1, 1], tanh: [Math.tanh, 1, 1], atan: [Math.atan, 1, 1],
+  abs: [Math.abs, 1, 1], sqrt: [Math.sqrt, 1, 1], exp: [Math.exp, 1, 1], log: [Math.log, 1, 1],
+  floor: [Math.floor, 1, 1], round: [Math.round, 1, 1], sign: [Math.sign, 1, 1], fract: [x => x - Math.floor(x), 1, 1],
+  pow: [Math.pow, 2, 2], mod: [(a, b) => ((a % b) + b) % b, 2, 2],
+  min: [Math.min, 1, 8], max: [Math.max, 1, 8], noise: [vnoise, 1, 2],
+};
+const NAMES = { theta: 'theta', 'θ': 'theta', th: 'theta', t: 't', E: 'E', g: 'g', pi: 'pi', 'π': 'pi' };
+
+function tokenize(s) {
+  const out = []; let i = 0;
+  while (i < s.length) {
+    const c = s[i];
+    if (/\s/.test(c)) { i++; continue; }
+    const num = /^(\d+\.?\d*|\.\d+)(e[+-]?\d+)?/.exec(s.slice(i));
+    if (num) { out.push({ t: 'num', v: num[0], n: parseFloat(num[0]) }); i += num[0].length; continue; }
+    if (c === 'θ' || c === 'π') { out.push({ t: 'id', v: c }); i++; continue; }
+    const id = /^[A-Za-z_][A-Za-z0-9_]*/.exec(s.slice(i));
+    if (id) { out.push({ t: 'id', v: id[0] }); i += id[0].length; continue; }
+    if ('+-*/%^(),'.includes(c)) { out.push({ t: 'op', v: c }); i++; continue; }
+    throw new Error(`"${c}" is not part of the equation language.`);
+  }
+  return out;
+}
+
+function compile(src) {
+  let s = src.replace(/[×·]/g, '*').replace(/[−–]/g, '-').replace(/²/g, '^2');
+  s = s.replace(/^\s*r\s*(\([^)]*\))?\s*=/, '');
+  if (!s.trim()) throw new Error('Write an expression for r.');
+  const toks = tokenize(s); let i = 0;
+  const peek = () => toks[i], next = () => toks[i++];
+  const isOp = (tk, v) => tk && tk.t === 'op' && tk.v === v;
+  function expect(v) { const tk = next(); if (!isOp(tk, v)) throw new Error(`Expected "${v}"` + (tk ? ` before "${tk.v}".` : ' at the end.')); }
+  function expr() {
+    let a = term();
+    while (isOp(peek(), '+') || isOp(peek(), '-')) {
+      const op = next().v, b = term(), x = a;
+      a = op === '+' ? e => x(e) + b(e) : e => x(e) - b(e);
+    }
+    return a;
+  }
+  function term() {
+    let a = unary();
+    for (;;) {
+      const tk = peek(); if (!tk) break;
+      if (isOp(tk, '*') || isOp(tk, '/') || isOp(tk, '%')) {
+        next(); const b = unary(), x = a;
+        a = tk.v === '*' ? e => x(e) * b(e) : tk.v === '/' ? e => x(e) / b(e) : e => x(e) % b(e);
+      } else if (tk.t === 'num' || tk.t === 'id' || isOp(tk, '(')) {
+        const b = power(), x = a; a = e => x(e) * b(e); // implicit: 3θ, 2(t+1)
+      } else break;
+    }
+    return a;
+  }
+  function unary() {
+    const tk = peek();
+    if (isOp(tk, '-')) { next(); const a = unary(); return e => -a(e); }
+    if (isOp(tk, '+')) { next(); return unary(); }
+    return power();
+  }
+  function power() {
+    const a = atom();
+    if (isOp(peek(), '^')) { next(); const b = unary(); return e => Math.pow(a(e), b(e)); }
+    return a;
+  }
+  function atom() {
+    const tk = next();
+    if (!tk) throw new Error('The equation ends too early.');
+    if (tk.t === 'num') { const v = tk.n; return () => v; }
+    if (isOp(tk, '(')) { const a = expr(); expect(')'); return a; }
+    if (tk.t === 'id') {
+      const name = tk.v;
+      if (FUNCS[name]) {
+        const [fn, lo, hi] = FUNCS[name];
+        if (!isOp(peek(), '(')) throw new Error(`${name} needs parentheses, like ${name}(θ).`);
+        next(); const args = [];
+        if (!isOp(peek(), ')')) { args.push(expr()); while (isOp(peek(), ',')) { next(); args.push(expr()); } }
+        expect(')');
+        if (args.length < lo || args.length > hi) throw new Error(`${name} takes ${lo === hi ? lo : lo + '–' + hi} value${hi > 1 ? 's' : ''}.`);
+        if (args.length === 1) { const a0 = args[0]; return e => fn(a0(e)); }
+        if (args.length === 2) { const a0 = args[0], a1 = args[1]; return e => fn(a0(e), a1(e)); }
+        return e => fn(...args.map(a => a(e)));
+      }
+      const v = NAMES[name];
+      if (v === 'pi') return () => Math.PI;
+      if (v) return e => e[v];
+      throw new Error(`"${name}" is unknown. Use θ (or theta), t, E, g, pi, or a listed function.`);
+    }
+    throw new Error(`Unexpected "${tk.v}".`);
+  }
+  const f = expr();
+  if (i < toks.length) throw new Error(`Unexpected "${toks[i].v}".`);
+  // it has to produce a body somewhere
+  let ok = 0;
+  for (let k = 0; k < 24; k++) { const v = f({ theta: k / 24 * Math.PI * 2, t: k * 0.37, E: 0.8, g: 1 }); if (Number.isFinite(v)) ok++; }
+  if (!ok) throw new Error('That gives no finite radius at any angle.');
+  return f;
+}
+
+/* ---------- needs ---------- */
+const NEED_DEFS = {
+  mass:      { label: 'Mass',      min: 0.4, max: 2.2, tol: 0.32, step: 0.45, fmt: v => v.toFixed(2), unit: 'mean radius' },
+  symmetry:  { label: 'Symmetry',  min: 0,   max: 12,  tol: 0.9,  step: 2,    fmt: v => String(Math.round(v)), unit: 'lobes', int: true },
+  pulse:     { label: 'Pulse',     min: 0,   max: 1.6, tol: 0.22, step: 0.35, fmt: v => v.toFixed(2), unit: 'motion' },
+  intricacy: { label: 'Intricacy', min: 1,   max: 14,  tol: 1.8,  step: 3,    fmt: v => v.toFixed(1), unit: 'detail' },
+  reach:     { label: 'Reach',     min: 1,   max: 2.6, tol: 0.25, step: 0.35, fmt: v => v.toFixed(2), unit: 'peak / mean' },
+};
+const SIGNALS = {
+  mass:      [(c, g) => `It wants more body. Mean radius ${c}, it wants ${g}.`, (c, g) => `It feels too heavy. Mean radius ${c}, it wants ${g}.`],
+  symmetry:  [(c, g) => c === '0' ? `It wants ${g}-fold symmetry. It has none.` : `It is reaching for ${g}-fold symmetry. It has ${c}.`,
+              (c, g) => g === '0' ? `It wants to be round, without lobes.` : `Too many lobes. It has ${c} and wants ${g}.`],
+  pulse:     [(c, g) => `It wants to move. Pulse ${c}, it wants ${g}.`, (c, g) => `It wants stillness. Pulse ${c}, it wants ${g}.`],
+  intricacy: [(c, g) => `It craves finer detail along its edge. Intricacy ${c}, wants ${g}.`, (c, g) => `Its edge is too busy. Intricacy ${c}, wants ${g}.`],
+  reach:     [(c, g) => `It wants to reach farther, with sharper extremities.`, (c, g) => `It wants to draw its extremities in.`],
+};
+const HINTS = {
+  mass: 'The constant term sets its overall size.',
+  symmetry: 'The number multiplying θ inside sin or cos sets the lobe count. The strongest term wins.',
+  pulse: 'Add t inside a term, like sin(5θ + 2t), to make it move. A larger multiple of t moves faster.',
+  intricacy: 'Add small high-frequency terms, like 0.05 sin(13θ), to roughen the edge.',
+  reach: 'Raise a term to a power, or use abs(), to sharpen peaks: 0.6 abs(sin(3θ))^4.',
+};
+
+let state = {
+  eq: '1 + 0.3 sin(3θ + t)·E + 0.05 sin(11θ - 2t)',
+  gen: 0, E: 0.8,
+  needs: [
+    { key: 'mass', target: 1.15, w: 1 },
+    { key: 'symmetry', target: 5, w: 1.3 },
+    { key: 'pulse', target: 0.45, w: 1 },
+    { key: 'intricacy', target: 4, w: 0.8 },
+  ],
+  log: [{ g: 0, text: 'Found drifting. <b>Symmetry 5</b> is its first want.' }],
+};
+const SAVE_KEY = 'void-drifter-v1';
+try { const s = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); if (s && s.eq && Array.isArray(s.needs)) state = s; } catch (_) {}
+const hotData = window.claude?.hot?.data;
+if (hotData && hotData.eq) state = hotData;
+function save() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); } catch (_) {} }
+window.claude?.hot?.snapshot?.(() => state);
+
+let cur, prev = null, morph = 1;
+try { cur = compile(state.eq); } catch (_) { state.eq = '1 + 0.3 sin(3θ + t)·E'; cur = compile(state.eq); }
+let committedEq = state.eq;
+
+/* ---------- canvas ---------- */
+const cv = $('void'), ctx = cv.getContext('2d');
+let W = 0, H = 0, DPR = 1;
+const stars = [];
+function seedStars() {
+  stars.length = 0;
+  const n = Math.round(clamp(W * H / 4200, 120, 420));
+  for (let i = 0; i < n; i++) {
+    const z = Math.pow(Math.random(), 2.2);
+    stars.push({ x: Math.random(), y: Math.random(), z, r: 0.35 + z * 1.1, a: 0.15 + z * 0.75, ph: Math.random() * 6.28, sp: 0.3 + Math.random() * 1.6, hue: Math.random() < 0.2 ? 30 : 220 });
+  }
+}
+function resize() {
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
+  W = innerWidth; H = innerHeight;
+  cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  seedStars();
+}
+addEventListener('resize', resize); resize();
+
+/* ---------- analysis of its own body ---------- */
+const N = 128, KMAX = 32;
+const COS = [], SIN = [];
+for (let k = 0; k <= KMAX; k++) { COS[k] = new Float32Array(N); SIN[k] = new Float32Array(N); for (let j = 0; j < N; j++) { const a = 2 * Math.PI * k * j / N; COS[k][j] = Math.cos(a); SIN[k][j] = Math.sin(a); } }
+const rA = new Float32Array(N), rB = new Float32Array(N);
+const env = { theta: 0, t: 0, E: 0.8, g: 0 };
+const ease = k => k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+function safe(v) { v = Math.abs(v); return Number.isFinite(v) ? Math.min(v, 2.6) : 0; }
+function R(theta, t) {
+  env.theta = theta; env.t = t;
+  let a = safe(cur(env));
+  if (prev && morph < 1) { const b = safe(prev(env)); a = lerp(b, a, ease(morph)); }
+  return a;
+}
+const traits = { mass: 1, symmetry: 0, pulse: 0, intricacy: 0, reach: 1 };
+function analyze(T, a = 0.12) {
+  const h = 0.04;
+  let sum = 0, mx = 0, dsum = 0;
+  for (let j = 0; j < N; j++) { const th = 2 * Math.PI * j / N; rA[j] = R(th, T); rB[j] = R(th, T + h); sum += rA[j]; if (rA[j] > mx) mx = rA[j]; dsum += Math.abs(rB[j] - rA[j]); }
+  const mean = sum / N;
+  let best = 0, bestK = 0, tot = 0, cen = 0;
+  for (let k = 1; k <= KMAX; k++) {
+    let re = 0, im = 0; const c = COS[k], s = SIN[k];
+    for (let j = 0; j < N; j++) { re += rA[j] * c[j]; im -= rA[j] * s[j]; }
+    const m = 2 * Math.hypot(re, im) / N;
+    if (k <= 16 && m > best) { best = m; bestK = k; }
+    tot += m; cen += k * m;
+  }
+  const sym = best < 0.015 * Math.max(mean, 0.2) ? 0 : bestK;
+  traits.mass = lerp(traits.mass, mean, a);
+  traits.symmetry = sym;
+  traits.pulse = lerp(traits.pulse, dsum / N / h, a);
+  traits.intricacy = lerp(traits.intricacy, tot > 1e-4 ? cen / tot : 0, a);
+  traits.reach = lerp(traits.reach, mean > 1e-3 ? mx / mean : 1, a);
+}
+function sat(n) { const d = NEED_DEFS[n.key]; const x = (traits[n.key] - n.target) / d.tol; return Math.exp(-x * x); }
+function fitness() { let s = 0, w = 0; for (const n of state.needs) { s += n.w * sat(n); w += n.w; } return w ? s / w : 0; }
+
+/* ---------- evolution ---------- */
+function shiftTarget(n, scale = 1) {
+  const d = NEED_DEFS[n.key];
+  const upBias = 0.6 + Math.min(state.gen, 10) * 0.015;
+  let dir = Math.random() < upBias ? 1 : -1;
+  let step = d.step * scale * (0.6 + Math.random() * 0.8) * dir;
+  let t = n.target + step;
+  if (t > d.max || t < d.min) t = n.target - step;
+  t = clamp(t, d.min, d.max);
+  if (d.int) { t = Math.round(t); if (t === Math.round(traits[n.key])) t = clamp(t + (dir || 1), d.min, d.max); }
+  n.target = t;
+}
+function addLog(text) { state.log.unshift({ g: state.gen, text }); state.log = state.log.slice(0, 5); }
+let newNeedKey = null;
+function evolve() {
+  // judge the form it was actually given, not the half-finished morph
+  const keep = morph; morph = 1; analyze(T, 1); morph = keep;
+  state.gen++;
+  const met = [];
+  for (const n of state.needs) {
+    if (sat(n) > 0.7) { shiftTarget(n); n.w = 0.7; met.push(n); }
+    else n.w = Math.min(2.4, n.w + 0.4);
+  }
+  if (met.length) addLog(met.map(n => `${NEED_DEFS[n.key].label} met, now wants <b>${NEED_DEFS[n.key].fmt(n.target)}</b>`).join('. ') + '.');
+  else addLog('Absorbed the new form. Unmet needs grow more urgent.');
+  if (state.gen === 4 && !state.needs.some(n => n.key === 'reach')) {
+    const tgt = clamp(Math.round((traits.reach + 0.4) * 100) / 100, 1.2, 2.4);
+    state.needs.push({ key: 'reach', target: tgt, w: 1.2 });
+    newNeedKey = 'reach';
+    addLog(`A new need has emerged: <b>Reach ${tgt.toFixed(2)}</b>.`);
+  }
+  // a rich diet of change feeds it a little
+  state.E = Math.min(1.7, state.E + 0.06 * fitness());
+  save(); buildNeeds();
+}
+let contentFor = 0;
+function restless(dt, fit) {
+  contentFor = fit > 0.8 ? contentFor + dt : 0;
+  if (contentFor > 22) {
+    contentFor = 0;
+    let pick = state.needs[0], best = -1;
+    for (const n of state.needs) { const s = sat(n); if (s > best) { best = s; pick = n; } }
+    shiftTarget(pick, 0.7); pick.w = 1.1;
+    addLog(`Restless from comfort. It now wants <b>${NEED_DEFS[pick.key].label} ${NEED_DEFS[pick.key].fmt(pick.target)}</b>.`);
+    save(); buildNeeds();
+  }
+}
+
+/* ---------- panel ---------- */
+const needEls = {};
+function buildNeeds() {
+  const list = $('needlist'); list.innerHTML = '';
+  for (const n of state.needs) {
+    const d = NEED_DEFS[n.key];
+    const el = document.createElement('div');
+    el.className = 'need' + (n.key === newNeedKey ? ' new' : '');
+    el.innerHTML = `<div class="row"><span class="lbl">${d.label}</span><span class="val"><b class="c">–</b> → <span class="g">${d.fmt(n.target)}</span></span></div><div class="track" title="${d.unit}"><span class="zone"></span><span class="tgt"></span><span class="cur"></span></div>`;
+    list.appendChild(el);
+    needEls[n.key] = { el, c: el.querySelector('.c'), g: el.querySelector('.g'), zone: el.querySelector('.zone'), tgt: el.querySelector('.tgt'), cur: el.querySelector('.cur') };
+  }
+  newNeedKey = null;
+  $('log').innerHTML = state.log.map(l => `<li>Gen ${l.g} · ${l.text}</li>`).join('');
+  $('gen').textContent = state.gen;
+}
+buildNeeds();
+const pct = (v, d) => (clamp((v - d.min) / (d.max - d.min), 0, 1) * 100).toFixed(1) + '%';
+let lastSignalKey = '';
+function updatePanel(fit) {
+  let urgent = null, uScore = -1;
+  for (const n of state.needs) {
+    const d = NEED_DEFS[n.key], e = needEls[n.key]; if (!e) continue;
+    const s = sat(n), score = n.w * (1 - s);
+    if (score > uScore) { uScore = score; urgent = n; }
+    e.c.textContent = d.fmt(traits[n.key]);
+    e.g.textContent = d.fmt(n.target);
+    e.cur.style.left = pct(traits[n.key], d);
+    e.tgt.style.left = pct(n.target, d);
+    const lo = (clamp(n.target - d.tol, d.min, d.max) - d.min) / (d.max - d.min) * 100, hi = (clamp(n.target + d.tol, d.min, d.max) - d.min) / (d.max - d.min) * 100;
+    e.zone.style.left = lo + '%'; e.zone.style.width = (hi - lo) + '%';
+    e.el.classList.toggle('urgent', score > 0.45);
+  }
+  $('fit').textContent = 'fit ' + fit.toFixed(2);
+  const E = state.E;
+  $('energy').textContent = E.toFixed(2);
+  $('ebar').style.width = (E / 1.7 * 100).toFixed(1) + '%';
+  const mood = E < 0.12 ? 'Dormant' : E < 0.4 ? 'Hungry' : E < 0.85 ? 'Steady' : E < 1.3 ? 'Thriving' : 'Radiant';
+  $('mood').textContent = mood;
+  let sig, key;
+  if (E < 0.12) { sig = 'Dormant. Its energy is nearly gone, and it waits for a form that suits it.'; key = 'dormant'; }
+  else if (fit > 0.8) { sig = 'Its needs are met. It is storing energy, and growing restless.'; key = 'content'; }
+  else {
+    const d = NEED_DEFS[urgent.key], up = urgent.target > traits[urgent.key];
+    sig = SIGNALS[urgent.key][up ? 0 : 1](d.fmt(traits[urgent.key]), d.fmt(urgent.target));
+    key = urgent.key;
+  }
+  $('signal').textContent = sig;
+  if (key !== lastSignalKey) { lastSignalKey = key; $('hint').textContent = HINTS[key] || 'Change any term to give it something new.'; }
+}
+
+/* ---------- the only interface: the equation ---------- */
+const input = $('eq'), status = $('status');
+input.value = state.eq;
+let parseTimer = 0, commitTimer = 0;
+function setStatus(text, err) { status.textContent = text; status.classList.toggle('err', !!err); input.classList.toggle('bad', !!err); }
+function tryApply() {
+  const src = input.value;
+  try {
+    const f = compile(src);
+    if (src !== state.eq) {
+      prev = cur; cur = f; morph = 0; state.eq = src;
+    }
+    setStatus(src === committedEq ? 'Stable. This is its current form.' : 'It senses the change. Press Enter, or wait, and it will adapt.');
+    return true;
+  } catch (e) { setStatus(e.message, true); return false; }
+}
+function commit() {
+  clearTimeout(commitTimer);
+  if (!tryApply()) return;
+  if (state.eq === committedEq) return;
+  committedEq = state.eq;
+  evolve();
+  setStatus(`Absorbed. Generation ${state.gen}.`);
+}
+input.addEventListener('input', () => {
+  clearTimeout(parseTimer); clearTimeout(commitTimer);
+  parseTimer = setTimeout(() => { if (tryApply()) commitTimer = setTimeout(commit, 2200); }, 280);
+});
+$('form').addEventListener('submit', e => { e.preventDefault(); clearTimeout(parseTimer); commit(); });
+
+/* ---------- drawing ---------- */
+let T = 0, wall = 0, last = performance.now(), panelTick = 0, saveTick = 0;
+const DRAW_N = 200;
+const pts = new Float32Array(DRAW_N);
+function layout() {
+  const top = document.querySelector('.top').getBoundingClientRect();
+  const bottom = document.querySelector('.bottom').getBoundingClientRect();
+  const narrow = W <= 720;
+  const y0 = narrow ? top.bottom : 90, y1 = bottom.top;
+  const sideW = narrow ? 0 : 300;
+  const availW = W - sideW * 2, availH = Math.max(120, y1 - y0);
+  return { cx: W / 2, cy: y0 + availH / 2, R0: Math.max(30, Math.min(availW, availH) * 0.21) };
+}
+function drawStars(dt) {
+  for (const s of stars) {
+    s.x -= s.z * dt * (reduce ? 0.0006 : 0.0025);
+    if (s.x < 0) s.x += 1;
+    const tw = reduce ? 1 : 0.65 + 0.35 * Math.sin(wall * s.sp + s.ph);
+    ctx.fillStyle = `hsla(${s.hue}, 40%, 88%, ${s.a * tw})`;
+    ctx.beginPath(); ctx.arc(s.x * W, s.y * H, s.r, 0, 6.283); ctx.fill();
+  }
+}
+function frame(now) {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now; wall += dt;
+  let E = state.E;
+  // its clock runs on its own energy
+  T += dt * (0.25 + 0.8 * E) * (reduce ? 0.5 : 1);
+  if (morph < 1) { morph = Math.min(1, morph + dt / 1.4); if (morph >= 1) prev = null; }
+  env.E = E; env.g = state.gen;
+
+  analyze(T);
+  const fit = fitness();
+  // metabolism: self-generated core energy + nourishment from a form that fits its needs - the cost of carrying that form
+  const core = 0.06 * E * (1.7 - E);
+  const feed = 0.16 * (fit - 0.5);
+  const cost = 0.025 * traits.mass * (0.5 + traits.pulse) + 0.012 * traits.intricacy / 8;
+  E = state.E = clamp(E + (core + feed - cost + 0.004) * dt, 0, 1.7);
+  restless(dt, fit);
+
+  const { cx: bx, cy: by, R0 } = layout();
+  const drift = reduce ? 0.3 : 1;
+  const cx = bx + Math.sin(wall * 0.05) * R0 * 0.35 * drift;
+  const cy = by + Math.sin(wall * 0.071 + 1) * R0 * 0.18 * drift;
+
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.fillStyle = '#03040a'; ctx.fillRect(0, 0, W, H);
+  drawStars(dt);
+
+  const hue = 205 + fit * 105;
+  const light = 45 + Math.min(E, 1.4) * 18;
+  const glow = clamp(E / 1.2, 0.08, 1.2);
+  document.documentElement.style.setProperty('--live', `hsl(${hue.toFixed(0)} 80% 74%)`);
+
+  for (let i = 0; i < DRAW_N; i++) pts[i] = R(2 * Math.PI * i / DRAW_N, T) * R0;
+  let mean = 0; for (let i = 0; i < DRAW_N; i++) mean += pts[i]; mean /= DRAW_N;
+
+  // halo
+  ctx.globalCompositeOperation = 'lighter';
+  const haloR = Math.max(R0 * 0.6, mean * 2.6);
+  const halo = ctx.createRadialGradient(cx, cy, 0, cx, cy, haloR);
+  halo.addColorStop(0, `hsla(${hue}, 80%, 60%, ${0.16 * glow})`);
+  halo.addColorStop(1, `hsla(${hue}, 80%, 40%, 0)`);
+  ctx.fillStyle = halo; ctx.beginPath(); ctx.arc(cx, cy, haloR, 0, 6.283); ctx.fill();
+
+  // tendrils grow at its peaks, one more per generation
+  const peaks = [];
+  for (let i = 0; i < DRAW_N; i++) {
+    const a = pts[(i - 1 + DRAW_N) % DRAW_N], b = pts[i], c = pts[(i + 1) % DRAW_N];
+    if (b > a && b >= c && b > mean * 1.03) peaks.push(i);
+  }
+  peaks.sort((p, q) => pts[q] - pts[p]);
+  const nT = Math.min(peaks.length, state.gen, 14);
+  const tLen = R0 * (0.2 + 0.35 * Math.min(E, 1.4)) * (0.6 + 0.07 * Math.min(state.gen, 12));
+  ctx.lineCap = 'round';
+  for (let p = 0; p < nT; p++) {
+    const i = peaks[p], th = 2 * Math.PI * i / DRAW_N;
+    let x = cx + Math.cos(th) * pts[i], y = cy + Math.sin(th) * pts[i], ang = th;
+    const segs = 14, sl = tLen / segs;
+    for (let s = 0; s < segs; s++) {
+      ang += Math.sin(T * 1.6 + i * 0.37 + s * 0.45) * 0.09 + Math.sin(wall * 0.4 + p) * 0.012;
+      const nx = x + Math.cos(ang) * sl, ny = y + Math.sin(ang) * sl;
+      const k = 1 - s / segs;
+      ctx.strokeStyle = `hsla(${hue + s * 3}, 85%, ${light + 10}%, ${0.55 * k * glow})`;
+      ctx.lineWidth = 0.4 + 2.2 * k;
+      ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(nx, ny); ctx.stroke();
+      x = nx; y = ny;
+    }
+    ctx.fillStyle = `hsla(${hue + 40}, 90%, 80%, ${0.7 * glow})`;
+    ctx.beginPath(); ctx.arc(x, y, 1.6, 0, 6.283); ctx.fill();
+  }
+
+  // membrane
+  ctx.beginPath();
+  for (let i = 0; i <= DRAW_N; i++) {
+    const j = i % DRAW_N, th = 2 * Math.PI * j / DRAW_N;
+    const x = cx + Math.cos(th) * pts[j], y = cy + Math.sin(th) * pts[j];
+    i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+  }
+  ctx.closePath();
+  const body = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(4, mean * 1.6));
+  body.addColorStop(0, `hsla(${hue + 30}, 85%, ${light}%, ${0.32 * glow})`);
+  body.addColorStop(0.7, `hsla(${hue}, 80%, ${light - 15}%, ${0.14 * glow})`);
+  body.addColorStop(1, `hsla(${hue - 20}, 80%, 35%, ${0.05 * glow})`);
+  ctx.fillStyle = body; ctx.fill();
+  ctx.shadowColor = `hsla(${hue}, 90%, 65%, ${0.9 * glow})`;
+  ctx.shadowBlur = 18 * glow;
+  ctx.strokeStyle = `hsla(${hue}, 90%, ${light + 15}%, ${0.75 * Math.max(glow, 0.25)})`;
+  ctx.lineWidth = 1.3; ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  // inner membrane echo
+  ctx.beginPath();
+  for (let i = 0; i <= DRAW_N; i++) {
+    const j = i % DRAW_N, th = 2 * Math.PI * j / DRAW_N, r = pts[j] * (0.62 + 0.05 * Math.sin(T * 2));
+    const x = cx + Math.cos(th) * r, y = cy + Math.sin(th) * r;
+    i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+  }
+  ctx.strokeStyle = `hsla(${hue + 20}, 70%, 70%, ${0.18 * glow})`; ctx.lineWidth = 0.8; ctx.stroke();
+
+  // organelles: one per generation, orbiting the core
+  const nO = Math.min(state.gen, 10);
+  for (let o = 0; o < nO; o++) {
+    const oa = T * (0.3 + o * 0.07) + o * 2.4, orr = mean * (0.22 + 0.04 * (o % 4));
+    ctx.fillStyle = `hsla(${hue + 50 + o * 8}, 90%, 75%, ${0.55 * glow})`;
+    ctx.beginPath(); ctx.arc(cx + Math.cos(oa) * orr, cy + Math.sin(oa) * orr, 1.5 + (o % 3) * 0.6, 0, 6.283); ctx.fill();
+  }
+
+  // core: its own energy source
+  const beat = 1 + 0.15 * Math.sin(T * 3.1) * Math.min(E, 1.2);
+  const coreR = Math.max(3, mean * 0.16) * (0.6 + 0.5 * Math.min(E, 1.5)) * beat;
+  const cg = ctx.createRadialGradient(cx, cy, 0, cx, cy, coreR * 3);
+  cg.addColorStop(0, `hsla(${hue + 60}, 100%, 92%, ${0.9 * glow})`);
+  cg.addColorStop(0.3, `hsla(${hue + 40}, 95%, 70%, ${0.45 * glow})`);
+  cg.addColorStop(1, `hsla(${hue}, 90%, 50%, 0)`);
+  ctx.fillStyle = cg; ctx.beginPath(); ctx.arc(cx, cy, coreR * 3, 0, 6.283); ctx.fill();
+
+  ctx.globalCompositeOperation = 'source-over';
+
+  panelTick += dt; if (panelTick > 0.2) { panelTick = 0; updatePanel(fit); }
+  saveTick += dt; if (saveTick > 5) { saveTick = 0; save(); }
+  requestAnimationFrame(frame);
+}
+updatePanel(0);
+requestAnimationFrame(frame);
+})();
+</script>
