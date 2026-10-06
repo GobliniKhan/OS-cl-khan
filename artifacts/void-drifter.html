@@ -211,6 +211,15 @@ form.eq { width: min(780px, 100%); background: var(--panel); backdrop-filter: bl
 .paneltoggle:hover { color: var(--ink); }
 .paneltoggle:focus-visible { outline: 1px solid var(--live); outline-offset: 2px; }
 .ui.bare .top, .ui.bare .hint { visibility: hidden; }
+.ctrls { display: inline-flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+#zoomin, #zoomout { width: 28px; padding: 4px 0; }
+#follow[aria-pressed="true"] { color: var(--ink); border-style: solid; border-color: var(--live); }
+.paneltoggle.reset { color: var(--err); border-color: color-mix(in srgb, var(--err) 40%, transparent); }
+#void { cursor: grab; touch-action: none; }
+.tip[hidden] { display: none; }
+.tip { position: fixed; z-index: 5; pointer-events: none; display: grid; gap: 2px; max-width: 240px; padding: 8px 10px; background: rgba(7, 13, 9, 0.92); border: 1px solid var(--faint); border-radius: 4px; font-size: 11px; color: var(--dim); }
+.tip b { font: 500 16px var(--display); color: var(--ink); }
+.tip i { font-family: var(--display); font-size: 13px; color: var(--ink); }
 
 @media (max-width: 720px) {
   .top { flex-direction: column; justify-content: flex-start; gap: 10px; overflow-y: auto; pointer-events: auto; }
@@ -234,7 +243,8 @@ form.eq { width: min(780px, 100%); background: var(--panel); backdrop-filter: bl
 }
 </style>
 
-<canvas id="void" aria-label="The elves of Ithilwen in their glade at night, each one’s aura shaped by their song"></canvas>
+<canvas id="void" aria-label="A small planet of forests, deserts, seas and ice, turning in the void; the elves of Ithilwen live on its surface. Drag to turn it, scroll to zoom, hover an elf to see who they are."></canvas>
+<div class="tip" id="tip" role="status" hidden></div>
 
 <div class="ui" id="ui">
   <div class="top">
@@ -242,7 +252,7 @@ form.eq { width: min(780px, 100%); background: var(--panel); backdrop-filter: bl
       <header class="id">
         <div class="eyebrow">Watching <span id="spec">—</span> · an elven village</div>
         <h1>Ithilwen</h1>
-        <details class="about"><summary>About the village</summary><p class="lede">Ithilwen is an elven village in a forest glade whose paths loop back on themselves. Each elf’s aura is shaped by their song, an equation of genes. Their heart holds one wisp of light per gene, and only their vigor keeps those wisps aloft. Every elf wants above all to be the fairest in the village. Drive genes shape their days: <code>forage(θ)</code> gathers lore leaves from the Ancestor Grove, <code>grow(t)</code> lets new genes reshape them, <code>rival(θ)</code> sets their standing and their challenges, and <code>circle(θ)</code> joins them to the Circle. A <code>psyche</code> gene carries the five human personality traits. At full vigor an elf has an elfling. Two elves in harmony sing new materials into being, and materials join into enchanted wares. When an elf’s wisps go out, they pass into the Grove as a tree. Their song, below, is the only way to reach the elf you are watching.</p></details>
+        <details class="about"><summary>About the village</summary><p class="lede">Ithilwen is an elven village on a small planet turning in the void, a world of forests, jungles, grasslands, deserts, tundra, ice, mountains and seas. Elves walk its land but never the sea; forests restore their vigor, deserts drain it, and snow and stone slow them. Each elf’s aura is shaped by their song, an equation of genes, and their heart holds one wisp of light per gene. Every elf wants above all to be the fairest. Drive genes shape their days: <code>forage(θ)</code> gathers lore leaves from the Ancestor Grove, <code>grow(t)</code> lets new genes reshape them, <code>rival(θ)</code> sets their standing, and <code>circle(θ)</code> joins them to the Circle. A <code>psyche</code> gene carries the five personality traits, which also decide their faction, how they vote, and how they react to your cursor. Drag to turn the planet, scroll to zoom, hover an elf to meet them. Their song, below, is the only way to change the elf you are watching.</p></details>
       </header>
       <dl class="vitals">
         <dt>State</dt><dd id="mood">Steady</dd>
@@ -251,6 +261,7 @@ form.eq { width: min(780px, 100%); background: var(--panel); backdrop-filter: bl
         <dt>Standing</dt><dd id="foodrole">gatherer</dd>
         <dt>Circle</dt><dd id="hivev">loner</dd>
         <dt>Faction</dt><dd id="factionv">—</dd>
+        <dt>Land</dt><dd id="biomev">—</dd>
         <dt class="wide">Generation</dt><dd class="wide" id="gen">0</dd>
         <dt class="wide">Villagers</dt><dd class="wide" id="popn">1 of 6</dd>
       </dl>
@@ -334,7 +345,13 @@ form.eq { width: min(780px, 100%); background: var(--panel); backdrop-filter: bl
   <div class="bottom">
     <div class="poprow">
       <div class="pop" id="pop" aria-label="Elves of the village"></div>
-      <button type="button" class="paneltoggle" id="paneltoggle" aria-pressed="false">Hide panels</button>
+      <span class="ctrls">
+        <button type="button" class="paneltoggle" id="zoomout" aria-label="Zoom out">−</button>
+        <button type="button" class="paneltoggle" id="zoomin" aria-label="Zoom in">+</button>
+        <button type="button" class="paneltoggle" id="follow" aria-pressed="false">Follow</button>
+        <button type="button" class="paneltoggle" id="paneltoggle" aria-pressed="false">Hide panels</button>
+        <button type="button" class="paneltoggle reset" id="reset">Reset village</button>
+      </span>
     </div>
     <p class="signal" id="signal" aria-live="polite"></p>
     <p class="hint" id="hint"></p>
@@ -574,6 +591,201 @@ function resize() {
   seedStars();
 }
 addEventListener('resize', resize); resize();
+
+/* ---------- the planet ---------- */
+// The village lives on a small planet floating in the void. Its surface is a map in "map units":
+// x is longitude and wraps all the way round; y is latitude, a band of about ±67° the elves can walk.
+// Everything is simulated on the map and drawn by projecting onto a rotating globe.
+const MW = 2400, MH = 900;
+const RW = MW / (2 * Math.PI);           // the planet's radius in map units
+const R0W = 34;                          // an elf's base aura radius, in map units
+const wrapX = x => ((x % MW) + MW) % MW;
+const cam = { yaw: 0, pitch: 0.28, zoom: 1, follow: false, idle: 0 };
+let GR = 300, GX = 0, GY = 0;
+function layoutGlobe() {
+  const narrow = W <= 720;
+  GR = (narrow ? Math.min(W * 0.44, H * 0.3) : Math.min(W, H) * 0.36) * cam.zoom;
+  GX = W / 2; GY = narrow ? H * 0.58 : H * 0.47;
+}
+const sph = (x, y) => { const lon = x / RW, lat = (MH / 2 - y) / RW; return [Math.cos(lat) * Math.sin(lon), Math.sin(lat), Math.cos(lat) * Math.cos(lon)]; };
+function toCam(p) {
+  const cy = Math.cos(cam.yaw), sy = Math.sin(cam.yaw), cp = Math.cos(cam.pitch), spi = Math.sin(cam.pitch);
+  const x1 = p[0] * cy - p[2] * sy, z1 = p[0] * sy + p[2] * cy;
+  return [x1, p[1] * cp - z1 * spi, p[1] * spi + z1 * cp];
+}
+// map point → screen point; z > 0 faces us; k is screen pixels per map unit, shrinking toward the limb
+function proj(x, y, lift = 0) {
+  const [a, b, c] = toCam(sph(x, y)), r = GR * (1 + lift);
+  return { x: GX + a * r, y: GY - b * r, z: c, k: GR / RW * (0.5 + 0.5 * Math.max(0, c)) };
+}
+// screen point → map point, or null off the globe
+function unproj(sx, sy) {
+  const a = (sx - GX) / GR, b = -(sy - GY) / GR, r2 = a * a + b * b;
+  if (r2 > 1) return null;
+  const c = Math.sqrt(1 - r2), cp = Math.cos(cam.pitch), spi = Math.sin(cam.pitch), cyw = Math.cos(cam.yaw), syw = Math.sin(cam.yaw);
+  const y1 = b * cp + c * spi, z1 = -b * spi + c * cp;
+  const x0 = a * cyw + z1 * syw, z0 = -a * syw + z1 * cyw;
+  return { x: wrapX(Math.atan2(x0, z0) * RW), y: MH / 2 - Math.asin(clamp(y1, -1, 1)) * RW };
+}
+
+/* ---------- biomes ---------- */
+// Elevation, moisture and temperature come from smooth 3D noise on the sphere, so there is no seam.
+const BIOMES = [
+  { id: 'deep', name: 'Deep ocean', rgb: [14, 38, 74], water: true },
+  { id: 'ocean', name: 'Ocean', rgb: [24, 72, 112], water: true },
+  { id: 'beach', name: 'Shore', rgb: [196, 178, 130] },
+  { id: 'grass', name: 'Grassland', rgb: [96, 140, 66] },
+  { id: 'forest', name: 'Forest', rgb: [44, 94, 50], vigor: 0.012 },
+  { id: 'jungle', name: 'Jungle', rgb: [30, 108, 62], vigor: 0.016 },
+  { id: 'desert', name: 'Desert', rgb: [200, 160, 96], vigor: -0.012 },
+  { id: 'tundra', name: 'Tundra', rgb: [142, 156, 136], slow: 0.55 },
+  { id: 'ice', name: 'Ice', rgb: [222, 232, 238], slow: 0.45, vigor: -0.006 },
+  { id: 'mountain', name: 'Mountains', rgb: [112, 100, 90], slow: 0.5 },
+  { id: 'snow', name: 'Snowy peaks', rgb: [232, 236, 240], slow: 0.4 },
+];
+const BIOME = Object.fromEntries(BIOMES.map((b, i) => [b.id, i]));
+const TW = 768, TH = 384;
+let tex = null, texSeed = null;
+function h3(x, y, z, s) { let h = (x * 374761393 + y * 668265263 + z * 2147483647 + s * 1442695041) | 0; h = (h ^ (h >>> 13)) * 1274126177 | 0; return ((h ^ (h >>> 16)) >>> 0) / 4294967295; }
+function noise3(x, y, z, s) {
+  const xi = Math.floor(x), yi = Math.floor(y), zi = Math.floor(z), xf = x - xi, yf = y - yi, zf = z - zi;
+  const u = xf * xf * (3 - 2 * xf), v = yf * yf * (3 - 2 * yf), w = zf * zf * (3 - 2 * zf);
+  const L = (a, b, k) => a + (b - a) * k, n = (dx, dy, dz) => h3(xi + dx, yi + dy, zi + dz, s);
+  return L(L(L(n(0, 0, 0), n(1, 0, 0), u), L(n(0, 1, 0), n(1, 1, 0), u), v), L(L(n(0, 0, 1), n(1, 0, 1), u), L(n(0, 1, 1), n(1, 1, 1), u), v), w);
+}
+function fbm(p, s) { let a = 0, amp = 0.5, f = 1.7; for (let o = 0; o < 5; o++) { a += amp * noise3(p[0] * f + 7.1, p[1] * f + 3.3, p[2] * f + 1.9, s + o); f *= 2; amp *= 0.5; } return a / 0.97; }
+function ensurePlanet() {
+  if (world.planetSeed == null) world.planetSeed = Math.floor(Math.random() * 1e6);
+  if (tex && texSeed === world.planetSeed) return;
+  texSeed = world.planetSeed;
+  tex = { id: new Uint8Array(TW * TH), r: new Uint8Array(TW * TH), g: new Uint8Array(TW * TH), b: new Uint8Array(TW * TH) };
+  for (let j = 0; j < TH; j++) {
+    const lat = Math.PI / 2 - (j + 0.5) / TH * Math.PI;
+    for (let i = 0; i < TW; i++) {
+      const lon = (i + 0.5) / TW * 2 * Math.PI, p = [Math.cos(lat) * Math.sin(lon), Math.sin(lat), Math.cos(lat) * Math.cos(lon)];
+      const e = fbm(p, texSeed), m = fbm([p[0] + 5, p[1] - 3, p[2] + 2], texSeed + 99);
+      const temp = 1 - Math.abs(lat) / (Math.PI / 2) * 1.1 - Math.max(0, e - 0.6) * 0.9;
+      const b = e < 0.4 ? 'deep' : e < 0.47 ? 'ocean' : e < 0.49 ? 'beach' : e > 0.74 ? (e > 0.8 || temp < 0.3 ? 'snow' : 'mountain')
+        : temp < 0.16 ? 'ice' : temp < 0.32 ? 'tundra' : m < 0.4 && temp > 0.55 ? 'desert' : m > 0.58 && temp > 0.6 ? 'jungle' : m > 0.47 ? 'forest' : 'grass';
+      const k = j * TW + i, rgb = BIOMES[BIOME[b]].rgb, shade = b === 'deep' || b === 'ocean' ? 0.85 + (e - 0.4) * 1.5 : 0.82 + (e - 0.5) * 0.9;
+      tex.id[k] = BIOME[b];
+      tex.r[k] = clamp(rgb[0] * shade, 0, 255); tex.g[k] = clamp(rgb[1] * shade, 0, 255); tex.b[k] = clamp(rgb[2] * shade, 0, 255);
+    }
+  }
+  if (!world.village || isWater(world.village.x, world.village.y)) placeVillage();
+}
+function biomeAt(x, y) {
+  ensurePlanet();
+  const lon = wrapX(x) / MW, lat = clamp((MH / 2 - y) / RW, -Math.PI / 2, Math.PI / 2);
+  const i = Math.min(TW - 1, Math.floor(lon * TW)), j = Math.min(TH - 1, Math.floor((Math.PI / 2 - lat) / Math.PI * TH));
+  return BIOMES[tex.id[j * TW + i]];
+}
+const isWater = (x, y) => !!biomeAt(x, y).water;
+// the village sits in the greenest stretch of land near the equator
+function placeVillage() {
+  let best = null, bestScore = -1;
+  for (let n = 0; n < 600; n++) {
+    const x = Math.random() * MW, y = MH * (0.3 + Math.random() * 0.4), b = biomeAt(x, y);
+    if (b.water || !['grass', 'forest', 'jungle'].includes(b.id)) continue;
+    let land = 0; for (let a = 0; a < 12; a++) if (!isWater(x + Math.cos(a) * 220, y + Math.sin(a) * 160)) land++;
+    if (land > bestScore) { bestScore = land; best = { x, y }; }
+  }
+  best = best || { x: MW / 2, y: MH / 2 };
+  const huts = [];
+  for (let i = 0; i < 6 && huts.length < 6; i++) for (let t = 0; t < 30; t++) {
+    const a = i / 6 * 6.283 + Math.random() * 0.6, r = 70 + Math.random() * 90, hx = best.x + Math.cos(a) * r, hy = best.y + Math.sin(a) * r * 0.8;
+    if (!isWater(hx, hy)) { huts.push([+(hx - best.x).toFixed(1), +(hy - best.y).toFixed(1)]); break; }
+  }
+  world.village = { x: +best.x.toFixed(1), y: +best.y.toFixed(1), huts };
+}
+function nearVillage(spread = 260) {
+  ensurePlanet();
+  const v = world.village;
+  for (let t = 0; t < 60; t++) { const x = wrapX(v.x + (Math.random() - 0.5) * 2 * spread), y = clamp(v.y + (Math.random() - 0.5) * 1.4 * spread, 20, MH - 20); if (!isWater(x, y)) return { x, y }; }
+  return { x: v.x, y: v.y };
+}
+function randomLand(prefer) {
+  ensurePlanet();
+  for (let t = 0; t < 200; t++) { const x = Math.random() * MW, y = 20 + Math.random() * (MH - 40), b = biomeAt(x, y); if (!b.water && (!prefer || prefer.includes(b.id) || t > 150)) return { x, y }; }
+  return nearVillage();
+}
+// move a walker across the surface: x wraps, y bounces at the edges of the walkable band, water turns them back
+function moveOnLand(o, dt, slowOK = true) {
+  const b = biomeAt(o.x, o.y), slow = slowOK && b.slow ? b.slow : 1;
+  const nx = wrapX(o.x + o.vx * dt * slow); let ny = o.y + o.vy * dt * slow;
+  if (ny < 15 || ny > MH - 15) { o.vy *= -0.6; ny = clamp(ny, 15, MH - 15); }
+  if (isWater(nx, ny) && !isWater(o.x, o.y)) { o.vx *= -0.5; o.vy *= -0.5; return; }
+  o.x = nx; o.y = ny;
+}
+
+/* ---------- drawing the globe ---------- */
+const gcv = document.createElement('canvas'), gctx = gcv.getContext('2d');
+let gimg = null, gsize = 0, gpix = null;
+function renderGlobe() {
+  ensurePlanet();
+  const size = Math.max(96, Math.min(520, Math.round(GR * 2 * 0.72)));
+  if (size !== gsize) {
+    gsize = size; gcv.width = gcv.height = size; gimg = gctx.createImageData(size, size);
+    // per pixel: its point on the unit disc and its lighting, which do not change as the globe turns
+    gpix = [];
+    const L = [-0.5, 0.55, 0.67];
+    for (let j = 0; j < size; j++) for (let i = 0; i < size; i++) {
+      const a = (i + 0.5) / size * 2 - 1, b = 1 - (j + 0.5) / size * 2, r2 = a * a + b * b;
+      if (r2 > 1) continue;
+      const c = Math.sqrt(1 - r2), light = 0.22 + 0.78 * Math.max(0, a * L[0] + b * L[1] + c * L[2]);
+      gpix.push(j * size + i, a, b, c, light);
+    }
+  }
+  const d32 = new Uint32Array(gimg.data.buffer);
+  d32.fill(0);
+  const cp = Math.cos(cam.pitch), spi = Math.sin(cam.pitch), cy = Math.cos(cam.yaw), sy = Math.sin(cam.yaw);
+  for (let n = 0; n < gpix.length; n += 5) {
+    const a = gpix[n + 1], b = gpix[n + 2], c = gpix[n + 3], light = gpix[n + 4];
+    const y1 = b * cp + c * spi, z1 = -b * spi + c * cp, x0 = a * cy + z1 * sy, z0 = -a * sy + z1 * cy;
+    let u = Math.atan2(x0, z0) / (2 * Math.PI); if (u < 0) u += 1;
+    const v = Math.acos(clamp(y1, -1, 1)) / Math.PI;
+    const k = Math.min(TH - 1, (v * TH) | 0) * TW + Math.min(TW - 1, (u * TW) | 0);
+    d32[gpix[n]] = 0xff000000 | ((tex.b[k] * light) << 16) | ((tex.g[k] * light) << 8) | (tex.r[k] * light);
+  }
+  gctx.putImageData(gimg, 0, 0);
+  // atmosphere
+  const at = ctx.createRadialGradient(GX, GY, GR * 0.96, GX, GY, GR * 1.12);
+  at.addColorStop(0, 'rgba(120, 180, 255, 0.28)'); at.addColorStop(1, 'rgba(120, 180, 255, 0)');
+  ctx.fillStyle = at; ctx.beginPath(); ctx.arc(GX, GY, GR * 1.12, 0, 6.283); ctx.fill();
+  ctx.imageSmoothingEnabled = true;
+  ctx.drawImage(gcv, GX - GR, GY - GR, GR * 2, GR * 2);
+  // a soft night side
+  const sh = ctx.createRadialGradient(GX - GR * 0.45, GY - GR * 0.5, GR * 0.2, GX, GY, GR * 1.02);
+  sh.addColorStop(0, 'rgba(0, 0, 0, 0)'); sh.addColorStop(0.75, 'rgba(0, 0, 0, 0.05)'); sh.addColorStop(1, 'rgba(0, 0, 10, 0.45)');
+  ctx.fillStyle = sh; ctx.beginPath(); ctx.arc(GX, GY, GR, 0, 6.283); ctx.fill();
+}
+// a polyline across the surface, from map point a along (dx, dy), drawn only where it faces us
+function strokeSurface(ax, ay, dx, dy, steps = 16, lift = 0.004) {
+  ctx.beginPath(); let on = false;
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps, p = proj(ax + dx * t, ay + dy * t, lift);
+    if (p.z < 0.02) { on = false; continue; }
+    on ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y); on = true;
+  }
+  ctx.stroke();
+}
+function drawVillage() {
+  const v = world.village; if (!v) return;
+  for (const [hx, hy] of v.huts) {
+    const p = proj(v.x + hx, v.y + hy); if (p.z < 0.05) continue;
+    const s = clamp(13 * p.k, 4, 30);
+    drawHut(ctx, p.x, p.y, s);
+    const f = reduce ? 0.85 : 0.78 + 0.22 * Math.sin(wall * 7 + hx) * Math.sin(wall * 2.3 + hy);
+    ctx.globalCompositeOperation = 'lighter';
+    const lx = p.x + s * 0.5, ly = p.y + s * 0.15, g = ctx.createRadialGradient(lx, ly, 0, lx, ly, s * 2.4);
+    g.addColorStop(0, `rgba(255, 190, 105, ${0.32 * f * p.z})`); g.addColorStop(1, 'rgba(255, 150, 70, 0)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(lx, ly, s * 2.4, 0, 6.283); ctx.fill();
+    ctx.fillStyle = `rgba(255, 214, 140, ${0.9 * f})`; ctx.fillRect(lx - s * 0.12, ly - s * 0.1, s * 0.24, s * 0.2);
+    ctx.globalCompositeOperation = 'source-over';
+  }
+}
+
+
 
 /* ---------- analysis of its own body ---------- */
 const N = 128, KMAX = 32;
@@ -1064,7 +1276,7 @@ function makeCreature(s, at = {}) {
     beauty: 0, hiveSize: 1,
     electrons: [], atom: { Z: 1, bound: 1, avgR: 1 },
     T: Math.random() * 20, rewriteClock: Math.random() * 6, contentFor: 0, collapseFor: 0, phase: at.phase || 'alive', phaseT: 0,
-    x: at.x ?? (p.x != null ? p.x * W : Math.random() * W), y: at.y ?? (p.y != null ? p.y * H : Math.random() * H),
+    ...(() => { if (at.x != null) return { x: at.x, y: at.y }; const q = p.x != null ? { x: wrapX(p.x * MW), y: clamp(p.y * MH, 20, MH - 20) } : null; return q && !isWater(q.x, q.y) ? q : nearVillage(); })(),
     vx: at.vx ?? 0, vy: at.vy ?? 0, wander: Math.random() * 6.283,
     hue: 230, fit: 0.5, radius: 40, bodyScale: 1, flare: 0, maxFor: 0, flash: -9, harmony: null,
   };
@@ -1135,9 +1347,10 @@ focus = pop.find(c => c.s.id === saved?.focus) || pop[0];
 enter(focus);
 function save() {
   try {
-    for (const c of pop) { c.s.pos = { x: +(c.x / W).toFixed(4), y: +(c.y / H).toFixed(4) }; c.s.orbits = c.electrons.map(e => +e.r.toFixed(3)); }
-    world.food = food.map(f => ({ src: f.src, sign: f.sign, anc: f.anc, hue: f.hue, x: +(f.x / W).toFixed(4), y: +(f.y / H).toFixed(4) }));
-    world.particles = particles.map(p => ({ k: p.k, x: +(p.x / W).toFixed(4), y: +(p.y / H).toFixed(4), b: p.bonds.map(o => particles.indexOf(o)) }));
+    if (resetting) return;
+    for (const c of pop) { c.s.pos = { x: +(c.x / MW).toFixed(4), y: +(c.y / MH).toFixed(4) }; c.s.orbits = c.electrons.map(e => +e.r.toFixed(3)); }
+    world.food = food.map(f => ({ src: f.src, sign: f.sign, anc: f.anc, hue: f.hue, x: +(f.x / MW).toFixed(4), y: +(f.y / MH).toFixed(4) }));
+    world.particles = particles.map(p => ({ k: p.k, x: +(p.x / MW).toFixed(4), y: +(p.y / MH).toFixed(4), b: p.bonds.map(o => particles.indexOf(o)) }));
     localStorage.setItem(SAVE_KEY, JSON.stringify({ creatures: pop.map(c => c.s), focus: focus.s.id }));
     localStorage.setItem(WORLD_KEY, JSON.stringify(world));
   } catch (_) {}
@@ -1165,7 +1378,7 @@ const STRUCTURAL = ['grow', 'recall', 'splice', 'replay', 'assimilate', 'sharpen
 /* ---------- food: ancestral genes drifting loose in the void ---------- */
 const food = [], seedPos = new Map(), foodFns = new Map();
 let foodClock = 0;
-for (const f of world.food || []) food.push({ ...f, x: f.x * W, y: f.y * H, vx: 0, vy: 0 });
+for (const f of world.food || []) food.push({ ...f, x: f.x * MW, y: f.y * MH, vx: 0, vy: 0 });
 function primordialGene() {
   const k = 2 + Math.floor(Math.random() * 9), c = +(0.5 + Math.random() * 2).toFixed(1);
   return `${+(0.05 + Math.random() * 0.15).toFixed(2)} ${pick(['sin', 'cos'])}(${k}θ ${pick(['+', '-'])} ${c}t)`;
@@ -1177,7 +1390,8 @@ function spawnFood() {
     const s = pick(seeds), g = pick(ancestralGenes(s).filter(g => !isDrive(g.src))), p = seedPos.get(s.id);
     food.push({ src: g.src, sign: g.sign, anc: s.name, hue: s.hue, x: p.x, y: p.y, vx: Math.cos(a) * 16, vy: Math.sin(a) * 16 });
   } else {
-    food.push({ src: show(parse(primordialGene())), sign: 1, anc: 'the forest', hue: 150, x: Math.random() * W, y: Math.random() * H, vx: Math.cos(a) * 6, vy: Math.sin(a) * 6 });
+    const spot = randomLand(['forest', 'jungle', 'grass']);
+    food.push({ src: show(parse(primordialGene())), sign: 1, anc: 'the forest', hue: 150, x: spot.x, y: spot.y, vx: Math.cos(a) * 6, vy: Math.sin(a) * 6 });
   }
 }
 function stepFood(dt) {
@@ -1187,23 +1401,23 @@ function stepFood(dt) {
   for (const f of food) {
     f.vx += (Math.random() - 0.5) * 8 * dt; f.vy += (Math.random() - 0.5) * 8 * dt;
     f.vx *= 1 - 0.3 * dt; f.vy *= 1 - 0.3 * dt;
-    f.x = ((f.x + f.vx * dt) % W + W) % W; f.y = ((f.y + f.vy * dt) % H + H) % H;
+    moveOnLand(f, dt, false);
   }
 }
 function drawFood() {
-  const e = { theta: 0, t: wall, E: 0.5, g: 1, Z: 1 };
   for (const f of food) {
-    if (!foodFns.has(f.src)) { let fn; try { fn = compile(f.src).f; } catch (_) { fn = () => 1; } foodFns.set(f.src, fn); }
-    const fn = foodFns.get(f.src);
-    const g = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, 11);
+    const p = proj(f.x, f.y); if (p.z < 0.05) continue;
+    const sc = clamp(p.k, 0.35, 2.4);
+    ctx.globalCompositeOperation = 'lighter';
+    const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, 9 * sc);
     g.addColorStop(0, 'hsla(140, 60%, 70%, 0.35)'); g.addColorStop(1, 'hsla(140, 60%, 50%, 0)');
-    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(f.x, f.y, 11, 0, 6.283); ctx.fill();
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(p.x, p.y, 9 * sc, 0, 6.283); ctx.fill();
+    ctx.globalCompositeOperation = 'source-over';
     // a lore leaf, turning as it drifts
-    const a = wall * 0.6 + f.x * 0.01;
-    ctx.save(); ctx.translate(f.x, f.y); ctx.rotate(a);
-    ctx.fillStyle = 'hsla(95, 55%, 62%, 0.85)';
+    ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(wall * 0.6 + f.x * 0.01); ctx.scale(sc, sc);
+    ctx.fillStyle = 'hsla(95, 60%, 60%, 0.95)';
     ctx.beginPath(); ctx.moveTo(-6, 0); ctx.quadraticCurveTo(0, -4, 6, 0); ctx.quadraticCurveTo(0, 4, -6, 0); ctx.fill();
-    ctx.strokeStyle = 'hsla(90, 60%, 85%, 0.7)'; ctx.lineWidth = 0.6; ctx.beginPath(); ctx.moveTo(-5, 0); ctx.lineTo(5, 0); ctx.stroke();
+    ctx.strokeStyle = 'hsla(90, 60%, 88%, 0.8)'; ctx.lineWidth = 0.6; ctx.beginPath(); ctx.moveTo(-5, 0); ctx.lineTo(5, 0); ctx.stroke();
     ctx.restore();
   }
 }
@@ -1218,7 +1432,7 @@ function stepHunt(dt) {
     let threat = null, td = Infinity, tdx = 0, tdy = 0;
     for (const o of pop) {
       if (!canEat(o, c)) continue;
-      const dx = wrapD(o.x - c.x, W), dy = wrapD(o.y - c.y, H), d = Math.hypot(dx, dy) || 1;
+      const dx = wrapD(o.x - c.x, MW), dy = (o.y - c.y), d = Math.hypot(dx, dy) || 1;
       if (d < (o.radius + c.radius) * 6 && d < td) { threat = o; td = d; tdx = dx; tdy = dy; }
     }
     if (threat) { const acc = (14 + 60 * ps.n) * dt; c.vx -= tdx / td * acc; c.vy -= tdy / td * acc; c.fleeing = threat; }
@@ -1227,7 +1441,7 @@ function stepHunt(dt) {
       let prey = null, pd = 150 + 700 * c.predAmp, pdx = 0, pdy = 0;
       for (const o of pop) {
         if (!canEat(c, o)) continue;
-        const dx = wrapD(o.x - c.x, W), dy = wrapD(o.y - c.y, H), d = Math.hypot(dx, dy) || 1;
+        const dx = wrapD(o.x - c.x, MW), dy = (o.y - c.y), d = Math.hypot(dx, dy) || 1;
         if (d < pd) { prey = o; pd = d; pdx = dx; pdy = dy; }
       }
       if (prey) {
@@ -1244,7 +1458,7 @@ function stepHunt(dt) {
     if (!(s > 0) || (c.s.carried || []).length >= 6) { c.phi = Math.atan2(c.vy, c.vx) || c.phi || 0; continue; }
     let best = null, bd = 120 + 900 * s, bdx = 0, bdy = 0;
     for (const f of food) {
-      const dx = wrapD(f.x - c.x, W), dy = wrapD(f.y - c.y, H), d = Math.hypot(dx, dy);
+      const dx = wrapD(f.x - c.x, MW), dy = (f.y - c.y), d = Math.hypot(dx, dy);
       if (d < bd) { bd = d; best = f; bdx = dx; bdy = dy; }
     }
     if (!best) { c.phi = Math.atan2(c.vy, c.vx) || c.phi || 0; continue; }
@@ -1473,19 +1687,15 @@ function bite(p, q) {
   if (p === focus || q === focus) uiDirty = true;
 }
 function drawChase() {
-  ctx.setLineDash([3, 5]); ctx.lineWidth = 1;
-  for (const c of pop) {
-    if (!c.chasing || !pop.includes(c.chasing)) continue;
-    const dx = wrapD(c.chasing.x - c.x, W), dy = wrapD(c.chasing.y - c.y, H);
-    ctx.strokeStyle = 'hsla(8, 90%, 70%, 0.4)';
-    ctx.beginPath(); ctx.moveTo(c.x, c.y); ctx.lineTo(c.x + dx, c.y + dy); ctx.stroke();
-  }
+  ctx.setLineDash([3, 5]); ctx.lineWidth = 1; ctx.strokeStyle = 'hsla(8, 90%, 70%, 0.5)';
+  for (const c of pop) if (c.chasing && pop.includes(c.chasing)) strokeSurface(c.x, c.y, wrapD(c.chasing.x - c.x, MW), c.chasing.y - c.y, 12);
   ctx.setLineDash([]);
   for (let i = bites.length - 1; i >= 0; i--) {
     const b = bites[i], k = (wall - b.t) / 1;
     if (k > 1) { bites.splice(i, 1); continue; }
+    const p = proj(b.x, b.y); if (p.z < 0.05) continue;
     ctx.strokeStyle = `hsla(8, 95%, 70%, ${0.85 * (1 - k)})`; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.arc(b.x, b.y, 8 + 34 * k, 0, 6.283); ctx.stroke();
+    ctx.beginPath(); ctx.arc(p.x, p.y, (8 + 34 * k) * p.k, 0, 6.283); ctx.stroke();
   }
 }
 
@@ -1570,7 +1780,7 @@ function stepBeauty(dt) {
   let admirers = 0;
   for (const c of pop) {
     if (c === leader || c.phase !== 'alive' || canEat(leader, c)) continue;
-    const dx = wrapD(leader.x - c.x, W), dy = wrapD(leader.y - c.y, H), d = Math.hypot(dx, dy) || 1;
+    const dx = wrapD(leader.x - c.x, MW), dy = (leader.y - c.y), d = Math.hypot(dx, dy) || 1;
     if (d > (c.radius + leader.radius) * 8) continue;
     admirers++;
     const pull = 2 * (0.5 + (c.psy || NEUTRAL).x) * dt;
@@ -1581,14 +1791,14 @@ function stepBeauty(dt) {
 }
 function drawCrown() {
   if (!leader || pop.length < 2) return;
-  const c = leader, r = c.radius * 1.55 + 8;
+  const c = leader, p = proj(c.x, c.y); if (p.z < 0.05) return;
+  const r = c.radius * p.k * 1.55 + 6;
   ctx.setLineDash([2, 6]); ctx.lineDashOffset = -wall * 10;
-  ctx.strokeStyle = 'rgba(230, 194, 127, 0.55)'; ctx.lineWidth = 1.2;
-  ctx.beginPath(); ctx.arc(c.x, c.y, r, 0, 6.283); ctx.stroke();
+  ctx.strokeStyle = 'rgba(230, 194, 127, 0.6)'; ctx.lineWidth = 1.2;
+  ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, 6.283); ctx.stroke();
   ctx.setLineDash([]); ctx.lineDashOffset = 0;
-  // a small crown above it
-  const x = c.x, y = c.y - r - 6, w = 9;
-  ctx.fillStyle = 'rgba(230, 194, 127, 0.85)';
+  const x = p.x, y = p.y - r - 6, w = 8;
+  ctx.fillStyle = 'rgba(230, 194, 127, 0.9)';
   ctx.beginPath(); ctx.moveTo(x - w, y + 4); ctx.lineTo(x - w, y - 2); ctx.lineTo(x - w / 2, y + 1); ctx.lineTo(x, y - 5); ctx.lineTo(x + w / 2, y + 1); ctx.lineTo(x + w, y - 2); ctx.lineTo(x + w, y + 4); ctx.closePath(); ctx.fill();
 }
 function renderBeauty() {
@@ -1644,12 +1854,11 @@ function shareInsight(text, answer) {
 function drawHive() {
   const m = hiveMembers();
   if (m.length < 2) return;
-  ctx.lineWidth = 0.8;
+  ctx.lineWidth = 0.9;
   for (let i = 0; i < m.length; i++) for (let j = i + 1; j < m.length; j++) {
-    const a = m[i], b = m[j], dx = wrapD(b.x - a.x, W), dy = wrapD(b.y - a.y, H);
-    const k = 0.5 + 0.5 * Math.sin(wall * 2 + i + j);
-    ctx.strokeStyle = `hsla(200, 30%, 86%, ${(0.06 + 0.1 * k) * Math.min(1, (a.hiveAmp + b.hiveAmp) * 4)})`;
-    ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.quadraticCurveTo(a.x + dx / 2 - dy * 0.15, a.y + dy / 2 + dx * 0.15, a.x + dx, a.y + dy); ctx.stroke();
+    const a = m[i], b = m[j], k = 0.5 + 0.5 * Math.sin(wall * 2 + i + j);
+    ctx.strokeStyle = `hsla(200, 30%, 88%, ${(0.1 + 0.14 * k) * Math.min(1, (a.hiveAmp + b.hiveAmp) * 4)})`;
+    strokeSurface(a.x, a.y, wrapD(b.x - a.x, MW), b.y - a.y, 20, 0.03);
   }
 }
 
@@ -1708,6 +1917,7 @@ function updatePanel(fit) {
   $('nuc').textContent = `${atom.Z} wisps · stature ${traits.mass.toFixed(2)}`;
   $('orb').textContent = `${atom.bound}/${atom.Z} aglow · height ${atom.avgR.toFixed(2)}`;
   $('popn').textContent = `${pop.length} of ${MAX_POP}`;
+  $('biomev').textContent = (focus.biome || biomeAt(focus.x, focus.y)).name;
   $('eqname').textContent = `${state.name}’s song`;
   $('carry').textContent = state.carried.length ? `${state.carried.length} gene${state.carried.length === 1 ? '' : 's'} · +${(focus.gain || 0).toFixed(3)}/s` : 'nothing';
   $('growth').textContent = driveAmp(curAst, 'grow') ? `G ${(state.G || 0).toFixed(2)}` : 'no grow gene';
@@ -1890,7 +2100,7 @@ function finishCondense(c) {
   const seed = {
     id: s.id, name: s.name, eq: s.eq, equations: s.history.slice(), gens: s.gen,
     rewrites: s.rewrites, tries: s.tries, hue: Math.round(c.hue), instinct: { ...s.instinct },
-    a: Math.random() * 6.283, d: 0.8 + Math.random() * 0.5, died: Date.now(),
+    a: Math.random() * 6.283, d: 0.8 + Math.random() * 0.5, died: Date.now(), mx: +c.x.toFixed(1), my: +c.y.toFixed(1),
   };
   world.seeds.push(seed);
   seedAnim.set(seed.id, { t0: wall, sx: c.x, sy: c.y });
@@ -1919,7 +2129,7 @@ function split(c) {
   d.log = [{ g: d.gen, text: `Born to <b>${s.name}</b>.` }];
   s.log.unshift({ g: s.gen, text: `Brimming with vigor, had an <b>elfling</b>: <b>${d.name}</b>.` }); s.log = s.log.slice(0, 6);
   const a = Math.random() * 6.283, off = c.radius * 0.8;
-  const dc = makeCreature(d, { x: (c.x + Math.cos(a) * off + W) % W, y: (c.y + Math.sin(a) * off + H) % H, vx: c.vx + Math.cos(a) * 30, vy: c.vy + Math.sin(a) * 30, traits: c.traits });
+  const dc = makeCreature(d, { x: wrapX(c.x + Math.cos(a) * off), y: clamp(c.y + Math.sin(a) * off, 20, MH - 20), vx: c.vx + Math.cos(a) * 30, vy: c.vy + Math.sin(a) * 30, traits: c.traits });
   c.vx -= Math.cos(a) * 30; c.vy -= Math.sin(a) * 30;
   dc.T = c.T; dc.hue = c.hue; dc.radius = c.radius; dc.bornAt = wall;
   c.flash = dc.flash = wall;
@@ -1962,31 +2172,29 @@ function renderLineage() {
   box.innerHTML = world.seeds.slice().reverse().map(s => `<details class="seed"><summary><span class="sname" style="color:hsl(${s.hue} 80% 74%)">${s.name}</span><span class="smeta">${s.gens} gen${s.gens === 1 ? '' : 's'} · ${s.equations.length} equation${s.equations.length === 1 ? '' : 's'}</span></summary><ol class="eqs">${s.equations.map(e => `<li><span class="by ${e.by}">${BY[e.by] || esc(String(e.by))}</span><code>${esc(e.eq)}</code></li>`).join('')}</ol></details>`).join('');
 }
 // condensed genes hold a slow ring around the middle of the void
-function drawSeeds(ox, oy, R0) {
+function drawSeeds() {
   const e = { theta: 0, t: wall * 0.4, E: 0.5, g: 1, Z: 2 };
   for (const s of world.seeds) {
+    if (s.mx == null) { const v = world.village || { x: MW / 2, y: MH / 2 }, a = s.id * 2.39996; s.mx = wrapX(v.x + Math.cos(a) * 240); s.my = clamp(v.y + Math.sin(a) * 160, 20, MH - 20); }
+    seedPos.set(s.id, { x: s.mx, y: s.my });
+    const p = proj(s.mx, s.my); if (p.z < 0.05) continue;
     if (!seedFns.has(s.id)) { let f; try { f = compile(s.eq).f; } catch (_) { f = () => 1; } seedFns.set(s.id, f); }
-    const f = seedFns.get(s.id), an = seedAnim.get(s.id);
-    const k = an ? ease(clamp((wall - an.t0) / 7, 0, 1)) : 1;
-    const ang = (s.a ?? s.id * 2.4) + wall * 0.012, dist = R0 * (2.1 + 0.5 * (s.d ?? 1));
-    const tx = ox + Math.cos(ang) * dist * 1.25 + Math.sin(wall * 0.09 + s.id * 1.7) * 6, ty = oy + Math.sin(ang) * dist * 0.8 + Math.cos(wall * 0.07 + s.id) * 5;
-    const x = an ? lerp(an.sx, tx, k) : tx, y = an ? lerp(an.sy, ty, k) : ty;
-    seedPos.set(s.id, { x: (x % W + W) % W, y: (y % H + H) % H });
+    const f = seedFns.get(s.id), sc = clamp(p.k * 1.1, 0.4, 2.5), x = p.x, y = p.y - 10 * sc;
     const pulse = 0.75 + 0.25 * Math.sin(wall * 1.3 + s.id);
     // a tree of the Ancestor Grove: trunk, then a canopy shaped by its final song
-    ctx.strokeStyle = 'rgba(120, 95, 70, 0.8)'; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(x, y + 14); ctx.quadraticCurveTo(x + 2, y + 6, x, y); ctx.stroke();
-    const g = ctx.createRadialGradient(x, y, 0, x, y, 26);
-    g.addColorStop(0, `hsla(${s.hue}, 90%, 75%, ${0.35 * pulse})`);
-    g.addColorStop(1, `hsla(${s.hue}, 90%, 50%, 0)`);
-    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, 26, 0, 6.283); ctx.fill();
-    ctx.beginPath();
+    ctx.strokeStyle = 'rgba(120, 95, 70, 0.9)'; ctx.lineWidth = 2 * sc;
+    ctx.beginPath(); ctx.moveTo(x, y + 12 * sc); ctx.quadraticCurveTo(x + 2 * sc, y + 5 * sc, x, y); ctx.stroke();
+    ctx.globalCompositeOperation = 'lighter';
+    const g = ctx.createRadialGradient(x, y, 0, x, y, 22 * sc);
+    g.addColorStop(0, `hsla(${s.hue}, 90%, 75%, ${0.35 * pulse})`); g.addColorStop(1, `hsla(${s.hue}, 90%, 50%, 0)`);
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, 22 * sc, 0, 6.283); ctx.fill();
     let mx = 1e-6; const vals = [];
     for (let i = 0; i < 48; i++) { e.theta = i / 48 * 6.283; let r = Math.abs(f(e)); if (!Number.isFinite(r)) r = 0; vals.push(r); mx = Math.max(mx, r); }
-    for (let i = 0; i <= 48; i++) { const th = i / 48 * 6.283 + wall * 0.05, r = 6 + 7 * vals[i % 48] / mx; const px = x + Math.cos(th) * r, py = y + Math.sin(th) * r; i ? ctx.lineTo(px, py) : ctx.moveTo(px, py); }
+    ctx.beginPath();
+    for (let i = 0; i <= 48; i++) { const th = i / 48 * 6.283 + wall * 0.05, r = (5 + 6 * vals[i % 48] / mx) * sc; const px = x + Math.cos(th) * r, py = y + Math.sin(th) * r; i ? ctx.lineTo(px, py) : ctx.moveTo(px, py); }
     ctx.closePath();
     ctx.strokeStyle = `hsla(${s.hue}, 90%, 82%, ${0.85 * pulse})`; ctx.lineWidth = 1; ctx.stroke();
-    ctx.fillStyle = `hsla(${s.hue + 40}, 100%, 92%, ${pulse})`; ctx.beginPath(); ctx.arc(x, y, 1.4, 0, 6.283); ctx.fill();
+    ctx.globalCompositeOperation = 'source-over';
   }
 }
 
@@ -2092,7 +2300,7 @@ function stepWorld(dt) {
   }
   for (let i = 0; i < pop.length; i++) for (let j = i + 1; j < pop.length; j++) {
     const a = pop[i], b = pop[j];
-    const dx = wrapD(b.x - a.x, W), dy = wrapD(b.y - a.y, H), d = Math.hypot(dx, dy) || 1, ux = dx / d, uy = dy / d;
+    const dx = wrapD(b.x - a.x, MW), dy = (b.y - a.y), d = Math.hypot(dx, dy) || 1, ux = dx / d, uy = dy / d;
     const reach = a.radius + b.radius;
     if (d < reach * 0.95) { const push = (reach * 0.95 - d) * 2 * dt; a.vx -= ux * push; a.vy -= uy * push; b.vx += ux * push; b.vy += uy * push; }
     const key = Math.min(a.s.id, b.s.id) + ':' + Math.max(a.s.id, b.s.id);
@@ -2130,20 +2338,20 @@ function stepWorld(dt) {
   for (const c of pop) {
     c.vx *= 1 - 0.5 * dt; c.vy *= 1 - 0.5 * dt;
     const v = Math.hypot(c.vx, c.vy), cap = c.chasing ? 72 : c.fleeing || c.seeking ? 60 : 36; if (v > cap) { c.vx *= cap / v; c.vy *= cap / v; }
-    c.x = ((c.x + c.vx * dt) % W + W) % W; c.y = ((c.y + c.vy * dt) % H + H) % H;
+    moveOnLand(c, dt);
   }
 }
 function drawHarmony() {
   for (const ps of pairs.values()) {
     if (!ps.a || ps.h <= HARMONY || ps.cool > 0 || ps.d > ps.reach * 5 || !pop.includes(ps.a) || !pop.includes(ps.b)) continue;
-    const a = ps.a, b = ps.b, dx = wrapD(b.x - a.x, W), dy = wrapD(b.y - a.y, H), d = Math.hypot(dx, dy) || 1;
+    const a = ps.a, b = ps.b, dx = wrapD(b.x - a.x, MW), dy = b.y - a.y, d = Math.hypot(dx, dy) || 1;
     const nx = -dy / d, ny = dx / d, nodes = 2 + Math.round(ps.h * 4), amp = (3 + 7 * ps.p) * Math.sin(wall * 5);
-    ctx.strokeStyle = `hsla(${(a.hue + b.hue) / 2}, 85%, 78%, ${0.08 + 0.55 * ps.p})`; ctx.lineWidth = 1 + ps.p;
-    ctx.beginPath();
-    for (let i = 0; i <= 40; i++) {
-      const t = i / 40, w = Math.sin(nodes * Math.PI * t) * amp;
-      const x = a.x + dx * t + nx * w, y = a.y + dy * t + ny * w;
-      i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+    ctx.strokeStyle = `hsla(${(a.hue + b.hue) / 2}, 85%, 78%, ${0.1 + 0.55 * ps.p})`; ctx.lineWidth = 1 + ps.p;
+    ctx.beginPath(); let on = false;
+    for (let i = 0; i <= 30; i++) {
+      const t = i / 30, w = Math.sin(nodes * Math.PI * t) * amp, q = proj(a.x + dx * t + nx * w, a.y + dy * t + ny * w, 0.01);
+      if (q.z < 0.03) { on = false; continue; }
+      on ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y); on = true;
     }
     ctx.stroke();
   }
@@ -2179,7 +2387,7 @@ function coinSymbol(name) {
 const SUB = '₀₁₂₃₄₅₆₇₈₉', sub = n => String(n).replace(/\d/g, d => SUB[d]);
 const particles = [], flashes = [];
 let pid = 0;
-for (const q of world.particles || []) if (world.elements[q.k]) particles.push({ id: pid++, k: q.k, x: q.x * W, y: q.y * H, vx: 0, vy: 0, bonds: [], _b: q.b || [] });
+for (const q of world.particles || []) if (world.elements[q.k]) particles.push({ id: pid++, k: q.k, x: q.x * MW, y: q.y * MH, vx: 0, vy: 0, bonds: [], _b: q.b || [] });
 for (const p of particles) { p.bonds = p._b.map(i => particles[i]).filter(Boolean); delete p._b; }
 function logTo(c, text) { c.s.log.unshift({ g: c.s.gen, text }); c.s.log = c.s.log.slice(0, 6); }
 function fuse(a, b, x, y) {
@@ -2247,7 +2455,7 @@ function stepChemistry(dt) {
   for (const p of particles) { p.vx += (Math.random() - 0.5) * 30 * dt; p.vy += (Math.random() - 0.5) * 30 * dt; }
   for (let i = 0; i < particles.length; i++) for (let j = i + 1; j < particles.length; j++) {
     const a = particles[i], b = particles[j];
-    const dx = wrapD(b.x - a.x, W), dy = wrapD(b.y - a.y, H), d = Math.hypot(dx, dy) || 1, ux = dx / d, uy = dy / d;
+    const dx = wrapD(b.x - a.x, MW), dy = (b.y - a.y), d = Math.hypot(dx, dy) || 1, ux = dx / d, uy = dy / d;
     const bonded = a.bonds.includes(b);
     let f = 0;
     const free = !bonded && freeVal(a) > 0 && freeVal(b) > 0;
@@ -2266,31 +2474,31 @@ function stepChemistry(dt) {
   }
   for (const p of particles) {
     p.vx *= 1 - 1.2 * dt; p.vy *= 1 - 1.2 * dt;
-    p.x = ((p.x + p.vx * dt) % W + W) % W; p.y = ((p.y + p.vy * dt) % H + H) % H;
+    p.x = wrapX(p.x + p.vx * dt); p.y = p.y + p.vy * dt; if (p.y < 15 || p.y > MH - 15) { p.vy *= -0.6; p.y = clamp(p.y, 15, MH - 15); }
   }
 }
 function drawChemistry() {
-  ctx.lineWidth = 1.2;
-  for (const p of particles) for (const o of p.bonds) if (p.id < o.id) {
-    const dx = wrapD(o.x - p.x, W), dy = wrapD(o.y - p.y, H);
-    ctx.strokeStyle = 'rgba(230, 194, 127, 0.5)';
-    ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x + dx, p.y + dy); ctx.moveTo(o.x, o.y); ctx.lineTo(o.x - dx, o.y - dy); ctx.stroke();
-  }
+  ctx.lineWidth = 1.2; ctx.strokeStyle = 'rgba(230, 194, 127, 0.6)';
+  for (const p of particles) for (const o of p.bonds) if (p.id < o.id) strokeSurface(p.x, p.y, wrapD(o.x - p.x, MW), o.y - p.y, 4);
   ctx.font = '10px "IBM Plex Mono", monospace';
-  for (const p of particles) {
-    const el = world.elements[p.k];
-    const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, 12);
+  for (const pa of particles) {
+    const el = world.elements[pa.k], p = proj(pa.x, pa.y); if (p.z < 0.05) continue;
+    const sc = clamp(p.k, 0.4, 2.2);
+    ctx.globalCompositeOperation = 'lighter';
+    const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, 10 * sc);
     g.addColorStop(0, `hsla(${el.hue}, 90%, 75%, 0.5)`); g.addColorStop(1, `hsla(${el.hue}, 90%, 50%, 0)`);
-    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(p.x, p.y, 12, 0, 6.283); ctx.fill();
-    ctx.fillStyle = `hsla(${el.hue}, 40%, 70%, 0.95)`;
-    ctx.beginPath(); ctx.moveTo(p.x, p.y - 4); ctx.lineTo(p.x + 3.4, p.y); ctx.lineTo(p.x, p.y + 4); ctx.lineTo(p.x - 3.4, p.y); ctx.closePath(); ctx.fill();
-    ctx.fillStyle = `hsla(${el.hue}, 80%, 85%, 0.85)`; ctx.fillText(el.sym, p.x + 5, p.y - 5);
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(p.x, p.y, 10 * sc, 0, 6.283); ctx.fill();
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.fillStyle = `hsla(${el.hue}, 45%, 72%, 0.95)`;
+    ctx.beginPath(); ctx.moveTo(p.x, p.y - 4 * sc); ctx.lineTo(p.x + 3.4 * sc, p.y); ctx.lineTo(p.x, p.y + 4 * sc); ctx.lineTo(p.x - 3.4 * sc, p.y); ctx.closePath(); ctx.fill();
+    if (sc > 0.6) { ctx.fillStyle = `hsla(${el.hue}, 80%, 88%, 0.9)`; ctx.fillText(el.sym, p.x + 5 * sc, p.y - 5 * sc); }
   }
   for (let i = flashes.length - 1; i >= 0; i--) {
     const f = flashes[i], k = (wall - f.t) / 1.4;
     if (k > 1) { flashes.splice(i, 1); continue; }
+    const p = proj(f.x, f.y); if (p.z < 0.05) continue;
     ctx.strokeStyle = `hsla(${f.hue}, 100%, 85%, ${0.8 * (1 - k)})`; ctx.lineWidth = 2 * (1 - k) + 0.5;
-    ctx.beginPath(); ctx.arc(f.x, f.y, 6 + 50 * k, 0, 6.283); ctx.stroke();
+    ctx.beginPath(); ctx.arc(p.x, p.y, (6 + 50 * k) * p.k, 0, 6.283); ctx.stroke();
   }
 }
 function renderChem() {
@@ -2303,39 +2511,7 @@ function renderChem() {
   $('comps').innerHTML = comps.length ? `<ul class="comps">${comps.map(c => `<li><b>${c.formula}</b>${c.atoms} atoms · formed ${c.count}×</li>`).join('')}</ul>` : '';
 }
 
-/* ---------- the glade of Ithilwen ---------- */
-// A forest clearing at night: canopy crowding the edges, lantern-lit huts, fireflies. The
-// still parts are painted once to an offscreen canvas; lanterns and fireflies move each frame.
-const backdrop = document.createElement('canvas'), bctx = backdrop.getContext('2d');
-const HUTS = [[0.2, 0.3], [0.79, 0.26], [0.15, 0.75], [0.85, 0.72], [0.5, 0.13], [0.54, 0.9]];
-const hutSize = () => clamp(Math.min(W, H) * 0.045, 16, 34);
-function buildBackdrop() {
-  backdrop.width = Math.round(W * DPR); backdrop.height = Math.round(H * DPR);
-  const b = bctx; b.setTransform(DPR, 0, 0, DPR, 0, 0);
-  let seed = 11; const rand = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-  b.fillStyle = '#040906'; b.fillRect(0, 0, W, H);
-  // the moonlit clearing
-  const g = b.createRadialGradient(W * 0.5, H * 0.48, 0, W * 0.5, H * 0.48, Math.max(W, H) * 0.65);
-  g.addColorStop(0, 'rgba(44, 76, 56, 0.6)'); g.addColorStop(0.55, 'rgba(18, 36, 26, 0.4)'); g.addColorStop(1, 'rgba(0, 0, 0, 0)');
-  b.fillStyle = g; b.fillRect(0, 0, W, H);
-  // grass
-  b.lineWidth = 1;
-  for (let i = 0; i < W * H / 2200; i++) {
-    const x = rand() * W, y = rand() * H;
-    b.strokeStyle = `rgba(110, 160, 110, ${0.04 + rand() * 0.08})`;
-    b.beginPath(); b.moveTo(x, y); b.lineTo(x + (rand() - 0.5) * 3, y - 3 - rand() * 4); b.stroke();
-  }
-  // the canopy crowds the edges
-  for (let i = 0; i < 160; i++) {
-    const side = i % 4, t = rand();
-    let x = side === 0 || side === 2 ? t * W : side === 1 ? W : 0, y = side === 1 || side === 3 ? t * H : side === 2 ? H : 0;
-    const r = 30 + rand() * 80; x += (rand() - 0.5) * 50; y += (rand() - 0.5) * 50;
-    const cg = b.createRadialGradient(x, y, 0, x, y, r);
-    cg.addColorStop(0, 'rgba(2, 6, 4, 0.95)'); cg.addColorStop(0.7, 'rgba(4, 12, 8, 0.75)'); cg.addColorStop(1, 'rgba(4, 12, 8, 0)');
-    b.fillStyle = cg; b.beginPath(); b.arc(x, y, r, 0, 6.283); b.fill();
-  }
-  for (const [hx, hy] of HUTS) drawHut(b, hx * W, hy * H, hutSize());
-}
+/* ---------- village huts and elves ---------- */
 function drawHut(b, x, y, s) {
   b.fillStyle = 'rgba(0, 0, 0, 0.35)'; b.beginPath(); b.ellipse(x, y + s * 0.55, s * 1.15, s * 0.26, 0, 0, 6.283); b.fill();
   b.fillStyle = '#2b2319';
@@ -2345,31 +2521,6 @@ function drawHut(b, x, y, s) {
   b.strokeStyle = 'rgba(170, 200, 130, 0.25)'; b.lineWidth = 1; b.stroke();
   b.fillStyle = '#120d08';
   b.beginPath(); b.moveTo(x - s * 0.2, y + s * 0.52); b.lineTo(x - s * 0.2, y + s * 0.14); b.arc(x, y + s * 0.14, s * 0.2, Math.PI, 0); b.lineTo(x + s * 0.2, y + s * 0.52); b.closePath(); b.fill();
-}
-function drawGlade() {
-  if (backdrop.width !== Math.round(W * DPR) || backdrop.height !== Math.round(H * DPR)) buildBackdrop();
-  ctx.drawImage(backdrop, 0, 0, W, H);
-  ctx.globalCompositeOperation = 'lighter';
-  // lanterns flicker in the hut windows
-  const s = hutSize();
-  HUTS.forEach(([hx, hy], i) => {
-    const x = hx * W + s * 0.5, y = hy * H + s * 0.15, f = reduce ? 0.85 : 0.78 + 0.22 * Math.sin(wall * 7 + i * 3) * Math.sin(wall * 2.3 + i);
-    const g = ctx.createRadialGradient(x, y, 0, x, y, s * 2.6);
-    g.addColorStop(0, `rgba(255, 190, 105, ${0.3 * f})`); g.addColorStop(1, 'rgba(255, 150, 70, 0)');
-    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, s * 2.6, 0, 6.283); ctx.fill();
-    ctx.fillStyle = `rgba(255, 214, 140, ${0.9 * f})`; ctx.fillRect(x - s * 0.12, y - s * 0.1, s * 0.24, s * 0.2);
-  });
-  // fireflies
-  for (let i = 0; i < Math.min(90, stars.length); i++) {
-    const f = stars[i];
-    if (!reduce) { f.x = (f.x + Math.sin(wall * 0.3 + f.ph) * 0.00035 * f.sp + 1) % 1; f.y = (f.y + Math.cos(wall * 0.27 + f.ph * 1.3) * 0.00028 * f.sp + 1) % 1; }
-    const blink = reduce ? 0.5 : Math.max(0, Math.sin(wall * f.sp * 1.3 + f.ph)) ** 3;
-    if (blink < 0.02) continue;
-    const x = f.x * W, y = f.y * H, a = blink * (0.45 + f.z * 0.55);
-    ctx.fillStyle = `rgba(214, 240, 120, ${a * 0.16})`; ctx.beginPath(); ctx.arc(x, y, 5, 0, 6.283); ctx.fill();
-    ctx.fillStyle = `rgba(238, 255, 170, ${a})`; ctx.beginPath(); ctx.arc(x, y, 1.2, 0, 6.283); ctx.fill();
-  }
-  ctx.globalCompositeOperation = 'source-over';
 }
 // an elf: hooded cloak, pale face, pointed ears, hair the colour of their aura
 function drawElf(cx, cy, s, hue, glow, face) {
@@ -2405,6 +2556,7 @@ function renderVillage() {
   const top = alive.slice().sort((a, b) => rankOf(b) - rankOf(a))[0];
   const rows = [
     ['Villagers', `${pop.length} of ${MAX_POP}`],
+    ['Homeland', world.village ? `${biomeAt(world.village.x, world.village.y).name}, ${Math.round((MH / 2 - world.village.y) / RW * 57.3)}° latitude` : '—'],
     ['Elder', elderOf() ? `${elderOf().s.name}, ${FACTION[world.politics.faction].name}` : 'none yet'],
     ['Law', world.politics?.law ? FACTION[world.politics.faction].law.name : 'none'],
     ['Fairest', leader ? `${leader.s.name}, ${leader.beauty.toFixed(2)}` : '—'],
@@ -2525,9 +2677,9 @@ function drawVotes() {
   for (const v of votes) {
     const k = (wall - v.t) / VOTE_SHOW;
     if (k > 1 || !pop.includes(v.from) || !pop.includes(v.to) || v.from === v.to) continue;
-    const dx = wrapD(v.to.x - v.from.x, W), dy = wrapD(v.to.y - v.from.y, H), f = factionOf(v.to);
-    ctx.strokeStyle = `hsla(${f.hue}, 80%, 72%, ${0.7 * (1 - k)})`; ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.moveTo(v.from.x, v.from.y); ctx.lineTo(v.from.x + dx * Math.min(1, k * 3), v.from.y + dy * Math.min(1, k * 3)); ctx.stroke();
+    const f = factionOf(v.to), g = Math.min(1, k * 3);
+    ctx.strokeStyle = `hsla(${f.hue}, 80%, 72%, ${0.75 * (1 - k)})`; ctx.lineWidth = 1.6;
+    strokeSurface(v.from.x, v.from.y, wrapD(v.to.x - v.from.x, MW) * g, (v.to.y - v.from.y) * g, 14, 0.02);
   }
 }
 function renderCouncil() {
@@ -2578,13 +2730,95 @@ function switchFocus(c) {
   if (state.eq !== committedEq) { state.eq = committedEq; cur = committedF; curAst = committedAst; } // drop an uncommitted edit
   leave(focus); focus = c; enter(focus);
   refreshFocusUI();
+  setFollow(true);
   setStatus(`Watching ${state.name}. The song below shapes them.`);
 }
 $('pop').addEventListener('click', e => { const b = e.target.closest('.chip'); if (b) switchFocus(pop.find(c => c.s.id === +b.dataset.id)); });
-cv.addEventListener('click', e => {
+
+
+/* ---------- the cursor: elves notice you ---------- */
+// Elves near the cursor turn to look at it. Curious ones (open, outgoing) come closer and sing;
+// anxious ones edge away. Hovering an elf shows who they are; clicking watches them.
+let cursor = null, hovered = null, drag = null;
+const tip = $('tip');
+function elfAtScreen(sx, sy) {
   let best = null, bd = Infinity;
-  for (const c of pop) { const d = Math.hypot(wrapD(e.clientX - c.x, W), wrapD(e.clientY - c.y, H)); if (d < c.radius * 1.6 + 12 && d < bd) { bd = d; best = c; } }
-  switchFocus(best);
+  for (const c of pop) {
+    const p = proj(c.x, c.y); if (p.z < 0.05) continue;
+    const d = Math.hypot(sx - p.x, sy - (p.y - c.radius * p.k * 0.2)), r = Math.max(14, c.radius * p.k * 1.2);
+    if (d < r && d < bd) { bd = d; best = c; }
+  }
+  return best;
+}
+function stepCursor(dt) {
+  for (const c of pop) c.mood = null;
+  if (!cursor) return;
+  for (const c of pop) {
+    if (c.phase !== 'alive') continue;
+    const dx = wrapD(cursor.x - c.x, MW), dy = cursor.y - c.y, d = Math.hypot(dx, dy) || 1;
+    if (d > 320) continue;
+    const ps = c.psy || NEUTRAL, curious = (ps.o + ps.x) / 2 - ps.n * 0.7;
+    c.phi = Math.atan2(dy, dx);
+    if (curious > 0.25 && d > c.radius * 1.4) { const a = 30 * curious * dt; c.vx += dx / d * a; c.vy += dy / d * a; c.mood = 'curious'; }
+    else if (ps.n > 0.5 && d < 200) { const a = 40 * ps.n * dt; c.vx -= dx / d * a; c.vy -= dy / d * a; c.mood = 'shy'; }
+    else c.mood = 'watching';
+  }
+}
+function showTip(c, sx, sy) {
+  if (!c) { tip.hidden = true; return; }
+  const q = c.s.question?.text;
+  tip.innerHTML = `<b>${esc(c.s.name)}</b><span>${esc((c.factionObj || factionOf(c)).name)} · ${esc(biomeAt(c.x, c.y).name)}</span><span>vigor ${c.s.E.toFixed(2)} · beauty ${(c.beauty || 0).toFixed(2)}</span>${q ? `<i>${esc(q)}</i>` : ''}`;
+  tip.hidden = false;
+  const r = tip.getBoundingClientRect();
+  tip.style.left = clamp(sx + 14, 8, W - r.width - 8) + 'px'; tip.style.top = clamp(sy + 14, 8, H - r.height - 8) + 'px';
+}
+cv.addEventListener('pointerdown', e => { drag = { x: e.clientX, y: e.clientY, moved: false, yaw: cam.yaw, pitch: cam.pitch }; cv.setPointerCapture?.(e.pointerId); });
+cv.addEventListener('pointermove', e => {
+  if (drag) {
+    const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+    if (Math.hypot(dx, dy) > 4) drag.moved = true;
+    if (drag.moved) { cam.yaw = drag.yaw - dx / GR; cam.pitch = clamp(drag.pitch + dy / GR, -1.2, 1.2); cam.idle = 0; setFollow(false); }
+  }
+  cursor = unproj(e.clientX, e.clientY);
+  if (cursor && (cursor.y < 0 || cursor.y > MH)) cursor = null;
+  hovered = drag?.moved ? null : elfAtScreen(e.clientX, e.clientY);
+  cv.style.cursor = drag?.moved ? 'grabbing' : hovered ? 'pointer' : 'grab';
+  if (e.pointerType === 'mouse') showTip(hovered, e.clientX, e.clientY);
+});
+cv.addEventListener('pointerup', e => {
+  if (drag && !drag.moved) { const c = elfAtScreen(e.clientX, e.clientY); if (c) switchFocus(c); }
+  drag = null;
+});
+cv.addEventListener('pointerleave', () => { cursor = null; hovered = null; tip.hidden = true; });
+cv.addEventListener('wheel', e => { e.preventDefault(); setZoom(cam.zoom * Math.exp(-e.deltaY * 0.0012)); }, { passive: false });
+function setZoom(z) { cam.zoom = clamp(z, 0.6, 3.2); }
+function setFollow(on) { cam.follow = on; $('follow').setAttribute('aria-pressed', on); $('follow').textContent = on ? 'Following' : 'Follow'; }
+$('zoomin').addEventListener('click', () => setZoom(cam.zoom * 1.3));
+$('zoomout').addEventListener('click', () => setZoom(cam.zoom / 1.3));
+$('follow').addEventListener('click', () => setFollow(!cam.follow));
+// the camera: follow the watched elf, or turn slowly on its own
+function stepCamera(dt) {
+  if (!cam.ready && world.village) { cam.ready = true; cam.yaw = world.village.x / RW; cam.pitch = clamp((MH / 2 - world.village.y) / RW, -0.8, 0.8); }
+  cam.idle += dt;
+  if (cam.follow && focus) {
+    const lon = focus.x / RW, lat = clamp((MH / 2 - focus.y) / RW, -0.9, 0.9);
+    const dyaw = Math.atan2(Math.sin(lon - cam.yaw), Math.cos(lon - cam.yaw));
+    cam.yaw += dyaw * Math.min(1, dt * 2.5); cam.pitch += (lat - cam.pitch) * Math.min(1, dt * 2.5);
+  } else if (!drag && cam.idle > 4 && !reduce) cam.yaw += dt * 0.05;
+}
+// reset: two clicks, so a stray one cannot wipe the village
+let resetArmed = -99, resetting = false;
+$('reset').addEventListener('click', () => {
+  if (wall - resetArmed < 4) {
+    resetting = true;
+    try { for (const k of [SAVE_KEY, OLD_KEY, WORLD_KEY]) localStorage.removeItem(k); } catch (_) {}
+    announce('Resetting the village…');
+    location.reload();
+    setTimeout(() => announce('The village was cleared. Reload the page to begin again.'), 1500);
+  } else {
+    resetArmed = wall; $('reset').textContent = 'Click again to reset';
+    setTimeout(() => { if (!resetting) $('reset').textContent = 'Reset village'; }, 4000);
+  }
 });
 
 /* ---------- drawing ---------- */
@@ -2618,6 +2852,8 @@ function simulate(c, dt) {
   analyze(T);
   const fit = c.fit = fitness();
   c.beauty = beautyOf(traits, state.E);
+  c.radius = Math.max(8, traits.mass * R0W * c.bodyScale);
+  c.biome = biomeAt(c.x, c.y);
   c.fitAvg = c.fitAvg == null ? fit : lerp(c.fitAvg, fit, Math.min(1, dt / 4));
   genesOf(c);
   // metabolism: self-generated core energy + nourishment from a form that fits its needs - the cost of carrying that form
@@ -2631,7 +2867,7 @@ function simulate(c, dt) {
   if (alive) {
     // genes it has eaten react inside it when they meet, and release energy
     const eaten = stepCarried(c, dt);
-    E = state.E = clamp(E + (core + feed - cost + 0.004 - radiated + eaten) * dt, 0, 1.7);
+    E = state.E = clamp(E + (core + feed - cost + 0.004 - radiated + eaten + (c.biome.vigor || 0)) * dt, 0, 1.7);
     // the grow gene builds its growth level while energy is high
     const ga = driveAmp(curAst, 'grow');
     state.G = clamp((state.G || 0) + dt * ga * 0.06 * (E - 0.6) * (state.question?.kind === 'size' ? 2 : 1), 0, 1.5);
@@ -2653,15 +2889,16 @@ function simulate(c, dt) {
 }
 // runs inside enter(c); draws the creature, plus copies across any edge it straddles
 function drawCreature(c) {
-  const R0 = baseR0() * Math.max(0.001, c.bodyScale);
+  const p = proj(c.x, c.y);
+  c.screen = p;
+  if (p.z < 0.05) return;
+  const B0 = R0W * p.k, R0 = B0 * Math.max(0.001, c.bodyScale);
+  c.screenB0 = B0;
   for (let i = 0; i < DRAW_N; i++) pts[i] = R(2 * Math.PI * i / DRAW_N, T) * R0;
   let mean = 0; for (let i = 0; i < DRAW_N; i++) mean += pts[i]; mean /= DRAW_N;
-  c.radius = Math.max(10, mean);
-  const ext = mean * 1.8 + R0 * 1.2;
-  const ox = c.x < ext ? W : c.x > W - ext ? -W : 0, oy = c.y < ext ? H : c.y > H - ext ? -H : 0;
-  const offs = [[0, 0]];
-  if (ox) offs.push([ox, 0]); if (oy) offs.push([0, oy]); if (ox && oy) offs.push([ox, oy]);
-  offs.forEach(([dx, dy], k) => drawBodyAt(c, c.x + dx, c.y + dy, R0, mean, k === 0));
+  ctx.globalAlpha = clamp(p.z * 3, 0, 1);
+  drawBodyAt(c, p.x, p.y, R0, mean, true);
+  ctx.globalAlpha = 1;
 }
 function drawBodyAt(c, cx, cy, R0, mean, first) {
   const E = state.E, hue = c.hue, flare = c.flare;
@@ -2748,7 +2985,7 @@ function drawBodyAt(c, cx, cy, R0, mean, first) {
   if (phase === 'condensing') {
     const k = Math.min(1, phaseT / CONDENSE_S);
     for (let i = 0; i < 40; i++) {
-      const u = (wall * 0.7 + i * 0.137) % 1, a = i * 2.39996 + wall * 0.3, r = baseR0() * 1.5 * (1 - u) * (1 - k * 0.6);
+      const u = (wall * 0.7 + i * 0.137) % 1, a = i * 2.39996 + wall * 0.3, r = (c.screenB0 || R0) * 1.5 * (1 - u) * (1 - k * 0.6);
       ctx.fillStyle = `hsla(${hue + 30}, 90%, 80%, ${0.7 * u * flare})`;
       ctx.beginPath(); ctx.arc(cx + Math.cos(a) * r, cy + Math.sin(a) * r, 1.3, 0, 6.283); ctx.fill();
     }
@@ -2770,6 +3007,7 @@ function drawBodyAt(c, cx, cy, R0, mean, first) {
   ctx.font = '10px "IBM Plex Mono", monospace'; ctx.textAlign = 'center';
   ctx.fillStyle = `hsla(${hue}, 60%, 82%, ${me ? 0.9 : 0.45})`;
   ctx.fillText(state.name, cx, cy + mean * 1.25 + 16);
+  if (c.mood && c.mood !== 'watching') { ctx.font = '13px "Cormorant Garamond", serif'; ctx.textAlign = 'center'; ctx.fillStyle = c.mood === 'curious' ? 'rgba(255, 224, 150, 0.95)' : 'rgba(200, 210, 230, 0.8)'; ctx.fillText(c.mood === 'curious' ? '♪' : '…', cx + Math.sin(wall * 3) * 2, cy - R0 * 0.75 - 4); ctx.font = '10px "IBM Plex Mono", monospace'; ctx.textAlign = 'start'; }
   if (c.factionObj) { ctx.fillStyle = `hsla(${c.factionObj.hue}, 75%, 65%, ${me ? 0.95 : 0.55})`; ctx.beginPath(); ctx.arc(cx - ctx.measureText(state.name).width / 2 - 6, cy + mean * 1.25 + 12.5, 2.5, 0, 6.283); ctx.fill(); }
   ctx.textAlign = 'start';
   if (me) {
@@ -2786,6 +3024,7 @@ function frame(now) {
   for (const c of pop) { enter(c); simulate(c, dt); leave(c); }
   for (const c of pop.filter(c => c.dead)) finishCondense(c);
   for (const c of pop.filter(c => c.wantsSplit)) { c.wantsSplit = false; if (pop.length < MAX_POP) split(c); }
+  stepCursor(dt);
   stepHunt(dt);
   stepWorld(dt);
   stepHive(dt);
@@ -2793,18 +3032,24 @@ function frame(now) {
   stepPolitics(dt);
   stepFood(dt);
   stepChemistry(dt);
+  stepCamera(dt);
 
+  layoutGlobe();
   ctx.globalCompositeOperation = 'source-over';
-  drawGlade();
-  ctx.globalCompositeOperation = 'lighter';
-  drawSeeds(W / 2, H / 2, Math.min(W, H) * 0.16);
+  ctx.fillStyle = '#03040a'; ctx.fillRect(0, 0, W, H);
+  drawStars(dt);
+  renderGlobe();
+  drawVillage();
+  drawSeeds();
   drawFood();
+  ctx.globalCompositeOperation = 'lighter';
   drawHive();
   drawHarmony();
+  ctx.globalCompositeOperation = 'source-over';
   drawChase();
   drawChemistry();
-  ctx.globalCompositeOperation = 'source-over';
-  for (const c of pop) { enter(c); drawCreature(c); leave(c); }
+  // nearer elves are drawn last
+  for (const c of pop.slice().sort((a, b) => proj(a.x, a.y).z - proj(b.x, b.y).z)) { enter(c); drawCreature(c); leave(c); }
   drawCrown();
   drawVotes();
 
