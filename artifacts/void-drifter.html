@@ -13,6 +13,7 @@
   --err: #ff8f7a;
   --live: hsl(230 80% 72%);
   --gold: #e6c27f;
+  --ancestral: #9fd6b0;
   --display: "Cormorant Garamond", "Iowan Old Style", Georgia, serif;
   --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
   color-scheme: dark;
@@ -73,6 +74,8 @@ h1 { margin: 0; font-family: var(--display); font-weight: 500; font-size: 34px; 
 .origin { white-space: nowrap; }
 .origin.you { color: var(--ink); }
 .origin.stone { color: var(--gold); }
+.origin.anc { color: var(--ancestral); }
+.log li .anc { color: var(--ancestral); }
 .origin.self { color: var(--live); }
 .seed summary { cursor: pointer; list-style: none; display: flex; justify-content: space-between; gap: 8px; font-size: 11.5px; }
 .seed summary::-webkit-details-marker { display: none; }
@@ -140,7 +143,7 @@ form.eq { width: min(780px, 100%); background: var(--panel); backdrop-filter: bl
       <div class="id">
         <div class="eyebrow">Specimen <span id="spec">VD-01</span> · deep field</div>
         <h1>Void Drifter</h1>
-        <p class="lede">It drifts alone in empty space and makes its own energy. Its body is the equation at the bottom of the screen, and that equation is the only way to reach it. It remembers every equation you try. Your misses become stepping stones it builds from when it rewrites itself, even while dormant. If its energy reaches zero, it condenses into a gene holding all its equations, and a blank creature takes its place.</p>
+        <p class="lede">It drifts alone in empty space and makes its own energy. Its body is the equation at the bottom of the screen, and that equation is the only way to reach it. It remembers every equation you try. Your misses become stepping stones it builds from when it rewrites itself, even while dormant. If its energy reaches zero, it condenses into a gene holding all its equations, and a blank creature takes its place, learning from the genes of those before it.</p>
         <dl class="vitals">
           <dt>Gen</dt><dd id="gen">0</dd>
           <dt>Rewrites</dt><dd id="rw">0</dd>
@@ -610,6 +613,7 @@ function selfRewrite(dormant) {
   const base = score(cur, size);
   // asleep, it leans on memory: your old tries, failures first
   const ops = size > 70 ? ['shed'] : Object.keys(MUTATIONS);
+  // asleep, it leans on memory: your old tries, failures first, and its ancestors' genes
   const w = op => (state.instinct[op] ?? 1) * (dormant && MEMORY_OPS.includes(op) ? 3 : 1);
   let best = null;
   for (let i = 0; i < 12; i++) {
@@ -631,14 +635,14 @@ function selfRewrite(dormant) {
   state.eq = committedEq = best.src; committedF = cur; committedAst = curAst;
   const g = best.gene;
   claimOrigins(curAst, src => g && !g.whole && g.src === src
-    ? { k: g.failed ? 'stone' : 'you', label: `${g.failed ? 'stone' : 'yours'} · try #${g.try}` }
-    : { k: 'self', label: g && g.whole ? `self · from #${g.try}` : 'self' });
+    ? (g.anc ? { k: 'anc', label: `ancestor · ${g.anc}` } : { k: g.failed ? 'stone' : 'you', label: `${g.failed ? 'stone' : 'yours'} · try #${g.try}` })
+    : { k: 'self', label: g && g.whole ? `self · from ${g.anc || '#' + g.try}` : 'self' });
   state.rewrites = (state.rewrites || 0) + 1;
   recordEq(dormant ? 'dormant' : 'self');
   input.value = best.src;
   input.classList.remove('rewritten'); void input.offsetWidth; input.classList.add('rewritten');
   const tag = dormant ? '<i>Rewrote itself while dormant:</i>' : '<i>Rewrote itself:</i>';
-  const body = esc(best.what).replace(/(your try #\d+, which failed)/, '<em>$1</em>');
+  const body = esc(best.what).replace(/(your try #\d+, which failed)/, '<em>$1</em>').replace(/(ancestor VD-\d+)/, '<span class="anc">$1</span>');
   addLog(`${tag} ${body}${improves ? '.' : ', as a blind experiment.'}`);
   setStatus(`It rewrote its own equation${dormant ? ' in its sleep' : ''}: ${best.what}.`);
   save(); buildNeeds();
@@ -646,7 +650,7 @@ function selfRewrite(dormant) {
 /* ---------- memory: every equation you try ---------- */
 const OP_LABEL = {
   retune: 'retune lobes', nudge: 'nudge numbers', grow: 'grow a term', shed: 'shed a term', tempo: 'change tempo', mass: 'resize its core',
-  sharpen: 'sharpen peaks', feed: 'feed on E', recall: 'borrow your genes', splice: 'swap in your genes', replay: 'rework your failed tries',
+  sharpen: 'sharpen peaks', feed: 'feed on E', recall: 'borrow remembered genes', splice: 'swap in remembered genes', replay: 'rework old equations',
 };
 const MEMORY_OPS = ['recall', 'splice', 'replay'];
 function learn(op, d, amt = 0.25) {
@@ -659,12 +663,31 @@ function weightedPick(arr, w) {
   for (const a of arr) { r -= w(a); if (r <= 0) return a; }
   return arr[arr.length - 1];
 }
+// ancestral genes: every term in every equation a condensed ancestor ever had.
+// a gene that persisted through more of its ancestor's equations proved itself longer.
+const ancCache = new Map();
+function ancestralGenes(seed) {
+  if (ancCache.has(seed.id)) return ancCache.get(seed.id);
+  const seen = new Map();
+  for (const e of seed.equations) {
+    let ast; try { ast = parse(e.eq); } catch (_) { continue; }
+    for (const x of addends(ast)) {
+      const src = show(x.n), k = (x.sign < 0 ? '-' : '') + src;
+      if (seen.has(k)) seen.get(k).persist++; else seen.set(k, { src, sign: x.sign, anc: seed.name, persist: 1 });
+    }
+  }
+  const out = [...seen.values()];
+  ancCache.set(seed.id, out);
+  return out;
+}
 function genePool() {
   const out = [];
   for (const m of state.memory) for (const g of m.genes) out.push({ ...g, try: m.n, failed: m.failed });
+  for (const seed of world.seeds) for (const g of ancestralGenes(seed)) out.push(g);
   return out;
 }
-const tryLabel = g => `your try #${g.try}${g.failed ? ', which failed' : ''}`;
+const geneWeight = g => g.anc ? 1 + Math.min(g.persist, 6) * 0.25 : g.failed ? 2 : 1;
+const tryLabel = g => g.anc ? `ancestor ${g.anc}` : `your try #${g.try}${g.failed ? ', which failed' : ''}`;
 function poolFor(list) {
   const have = new Set(list.map(x => show(x.n)));
   return genePool().filter(g => !have.has(g.src) && !/^[\d.]+$/.test(g.src));
@@ -674,7 +697,7 @@ MUTATIONS.recall = ast => {
   const list = addends(ast);
   if (list.length >= 6) return null;
   const pool = poolFor(list); if (!pool.length) return null;
-  const g = weightedPick(pool, g => g.failed ? 2 : 1);
+  const g = weightedPick(pool, geneWeight);
   list.push({ n: parse(g.src), sign: g.sign });
   return { ast: join(list), what: `borrowed ${g.sign < 0 ? '-' : ''}${g.src} from ${tryLabel(g)}`, gene: g };
 };
@@ -683,17 +706,20 @@ MUTATIONS.splice = ast => {
   const idx = list.map((x, i) => i).filter(i => list[i].n.k !== 'num');
   const pool = poolFor(list);
   if (!idx.length || !pool.length) return null;
-  const g = weightedPick(pool, g => g.failed ? 2 : 1), i = pick(idx), old = show(list[i].n);
+  const g = weightedPick(pool, geneWeight), i = pick(idx), old = show(list[i].n);
   list[i] = { n: parse(g.src), sign: g.sign };
   return { ast: join(list), what: `swapped ${old} for ${g.src} from ${tryLabel(g)}`, gene: g };
 };
 MUTATIONS.replay = () => {
-  const tries = state.memory.filter(m => m.eq !== state.eq);
-  if (!tries.length) return null;
-  const m = weightedPick(tries, m => m.failed ? 2.5 : 1);
-  const op = pick(BASIC_OPS), inner = MUTATIONS[op](parse(m.eq));
+  const olds = state.memory.map(m => ({ eq: m.eq, w: m.failed ? 2.5 : 1, label: `your try #${m.n}${m.failed ? ', which failed,' : ''}`, gene: { try: m.n, failed: m.failed, whole: true } }));
+  for (const seed of world.seeds) for (const e of seed.equations) olds.push({ eq: e.eq, w: 0.6, label: `ancestor ${seed.name}'s equation`, gene: { anc: seed.name, whole: true } });
+  const pool = olds.filter(o => o.eq !== state.eq);
+  if (!pool.length) return null;
+  const o = weightedPick(pool, o => o.w);
+  let base; try { base = parse(o.eq); } catch (_) { return null; }
+  const inner = MUTATIONS[pick(BASIC_OPS)](base);
   if (!inner) return null;
-  return { ast: inner.ast, what: `went back to your try #${m.n}${m.failed ? ', which failed,' : ''} and ${inner.what}`, gene: { try: m.n, failed: m.failed, whole: true } };
+  return { ast: inner.ast, what: `went back to ${o.label} and ${inner.what}`, gene: o.gene };
 };
 const BASIC_OPS = Object.keys(MUTATIONS).filter(k => !MEMORY_OPS.includes(k));
 
@@ -882,7 +908,7 @@ function updatePanel(fit) {
   const mood = E < 0.15 ? 'Dormant' : E < 0.4 ? 'Hungry' : E < 0.85 ? 'Steady' : E < 1.3 ? 'Thriving' : 'Radiant';
   $('mood').textContent = mood;
   let sig, key;
-  if (E < 0.15) { sig = state.memory.length ? 'Dormant. It is rewriting itself in its sleep, working through your old tries. At zero it condenses into a gene.' : 'Dormant. It is rewriting itself in its sleep, working blind. At zero it condenses into a gene.'; key = 'dormant'; }
+  if (E < 0.15) { sig = state.memory.length ? 'Dormant. It is rewriting itself in its sleep, working through your old tries. At zero it condenses into a gene.' : world.seeds.length ? 'Dormant. It is rewriting itself in its sleep, working through its ancestors\u2019 genes. At zero it condenses into a gene.' : 'Dormant. It is rewriting itself in its sleep, working blind. At zero it condenses into a gene.'; key = 'dormant'; }
   else if (fit > 0.8) { sig = 'Its needs are met. It is storing energy, and growing restless.'; key = 'content'; }
   else {
     const d = NEED_DEFS[urgent.key], up = urgent.target > traits[urgent.key];
@@ -950,9 +976,19 @@ function recordEq(by) {
   state.history.push({ eq: state.eq, by, g: state.gen });
   if (state.history.length > 300) state.history.splice(1, state.history.length - 300);
 }
+// a newborn starts with a softened blend of what its last three ancestors learned
+function inheritInstinct() {
+  const recent = world.seeds.slice(-3).filter(s => s.instinct), out = {};
+  if (!recent.length) return out;
+  for (const op of Object.keys(OP_LABEL)) {
+    const avg = recent.reduce((t, s) => t + (s.instinct[op] ?? 1), 0) / recent.length;
+    if (Math.abs(avg - 1) > 0.01) out[op] = +(1 + (avg - 1) * 0.5).toFixed(3);
+  }
+  return out;
+}
 function blankState() {
   return {
-    eq: '1', gen: 0, E: 0.8, rewrites: 0, tries: 0, memory: [], origins: { 1: { k: 'self', label: 'blank start' } }, instinct: {},
+    eq: '1', gen: 0, E: 0.8, rewrites: 0, tries: 0, memory: [], origins: { 1: { k: 'self', label: 'blank start' } }, instinct: inheritInstinct(),
     history: [{ eq: '1', by: 'birth', g: 0 }],
     needs: [
       { key: 'mass', target: +(0.8 + Math.random() * 0.6).toFixed(2), w: 1 },
@@ -981,13 +1017,14 @@ function finishCondense() {
   const n = world.specimen;
   const seed = {
     id: n, name: specName(n), eq: state.eq, equations: state.history.slice(), gens: state.gen,
-    rewrites: state.rewrites, tries: state.tries, hue: Math.round(lastHue),
+    rewrites: state.rewrites, tries: state.tries, hue: Math.round(lastHue), instinct: { ...state.instinct },
     a: Math.random() * 6.283, d: 0.8 + Math.random() * 0.5, died: Date.now(),
   };
   world.seeds.push(seed); world.specimen++;
   seedAnim.set(seed.id, { t0: wall, sx: lastCx, sy: lastCy });
   state = blankState();
-  state.log = [{ g: 0, text: `Formed blank in the void after <b>${seed.name}</b> condensed into a gene of ${seed.equations.length} equations.` }];
+  const ancN = world.seeds.reduce((t, sd) => t + ancestralGenes(sd).length, 0);
+  state.log = [{ g: 0, text: `Formed blank in the void after <b>${seed.name}</b> condensed into a gene of ${seed.equations.length} equation${seed.equations.length === 1 ? '' : 's'}. It can learn from <span class="anc">${ancN} ancestral genes</span>${Object.keys(state.instinct).length ? ' and starts with instincts inherited from them' : ''}.` }];
   adopt();
   phase = 'birth'; phaseT = 0; zeroFor = 0;
   setStatus(`${seed.name} condensed into a gene. A blank creature has taken over.`);
