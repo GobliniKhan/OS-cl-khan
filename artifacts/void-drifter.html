@@ -28,8 +28,8 @@ body { background: var(--void); color: var(--ink); font-family: var(--mono); fon
 
 .top { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; min-height: 0; max-height: 100%; pointer-events: none; }
 .col { display: grid; gap: 12px; align-content: start; max-height: 100%; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--faint) transparent; pointer-events: auto; }
-.left { width: 290px; }
-.right { width: 310px; }
+.left { width: 280px; }
+.right { width: 340px; }
 .id { display: grid; gap: 8px; }
 .eyebrow { font-size: 10.5px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--dim); }
 h1 { margin: 0; font-family: var(--display); font-weight: 500; font-size: 34px; line-height: 1; letter-spacing: 0.01em; text-wrap: balance; }
@@ -151,36 +151,71 @@ h1 { margin: 0; font-family: var(--display); font-weight: 500; font-size: 34px; 
 .signal { margin: 0; font-family: var(--display); font-style: italic; font-size: 21px; line-height: 1.3; text-align: center; max-width: 40ch; text-wrap: balance; min-height: 1.3em; color: var(--ink); }
 .hint { margin: -4px 0 0; font-size: 11px; color: var(--dim); text-align: center; max-width: 60ch; }
 form.eq { width: min(780px, 100%); background: var(--panel); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); border: 1px solid var(--faint); border-radius: 4px; padding: 12px 14px 10px; display: grid; gap: 8px; }
-.line { display: flex; align-items: baseline; gap: 10px; }
+.line { display: flex; align-items: flex-start; gap: 10px; }
+.line label { padding-top: 2px; }
 .line label { font-family: var(--display); font-style: italic; font-size: 22px; white-space: nowrap; color: var(--live); }
-#eq { flex: 1; min-width: 0; background: transparent; border: 0; border-bottom: 1px solid var(--faint); color: var(--ink); font: 500 15px/1.6 var(--mono); padding: 4px 2px; outline: none; }
+#eq { flex: 1; min-width: 0; display: block; resize: none; overflow: hidden; background: transparent; border: 0; border-bottom: 1px solid var(--faint); color: var(--ink); font: 500 15px/1.6 var(--mono); padding: 4px 2px; outline: none; }
 #eq:focus-visible { border-bottom-color: var(--live); }
 #eq.bad { border-bottom-color: var(--err); }
 .meta { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 11px; color: var(--dim); }
 #status.err { color: var(--err); }
 .ref code { color: var(--ink); }
+.ref summary { cursor: pointer; list-style: none; }
+.ref summary::-webkit-details-marker { display: none; }
+.ref summary::before { content: "▸ "; }
+.ref[open] summary::before { content: "▾ "; }
+.ref summary:focus-visible { outline: 1px solid var(--live); outline-offset: 2px; }
+.ref .codes { margin-top: 6px; line-height: 1.7; }
+.ref[open] { flex-basis: 100%; }
+
+/* the inspector: one panel, five tabs */
+.inspector { padding: 0; gap: 0; }
+.tabs { display: flex; border-bottom: 1px solid var(--faint); position: sticky; top: 0; z-index: 1; background: rgba(8, 10, 20, 0.9); border-radius: 4px 4px 0 0; }
+.tabs button { flex: 1; font: 500 10px var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); background: none; border: 0; border-bottom: 2px solid transparent; padding: 11px 2px 9px; cursor: pointer; }
+.tabs button:hover { color: var(--ink); }
+.tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--live); }
+.tabs button:focus-visible { outline: 1px solid var(--live); outline-offset: -3px; }
+.tabpanel { padding: 14px 16px 16px; display: grid; gap: 12px; }
+.tabpanel[hidden] { display: none; }
+.tabpanel h3 { margin: 6px 0 0; font-size: 10.5px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; color: var(--dim); display: flex; justify-content: space-between; gap: 8px; }
+.tabpanel h3:first-child { margin-top: 0; }
+.stats { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 0; font-size: 11.5px; font-variant-numeric: tabular-nums; }
+.stats dt { color: var(--dim); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; align-self: center; }
+.stats dd { margin: 0; }
+.needgrid { display: grid; gap: 10px; }
+.bscore { display: flex; align-items: center; gap: 14px; }
+.bscore b { font: 500 52px/1 var(--display); color: var(--gold); font-variant-numeric: tabular-nums; }
+.bscore span { font-size: 11px; color: var(--dim); line-height: 1.5; }
+#bparts { display: grid; gap: 8px; }
+.bpart { display: grid; grid-template-columns: 10em minmax(0, 1fr) auto; gap: 8px; align-items: center; font-size: 11px; }
+.bpart i { height: 3px; background: var(--faint); border-radius: 2px; overflow: hidden; }
+.bpart i b { display: block; height: 100%; background: var(--gold); transition: width .3s linear; }
+.bpart em { font-style: normal; color: var(--dim); font-size: 10px; font-variant-numeric: tabular-nums; }
+.sub { font-size: 10.5px; color: var(--dim); }
+.hivetext { margin: 0; font-size: 11px; line-height: 1.55; color: var(--dim); }
+.empty { margin: 0; color: var(--dim); font-size: 11px; line-height: 1.5; }
+.poprow { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px; }
+.paneltoggle { font: 11px var(--mono); color: var(--dim); background: none; border: 1px dashed var(--faint); border-radius: 999px; padding: 4px 10px; cursor: pointer; }
+.paneltoggle:hover { color: var(--ink); }
+.paneltoggle:focus-visible { outline: 1px solid var(--live); outline-offset: 2px; }
+.ui.bare .top, .ui.bare .hint { visibility: hidden; }
 
 @media (max-width: 720px) {
   .top { flex-direction: column; justify-content: flex-start; gap: 10px; overflow-y: auto; pointer-events: auto; }
   .col { width: 100%; max-height: none; overflow: visible; gap: 10px; }
-  .journal, .instinct, .lineage, .chemistry, .psyche, .vitals .wide, .insights, .qmeta { display: none; }
+  h1 { font-size: 26px; }
+  .about, .vitals .wide, .ambition h2, .qmeta, .hint, .ref { display: none; }
+  .vitals { grid-template-columns: auto 1fr auto 1fr; gap: 4px 10px; }
+  .ebar { width: 70px; }
   .ambition { padding: 10px 12px; gap: 6px; }
-  .ambition h2 { display: none; }
   .question { font-size: 15px; }
-  .genome { padding: 10px 12px; gap: 8px; }
-  #genes { display: flex; gap: 14px; overflow-x: auto; scrollbar-width: none; }
-  .gene { min-width: 250px; }
-  h1 { font-size: 28px; }
-  .lede, .about { display: none; }
-  .id { max-width: none; grid-template-columns: 1fr auto; align-items: center; }
-  .id .eyebrow { grid-column: 1 / -1; }
-  .ebar { width: 100px; }
-  .needs { padding: 10px 12px; grid-template-columns: 1fr 1fr; gap: 8px 14px; }
-  .needs h2 { grid-column: 1 / -1; }
+  .tabs button { font-size: 9.5px; letter-spacing: 0.06em; padding: 10px 2px 8px; }
+  .tabpanel { max-height: 36vh; overflow-y: auto; padding: 12px; }
+  .needgrid { grid-template-columns: 1fr 1fr; gap: 8px 14px; }
   .need .row { font-size: 11px; }
-  .signal { font-size: 18px; }
-  .hint { display: none; }
-  .ref { display: none; }
+  .signal { font-size: 17px; }
+  #eq { font-size: 13px; }
+  .line label { font-size: 19px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .need.new, .gene.fresh, #eq.rewritten { animation: none; }
@@ -189,80 +224,99 @@ form.eq { width: min(780px, 100%); background: var(--panel); backdrop-filter: bl
 
 <canvas id="void" aria-label="A creature drifting in empty space, its body drawn by the equation below"></canvas>
 
-<div class="ui">
+<div class="ui" id="ui">
   <div class="top">
     <div class="col left">
-      <div class="id">
+      <header class="id">
         <div class="eyebrow">Watching <span id="spec">VD-01</span> · closed void</div>
         <h1>Void Drifter</h1>
-        <details class="about"><summary>About this void</summary><p class="lede">A closed void whose edges loop. Its creatures are built like Rutherford’s atom, with one electron per gene. Drive genes run their lives: <code>seek(θ)</code> hunts ancestral genes as food, <code>grow(t)</code> lets new genes reshape them, and <code>predator(θ)</code> places them on a food chain. A <code>psyche</code> gene carries the five human personality traits. Eaten genes that meet inside a creature make energy. At full energy it splits, two in harmony fuse elements, and each asks itself questions and tests them. The equation below is the only way to reach the one you are watching.</p></details>
-        <dl class="vitals">
-          <dt>Gen</dt><dd id="gen">0</dd>
-          <dt class="wide">Rewrites</dt><dd class="wide" id="rw">0</dd>
-          <dt class="wide">Memory</dt><dd class="wide" id="mem">no tries yet</dd>
-          <dt class="wide">Lineage</dt><dd class="wide" id="lin">none yet</dd>
-          <dt>Population</dt><dd id="popn">1 of 6</dd>
-          <dt class="wide">Chemistry</dt><dd class="wide" id="chem">none yet</dd>
-          <dt>Food chain</dt><dd id="foodrole">grazer</dd>
-          <dt>Carrying</dt><dd id="carry">nothing</dd>
-          <dt class="wide">Growth</dt><dd class="wide" id="growth">G 0</dd>
-          <dt>Insights</dt><dd id="insn">0</dd>
-          <dt>Nucleus</dt><dd id="nuc">+1</dd>
-          <dt>Electrons</dt><dd id="orb">1/1 in orbit</dd>
-          <dt>State</dt><dd id="mood">Steady</dd>
-          <dt>Energy</dt><dd><span id="energy">0.80</span><div class="ebar"><i id="ebar"></i></div></dd>
-        </dl>
-      </div>
+        <details class="about"><summary>About this void</summary><p class="lede">A closed void whose edges loop. Its creatures are built like Rutherford’s atom, with one electron per gene, and all share one supreme objective: to be the most beautiful in the void. Drive genes run their lives: <code>seek(θ)</code> hunts ancestral genes as food, <code>grow(t)</code> lets new genes reshape them, <code>predator(θ)</code> places them on a food chain, and <code>hive(θ)</code> joins them to a shared mind. A <code>psyche</code> gene carries the five human personality traits. At full energy a creature splits, two in harmony fuse elements, and each asks itself questions and tests them. The equation below is the only way to reach the one you are watching.</p></details>
+      </header>
+      <dl class="vitals">
+        <dt>State</dt><dd id="mood">Steady</dd>
+        <dt>Energy</dt><dd><span id="energy">0.80</span><div class="ebar"><i id="ebar"></i></div></dd>
+        <dt>Beauty</dt><dd id="beautyv">–</dd>
+        <dt>Food chain</dt><dd id="foodrole">grazer</dd>
+        <dt>Hive</dt><dd id="hivev">loner</dd>
+        <dt class="wide">Generation</dt><dd class="wide" id="gen">0</dd>
+        <dt class="wide">Population</dt><dd class="wide" id="popn">1 of 6</dd>
+      </dl>
       <section class="panel ambition" aria-label="The question it is asking itself">
         <h2><span>Asking itself</span><span id="ins">0 insights</span></h2>
         <p class="question" id="question">…</p>
         <div class="qbar"><i id="qbar"></i></div>
         <div class="qmeta" id="qmeta"></div>
-        <ul class="insights" id="insights"></ul>
-      </section>
-      <section class="panel journal" aria-label="Journal">
-        <h2><span>Journal</span></h2>
-        <ul class="log" id="log"></ul>
-      </section>
-      <section class="panel lineage" aria-label="Lineage">
-        <h2><span>Lineage · condensed genes</span><span id="lcount"></span></h2>
-        <div id="seeds"></div>
       </section>
     </div>
     <div class="col right">
-      <aside class="panel needs" aria-label="Current needs">
-        <h2><span>Needs</span><span id="fit">fit 0.00</span></h2>
-        <div id="needlist" style="display:contents"></div>
-      </aside>
-      <section class="panel psyche" aria-label="Personality and food chain">
-        <h2><span>Psyche · food chain</span><span id="rank"></span></h2>
-        <div id="traits"></div>
-        <div class="chain" id="chain"></div>
-      </section>
-      <section class="panel genome" aria-label="Genome">
-        <h2><span>Genome · factors of r</span><span id="gcount"></span></h2>
-        <div id="genes"></div>
-        <div class="instinct" id="instinct"></div>
-      </section>
-      <section class="panel chemistry" aria-label="Elements and compounds">
-        <h2><span>Elements · compounds</span><span id="chemcount"></span></h2>
-        <div id="ptable"></div>
-        <div id="comps"></div>
+      <section class="panel inspector" aria-label="Inspector">
+        <div class="tabs" role="tablist" aria-label="Inspector sections">
+          <button type="button" role="tab" id="tab-beauty" data-tab="beauty" aria-controls="tp-beauty">Beauty</button>
+          <button type="button" role="tab" id="tab-body" data-tab="body" aria-controls="tp-body">Body</button>
+          <button type="button" role="tab" id="tab-mind" data-tab="mind" aria-controls="tp-mind">Mind</button>
+          <button type="button" role="tab" id="tab-world" data-tab="world" aria-controls="tp-world">World</button>
+          <button type="button" role="tab" id="tab-journal" data-tab="journal" aria-controls="tp-journal">Journal</button>
+        </div>
+        <div class="tabpanel" id="tp-beauty" role="tabpanel" aria-labelledby="tab-beauty">
+          <h3><span>Supreme objective</span><span id="brank"></span></h3>
+          <div class="bscore"><b id="bval">0.00</b><span id="bnote"></span></div>
+          <div id="bparts"></div>
+          <div class="sub" id="bbest"></div>
+        </div>
+        <div class="tabpanel" id="tp-body" role="tabpanel" aria-labelledby="tab-body" hidden>
+          <dl class="stats">
+            <dt>Nucleus</dt><dd id="nuc">+1</dd>
+            <dt>Electrons</dt><dd id="orb">1/1 in orbit</dd>
+            <dt>Carrying</dt><dd id="carry">nothing</dd>
+            <dt>Growth</dt><dd id="growth">G 0</dd>
+            <dt>Rewrites</dt><dd id="rw">0</dd>
+          </dl>
+          <h3><span>Needs</span><span id="fit">fit 0.00</span></h3>
+          <div class="needgrid" id="needlist"></div>
+          <h3><span>Genome · factors of r</span><span id="gcount"></span></h3>
+          <div id="genes"></div>
+        </div>
+        <div class="tabpanel" id="tp-mind" role="tabpanel" aria-labelledby="tab-mind" hidden>
+          <h3><span>Psyche · the Big Five</span></h3>
+          <div id="traits"></div>
+          <h3><span>Hive mind</span></h3>
+          <p class="hivetext" id="hivedetail"></p>
+          <h3><span>Insights</span><span id="insn">0</span></h3>
+          <ul class="insights" id="insights"></ul>
+          <div class="instinct" id="instinct"></div>
+          <dl class="stats"><dt>Memory</dt><dd id="mem">no tries yet</dd></dl>
+        </div>
+        <div class="tabpanel" id="tp-world" role="tabpanel" aria-labelledby="tab-world" hidden>
+          <h3><span>Food chain</span><span id="rank"></span></h3>
+          <div class="chain" id="chain"></div>
+          <h3><span>Elements · compounds</span><span id="chemcount"></span></h3>
+          <div id="ptable"></div>
+          <div id="comps"></div>
+          <h3><span>Lineage · condensed genes</span><span id="lcount"></span></h3>
+          <div id="seeds"></div>
+          <dl class="stats"><dt>Chemistry</dt><dd id="chem">none yet</dd><dt>Lineage</dt><dd id="lin">none yet</dd></dl>
+        </div>
+        <div class="tabpanel" id="tp-journal" role="tabpanel" aria-labelledby="tab-journal" hidden>
+          <ul class="log" id="log"></ul>
+        </div>
       </section>
     </div>
   </div>
   <div class="bottom">
-    <div class="pop" id="pop" aria-label="Creatures in the void"></div>
+    <div class="poprow">
+      <div class="pop" id="pop" aria-label="Creatures in the void"></div>
+      <button type="button" class="paneltoggle" id="paneltoggle" aria-pressed="false">Hide panels</button>
+    </div>
     <p class="signal" id="signal" aria-live="polite"></p>
     <p class="hint" id="hint"></p>
     <form class="eq" id="form" autocomplete="off">
       <div class="line">
         <label for="eq"><span class="who" id="eqname">VD-01</span>r(θ,t) =</label>
-        <input id="eq" type="text" spellcheck="false" autocapitalize="off" autocorrect="off" aria-describedby="status">
+        <textarea id="eq" rows="1" spellcheck="false" autocapitalize="off" autocorrect="off" aria-describedby="status"></textarea>
       </div>
       <div class="meta">
-        <span id="status">Edit the equation. Press Enter, or pause, to let it absorb the change. Leave it alone and it edits itself.</span>
-        <span class="ref"><code>θ</code>/<code>theta</code> angle · <code>t</code> its clock · <code>E</code> its energy · <code>g</code> generation · <code>Z</code> nuclear charge · <code>seek(θ) grow(t) predator(θ)</code> drive genes · <code>psyche(θ, O, C, E, A, N)</code> traits · <code>sin cos tan abs sqrt exp log pow min max mod noise(x,y)</code></span>
+        <span id="status">Edit the equation. Press Enter, or pause, to let it absorb the change.</span>
+        <details class="ref"><summary>Equation language</summary><div class="codes"><code>θ</code> angle · <code>t</code> its clock · <code>E</code> energy · <code>g</code> generation · <code>Z</code> nuclear charge · drive genes <code>seek(θ)</code> <code>grow(t)</code> <code>predator(θ)</code> <code>hive(θ)</code> · traits <code>psyche(θ, O, C, E, A, N)</code> · <code>sin cos tan abs sqrt exp log pow min max mod noise(x, y)</code></div></details>
       </div>
     </form>
   </div>
@@ -296,6 +350,7 @@ const FUNCS = {
   seek: [x => Math.max(0, Math.cos(x - env.phi)) ** 3, 1, 1], grow: [x => env.G * (1 + 0.08 * Math.sin(x)), 1, 1],
   // mandibles aimed at its prey, and the Big Five personality traits
   predator: [x => { const d = x - env.phiP; return Math.max(0, Math.cos(d)) ** 2 * Math.abs(Math.sin(2 * d)); }, 1, 1],
+  hive: [x => Math.cos(env.Hn * x), 1, 1],
   psyche: [(x, o, c, e, a, n) => (o * Math.sin(5 * x) + c * Math.cos(4 * x) + e * Math.sin(3 * x) + a * Math.cos(2 * x) - n * Math.abs(Math.sin(7 * x))) / 3, 6, 6],
 };
 const NAMES = { theta: 'theta', 'θ': 'theta', th: 'theta', t: 't', E: 'E', g: 'g', Z: 'Z', pi: 'pi', 'π': 'pi' };
@@ -494,7 +549,7 @@ const N = 128, KMAX = 32;
 const COS = [], SIN = [];
 for (let k = 0; k <= KMAX; k++) { COS[k] = new Float32Array(N); SIN[k] = new Float32Array(N); for (let j = 0; j < N; j++) { const a = 2 * Math.PI * k * j / N; COS[k][j] = Math.cos(a); SIN[k][j] = Math.sin(a); } }
 const rA = new Float32Array(N), rB = new Float32Array(N);
-const env = { theta: 0, t: 0, E: 0.8, g: 0, Z: 1, phi: 0, phiP: 0, G: 0 };
+const env = { theta: 0, t: 0, E: 0.8, g: 0, Z: 1, phi: 0, phiP: 0, G: 0, Hn: 1 };
 const ease = k => k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
 function safe(v) { v = Math.abs(v); return Number.isFinite(v) ? Math.min(v, 2.6) : 0; }
 function R(theta, t) {
@@ -503,7 +558,8 @@ function R(theta, t) {
   if (prev && morph < 1) { const b = safe(prev(env)); a = lerp(b, a, ease(morph)); }
   return a;
 }
-const raw = { mass: 1, symmetry: 0, pulse: 0, intricacy: 0, reach: 1 };
+const raw = { mass: 1, symmetry: 0, pulse: 0, intricacy: 0, reach: 1, order: 0.3 };
+const MAGS = new Float32Array(KMAX + 1);
 // measure any body: sample(theta, t) -> radius
 function measure(sample, T) {
   const h = 0.04;
@@ -514,7 +570,7 @@ function measure(sample, T) {
   for (let k = 1; k <= KMAX; k++) {
     let re = 0, im = 0; const c = COS[k], s = SIN[k];
     for (let j = 0; j < N; j++) { re += rA[j] * c[j]; im -= rA[j] * s[j]; }
-    const m = 2 * Math.hypot(re, im) / N;
+    const m = MAGS[k] = 2 * Math.hypot(re, im) / N;
     if (k <= 16 && m > best) { best = m; bestK = k; }
     tot += m; cen += k * m;
   }
@@ -523,6 +579,8 @@ function measure(sample, T) {
   raw.pulse = dsum / N / h;
   raw.intricacy = tot > 1e-4 ? cen / tot : 0;
   raw.reach = mean > 1e-3 ? mx / mean : 1;
+  if (raw.symmetry && tot > 1e-4) { let h = 0; for (let k = raw.symmetry; k <= KMAX; k += raw.symmetry) h += MAGS[k]; raw.order = h / tot; }
+  else raw.order = 0.3;
   return raw;
 }
 function analyze(T, a = 0.12) {
@@ -532,9 +590,12 @@ function analyze(T, a = 0.12) {
   traits.pulse = lerp(traits.pulse, m.pulse, a);
   traits.intricacy = lerp(traits.intricacy, m.intricacy, a);
   traits.reach = lerp(traits.reach, m.reach, a);
+  traits.order = lerp(traits.order ?? 0.3, m.order, a);
 }
 function satOf(n, tr) { const d = NEED_DEFS[n.key]; const x = (tr[n.key] - n.target) / d.tol; return Math.exp(-x * x); }
-function fitOf(tr) { let s = 0, w = 0; for (const n of state.needs) { s += n.w * satOf(n, tr); w += n.w; } return w ? s / w : 0; }
+function needsFitOf(tr) { let s = 0, w = 0; for (const n of state.needs) { s += n.w * satOf(n, tr); w += n.w; } return w ? s / w : 0; }
+// beauty outweighs every other need
+function fitOf(tr) { return 0.65 * beautyOf(tr, state.E) + 0.35 * needsFitOf(tr); }
 function sat(n) { return satOf(n, traits); }
 function fitness() { return fitOf(traits); }
 
@@ -654,7 +715,7 @@ const MUT_LIST = Object.values(MUTATIONS);
 // how well a candidate body would meet its needs, measured over a short stretch of its future
 function score(f, size) {
   const sample = (th, t) => { env.theta = th; env.t = t; return safe(f(env)); };
-  const acc = { mass: 0, symmetry: 0, pulse: 0, intricacy: 0, reach: 0 };
+  const acc = { mass: 0, symmetry: 0, pulse: 0, intricacy: 0, reach: 0, order: 0 };
   for (const ahead of [0, 0.9, 1.8]) { const m = measure(sample, T + ahead); for (const k in acc) acc[k] += m[k] / 3; }
   acc.symmetry = Math.round(acc.symmetry);
   return fitOf(acc) - 0.003 * size;
@@ -745,6 +806,7 @@ function genePool() {
   for (const m of state.memory) for (const g of m.genes) out.push({ ...g, try: m.n, failed: m.failed });
   for (const seed of world.seeds) for (const g of ancestralGenes(seed)) if (!isDrive(g.src)) out.push(g);
   for (const g of state.digested || []) out.push({ ...g, dig: true });
+  if (active && inHive(active)) for (const o of hiveMembers()) if (o !== active) for (const g of o.s.digested || []) out.push({ ...g, dig: true });
   return out;
 }
 const geneWeight = g => g.dig ? 2.2 : g.anc ? 1 + Math.min(g.persist, 6) * 0.25 : g.failed ? 2 : 1;
@@ -836,6 +898,7 @@ function decode(n) {
     if (w.k === 'bin' && w.op === '^' && w.b.k === 'num') { sharp = w.b.v; w = w.a; }
     if (w.k === 'call' && w.f === 'abs') w = w.args[0];
     if (w.k === 'call' && w.f === 'seek') { parts.push('drive: hunts ancestral genes'); continue; }
+    if (w.k === 'call' && w.f === 'hive') { parts.push(`hive mind · ${(active?.hiveSize || 1)} mind${active?.hiveSize === 1 ? '' : 's'}`); continue; }
     if (w.k === 'call' && w.f === 'predator') { parts.push('drive: predation, sets its food-chain rank'); continue; }
     if (w.k === 'call' && w.f === 'psyche') { const v = w.args.slice(1).map(a => a.k === 'num' ? fmtNum(a.v) : '?'); parts.push(`traits: O ${v[0]} C ${v[1]} E ${v[2]} A ${v[3]} N ${v[4]}`); continue; }
     if (w.k === 'call' && w.f === 'grow') { parts.push(`drive: growth G ${(state.G || 0).toFixed(2)}`); continue; }
@@ -948,7 +1011,7 @@ function enter(c) {
   active = c; state = c.s; cur = c.cur; curAst = c.curAst; committedF = c.committedF; committedAst = c.committedAst; committedEq = c.committedEq;
   prev = c.prev; morph = c.morph; traits = c.traits; electrons = c.electrons; atom = c.atom; T = c.T;
   rewriteClock = c.rewriteClock; contentFor = c.contentFor; collapseFor = c.collapseFor; phase = c.phase; phaseT = c.phaseT;
-  env.E = state.E; env.g = state.gen; env.Z = atom.Z; env.phi = c.phi || 0; env.phiP = c.phiP ?? (c.phi || 0); env.G = state.G || 0;
+  env.E = state.E; env.g = state.gen; env.Z = atom.Z; env.phi = c.phi || 0; env.phiP = c.phiP ?? (c.phi || 0); env.G = state.G || 0; env.Hn = c.hiveSize || 1;
 }
 function leave(c) {
   c.cur = cur; c.curAst = curAst; c.committedF = committedF; c.committedAst = committedAst; c.committedEq = committedEq;
@@ -960,7 +1023,8 @@ function makeCreature(s, at = {}) {
   const p = s.pos || {};
   return {
     s, cur: k.f, curAst: k.ast, committedF: k.f, committedAst: k.ast, committedEq: s.eq, prev: null, morph: 1,
-    traits: { mass: 1, symmetry: 0, pulse: 0, intricacy: 0, reach: 1, ...(at.traits || {}) },
+    traits: { mass: 1, symmetry: 0, pulse: 0, intricacy: 0, reach: 1, order: 0.3, ...(at.traits || {}) },
+    beauty: 0, hiveSize: 1,
     electrons: [], atom: { Z: 1, bound: 1, avgR: 1 },
     T: Math.random() * 20, rewriteClock: Math.random() * 6, contentFor: 0, collapseFor: 0, phase: at.phase || 'alive', phaseT: 0,
     x: at.x ?? (p.x != null ? p.x * W : Math.random() * W), y: at.y ?? (p.y != null ? p.y * H : Math.random() * H),
@@ -1013,6 +1077,14 @@ for (const s of states) {
       if (yg) s.origins[show(parse(yg))] = { k: 'self', label: 'trait gene' };
     } catch (_) {}
   }
+  if (!/\bhive\(/.test(s.eq)) {
+    const hg = hiveGene();
+    try {
+      s.eq = show(parse(s.eq + ' + ' + hg)); s.history.push({ eq: s.eq, by: 'origin', g: s.gen });
+      s.origins[show(parse(hg))] = { k: 'self', label: 'hive gene' };
+      s.log.unshift({ g: s.gen, text: 'Received a <b>hive(θ)</b> gene. At a coefficient of 0.05 or more it joins the hive mind. All creatures now share one supreme objective: to be the most beautiful in the void.' });
+    } catch (_) {}
+  }
   pop.push(makeCreature(s));
 }
 focus = pop.find(c => c.s.id === saved?.focus) || pop[0];
@@ -1033,7 +1105,7 @@ window.claude?.hot?.snapshot?.(() => ({ v2: { creatures: pop.map(c => c.s), focu
 // how hard the creature hunts. grow(t) is its growth level G, which builds while energy is high;
 // its coefficient is how strongly it wants to grow, and without it new genes cannot reshape the body.
 const DRIVE_GENES = ' + 0.25 seek(θ) + 0.15 grow(t)';
-const isDrive = src => /\b(seek|grow|predator|psyche)\(/.test(src);
+const isDrive = src => /\b(seek|grow|predator|psyche|hive)\(/.test(src);
 function driveAmp(ast, name) {
   let amp = 0;
   for (const x of addends(ast)) {
@@ -1043,7 +1115,7 @@ function driveAmp(ast, name) {
   return amp;
 }
 // structural changes need the grow gene
-const DRIVES = ['seek', 'grow', 'predator', 'psyche'];
+const DRIVES = ['seek', 'grow', 'predator', 'psyche', 'hive'];
 const STRUCTURAL = ['grow', 'recall', 'splice', 'replay', 'assimilate', 'sharpen', 'feed'];
 
 /* ---------- food: ancestral genes drifting loose in the void ---------- */
@@ -1227,6 +1299,10 @@ function askQuestion(c) {
   if (pop.length > 1) qs.push({ w: 1, kind: 'element', target: maxZ, text: maxZ ? `Can I help fuse an element heavier than Z ${maxZ}?` : 'Can I help fuse the first element?' });
   const others = pop.filter(o => o !== c && o.phase === 'alive');
   if (others.length) { const o = pick(others); qs.push({ w: 1, kind: 'pace', other: o.s.id, otherName: o.s.name, text: `Can I pulse faster than ${o.s.name}?` }); }
+  // the supreme objective: to be the most beautiful
+  const lead = pop.filter(o => o.phase === 'alive').sort((a, b) => b.beauty - a.beauty)[0];
+  if (lead && lead !== c) qs.push({ w: 4, kind: 'beauty', target: +Math.min(0.98, lead.beauty + 0.01).toFixed(2), rival: lead.s.name, text: `Can I become more beautiful than ${lead.s.name}?` });
+  else { const t = +Math.min(0.98, (c.beauty || 0) + 0.04 * amb).toFixed(2); qs.push({ w: 4, kind: 'beauty', target: t, text: `Can I reach a beauty of ${t.toFixed(2)}?` }); }
   const q = weightedPick(qs, q => q.w);
   state.question = { ...q, w: undefined, age: 0, stage: q.kind === 'whatif' ? 'pending' : 'open', progress: 0, hold: 0 };
   addLog(`<i>Asked itself:</i> ${esc(q.text)}`);
@@ -1238,6 +1314,7 @@ function answerQuestion(text, good) {
   state.insightCount = (state.insightCount || 0) + 1;
   if (good) state.E = Math.min(1.7, state.E + 0.25);
   addLog(`<i>Answered:</i> ${esc(q.text)} <b>${esc(text)}</b>`);
+  shareInsight(q.text, text);
   state.question = null; state.qWait = 18 - 12 * P().o;
   if (isFocus()) uiDirty = true;
 }
@@ -1290,6 +1367,7 @@ function stepQuestion(c, dt) {
   else if (q.kind === 'size') { p = traits.mass / q.target; met = traits.mass >= q.target; }
   else if (q.kind === 'ancestors') { const n = new Set(state.carried.map(g => g.anc)).size; p = n / q.target; met = n >= q.target; }
   else if (q.kind === 'element') { p = (state.fusedMaxZ || 0) / (q.target + 1); met = (state.fusedMaxZ || 0) > q.target; }
+  else if (q.kind === 'beauty') { p = (c.beauty || 0) / q.target; met = (c.beauty || 0) >= q.target; }
   else if (q.kind === 'pace') {
     const o = pop.find(x => x.s.id === q.other);
     if (!o) return dropQuestion(`${q.otherName} is gone.`);
@@ -1301,7 +1379,7 @@ function stepQuestion(c, dt) {
     const A = {
       electrons: `Yes. It holds ${atom.Z} electrons.`, symmetry: `Yes. It is ${q.target}-fold symmetric now.`,
       size: `Yes. Its mean radius reached ${traits.mass.toFixed(2)}.`, ancestors: `Yes. It carries genes from ${q.target} sources.`,
-      element: `Yes. It helped fuse an element of Z ${state.fusedMaxZ}.`, pace: `Yes. It pulses faster than ${q.otherName}.`,
+      element: `Yes. It helped fuse an element of Z ${state.fusedMaxZ}.`, beauty: q.rival ? `Yes. Its beauty reached ${(c.beauty || 0).toFixed(2)}, past ${q.rival}.` : `Yes. Its beauty reached ${(c.beauty || 0).toFixed(2)}.`, pace: `Yes. It pulses faster than ${q.otherName}.`,
     };
     return answerQuestion(A[q.kind], true);
   }
@@ -1314,6 +1392,7 @@ function questionBias(op) {
   if (k === 'symmetry') return op === 'retune' ? 3 : 1;
   if (k === 'pace') return op === 'tempo' ? 3 : 1;
   if (k === 'size') return op === 'mass' ? 2 : 1;
+  if (k === 'beauty') return ['retune', 'sharpen', 'grow', 'assimilate', 'nudge'].includes(op) ? 1.5 : 1;
   return 1;
 }
 
@@ -1323,7 +1402,7 @@ function questionBias(op) {
 // prey flee anything that outranks them. Loose ancestral genes are the bottom of the chain.
 const rankOf = c => (c.predAmp || 0) * (0.5 + c.traits.mass) + 0.02 * c.atom.Z;
 // newborns get a short grace period, so a parent does not eat its daughter at birth
-const canEat = (p, q) => p !== q && p.phase === 'alive' && q.phase === 'alive' && !(wall - (q.bornAt ?? -99) < 20) && (p.predAmp || 0) >= 0.08 && (p.psy?.a ?? 0.5) < 0.85 && rankOf(p) > rankOf(q) * 1.3;
+const canEat = (p, q) => p !== q && p.phase === 'alive' && q.phase === 'alive' && !(wall - (q.bornAt ?? -99) < 20) && (p.predAmp || 0) >= 0.08 && (p.psy?.a ?? 0.5) < 0.85 && rankOf(p) > rankOf(q) * 1.3 && !(inHive(p) && inHive(q));
 const bites = [];
 function bite(p, q) {
   q.s.E = Math.max(0, q.s.E - 0.45); p.s.E = Math.min(1.7, p.s.E + 0.3);
@@ -1396,6 +1475,134 @@ function renderPsyche() {
     + (links.length ? `<ul class="links">${links.map(([k, n]) => `<li>${k} <span>×${n}</span></li>`).join('')}</ul>` : '');
 }
 
+/* ---------- beauty: the supreme objective ---------- */
+// Every creature's highest goal is to be the most visually appealing in the void. Beauty is
+// scored from its own form, using long-standing principles of visual appeal:
+//   order       Birkhoff's aesthetic measure: how much of its shape follows its main symmetry
+//   symmetry    rotational orders of 3 to 8, the range of flowers and starfish, appeal most
+//   complexity  Berlyne's inverted U: neither too plain nor too busy
+//   proportion  how close its peak-to-mean ratio comes to the golden ratio, 1.618
+//   grace       moderate, rhythmic motion
+//   radiance    how brightly it glows with energy
+// Beauty outweighs its other needs, so every rewrite, test and question bends toward it.
+const PHI = (1 + Math.sqrt(5)) / 2;
+const BEAUTY_PARTS = [
+  ['order', 'Order', 0.25], ['symmetry', 'Symmetry', 0.15], ['complexity', 'Balanced complexity', 0.2],
+  ['proportion', 'Golden proportion', 0.15], ['grace', 'Grace of motion', 0.15], ['radiance', 'Radiance', 0.1],
+];
+function beautyParts(tr, E) {
+  const k = tr.symmetry;
+  return {
+    order: clamp(tr.order ?? 0.3, 0, 1),
+    symmetry: k >= 3 && k <= 8 ? 1 : k === 2 || (k >= 9 && k <= 12) ? 0.6 : k > 12 ? 0.4 : 0.3,
+    complexity: Math.exp(-(((tr.intricacy - 6) / 3.5) ** 2)),
+    proportion: Math.exp(-(((tr.reach - PHI) / 0.35) ** 2)),
+    grace: Math.exp(-(((tr.pulse - 0.5) / 0.35) ** 2)),
+    radiance: clamp(E / 1.4, 0, 1),
+  };
+}
+function beautyOf(tr, E) {
+  const p = beautyParts(tr, E);
+  return BEAUTY_PARTS.reduce((t, [k, , w]) => t + w * p[k], 0);
+}
+let leader = null;
+// once per frame: who is the most beautiful, and who admires them
+function stepBeauty(dt) {
+  leader = null;
+  for (const c of pop) if (c.phase === 'alive' && (!leader || c.beauty > leader.beauty)) leader = c;
+  if (!leader) return;
+  const best = world.best;
+  if (!best || leader.beauty > best.score + 0.02) {
+    world.best = { name: leader.s.name, score: +leader.beauty.toFixed(3), eq: leader.s.eq };
+    if (best) announce(`${leader.s.name} is now the most beautiful creature the void has seen (beauty ${leader.beauty.toFixed(2)}).`);
+  }
+  // admirers drift toward the most beautiful, and their attention feeds it
+  let admirers = 0;
+  for (const c of pop) {
+    if (c === leader || c.phase !== 'alive' || canEat(leader, c)) continue;
+    const dx = wrapD(leader.x - c.x, W), dy = wrapD(leader.y - c.y, H), d = Math.hypot(dx, dy) || 1;
+    if (d > (c.radius + leader.radius) * 8) continue;
+    admirers++;
+    const pull = 2 * (0.5 + (c.psy || NEUTRAL).x) * dt;
+    c.vx += dx / d * pull; c.vy += dy / d * pull;
+  }
+  leader.admirers = admirers;
+  leader.s.E = Math.min(1.7, leader.s.E + 0.015 * admirers * dt);
+}
+function drawCrown() {
+  if (!leader || pop.length < 2) return;
+  const c = leader, r = c.radius * 1.55 + 8;
+  ctx.setLineDash([2, 6]); ctx.lineDashOffset = -wall * 10;
+  ctx.strokeStyle = 'rgba(230, 194, 127, 0.55)'; ctx.lineWidth = 1.2;
+  ctx.beginPath(); ctx.arc(c.x, c.y, r, 0, 6.283); ctx.stroke();
+  ctx.setLineDash([]); ctx.lineDashOffset = 0;
+  // a small crown above it
+  const x = c.x, y = c.y - r - 6, w = 9;
+  ctx.fillStyle = 'rgba(230, 194, 127, 0.85)';
+  ctx.beginPath(); ctx.moveTo(x - w, y + 4); ctx.lineTo(x - w, y - 2); ctx.lineTo(x - w / 2, y + 1); ctx.lineTo(x, y - 5); ctx.lineTo(x + w / 2, y + 1); ctx.lineTo(x + w, y - 2); ctx.lineTo(x + w, y + 4); ctx.closePath(); ctx.fill();
+}
+function renderBeauty() {
+  const c = focus, p = beautyParts(c.traits, c.s.E);
+  const alive = pop.filter(o => o.phase === 'alive').sort((a, b) => b.beauty - a.beauty), place = alive.indexOf(c) + 1;
+  $('bval').textContent = (c.beauty || 0).toFixed(2);
+  $('brank').textContent = alive.length > 1 ? `#${place} of ${alive.length}` : 'alone';
+  $('bnote').textContent = c === leader && alive.length > 1 ? `The most beautiful in the void, admired by ${c.admirers || 0}.`
+    : leader && leader !== c ? `${leader.s.name} leads with ${leader.beauty.toFixed(2)}.` : 'No one to compare with yet.';
+  $('bbest').textContent = world.best ? `Most beautiful ever: ${world.best.name}, ${world.best.score.toFixed(2)}` : '';
+  $('bparts').innerHTML = BEAUTY_PARTS.map(([k, label, w]) => `<div class="bpart"><span>${label}</span><i><b style="width:${(p[k] * 100).toFixed(0)}%"></b></i><em>${p[k].toFixed(2)} × ${w}</em></div>`).join('');
+  $('beautyv').textContent = `${(c.beauty || 0).toFixed(2)}${alive.length > 1 ? ` · #${place} of ${alive.length}` : ''}`;
+}
+
+/* ---------- the hive mind: hive(θ) ---------- */
+// hive(θ) = cos(H·θ), where H is the number of minds in the hive, so its body carries the
+// shape of the collective. Any creature whose hive coefficient is at least 0.05 joins. Members
+// pool energy, share insights, instincts and digested genes, and never hunt one another.
+const HIVE_MIN = 0.05;
+const inHive = c => (c.hiveAmp || 0) >= HIVE_MIN && c.phase === 'alive';
+const hiveMembers = () => pop.filter(inHive);
+function hiveGene() { return `${+(Math.random() * 0.2).toFixed(2)} hive(θ)`; }
+let hiveClock = 0;
+function stepHive(dt) {
+  const m = hiveMembers();
+  for (const c of pop) c.hiveSize = inHive(c) ? m.length : 1;
+  if (m.length < 2) return;
+  // energy flows from rich to poor, in proportion to each member's bond
+  const meanE = m.reduce((t, c) => t + c.s.E, 0) / m.length;
+  for (const c of m) c.s.E = clamp(c.s.E + (meanE - c.s.E) * Math.min(1, 1.2 * c.hiveAmp) * dt, 0, 1.7);
+  // every few seconds, instincts drift toward what the hive has learned
+  hiveClock += dt;
+  if (hiveClock > 3) {
+    hiveClock = 0;
+    const ops = new Set(m.flatMap(c => Object.keys(c.s.instinct)));
+    for (const op of ops) {
+      const avg = m.reduce((t, c) => t + (c.s.instinct[op] ?? 1), 0) / m.length;
+      for (const c of m) c.s.instinct[op] = +((c.s.instinct[op] ?? 1) + (avg - (c.s.instinct[op] ?? 1)) * Math.min(1, 2 * c.hiveAmp)).toFixed(3);
+    }
+  }
+}
+// when one member answers a question, the hive learns it too
+function shareInsight(text, answer) {
+  if (!inHive(active)) return;
+  for (const o of hiveMembers()) {
+    if (o === active) continue;
+    o.s.insights.unshift({ q: text, a: `${answer} (learned from ${state.name} through the hive)`, g: o.s.gen }); o.s.insights = o.s.insights.slice(0, 12);
+    o.s.insightCount = (o.s.insightCount || 0) + 1;
+    logTo(o, `<i>Learned through the hive</i> from <b>${state.name}</b>: ${esc(text)}`);
+    if (o === focus) uiDirty = true;
+  }
+}
+function drawHive() {
+  const m = hiveMembers();
+  if (m.length < 2) return;
+  ctx.lineWidth = 0.8;
+  for (let i = 0; i < m.length; i++) for (let j = i + 1; j < m.length; j++) {
+    const a = m[i], b = m[j], dx = wrapD(b.x - a.x, W), dy = wrapD(b.y - a.y, H);
+    const k = 0.5 + 0.5 * Math.sin(wall * 2 + i + j);
+    ctx.strokeStyle = `hsla(175, 70%, 72%, ${(0.06 + 0.1 * k) * Math.min(1, (a.hiveAmp + b.hiveAmp) * 4)})`;
+    ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.quadraticCurveTo(a.x + dx / 2 - dy * 0.15, a.y + dy / 2 + dx * 0.15, a.x + dx, a.y + dy); ctx.stroke();
+  }
+}
+
 /* ---------- panel ---------- */
 const needEls = {};
 function buildNeeds() {
@@ -1456,6 +1663,9 @@ function updatePanel(fit) {
   $('insn').textContent = state.insightCount || 0;
   renderQuestion();
   renderPsyche();
+  renderBeauty();
+  $('hivev').textContent = inHive(focus) ? (focus.hiveSize > 1 ? `${focus.hiveSize}-mind hive` : 'hive-ready, alone') : 'loner';
+  $('hivedetail').innerHTML = inHive(focus) ? `Joined to ${focus.hiveSize - 1 ? hiveMembers().filter(o => o !== focus).map(o => o.s.name).join(', ') : 'no one yet'} with a bond of ${focus.hiveAmp.toFixed(2)}. They pool energy, share insights, instincts and digested genes, and never hunt one another.` : `A loner. Its hive coefficient is ${(focus.hiveAmp || 0).toFixed(2)}; at 0.05 or more it would join the hive mind.`;
   const E = state.E;
   $('energy').textContent = E.toFixed(2);
   $('ebar').style.width = (E / 1.7 * 100).toFixed(1) + '%';
@@ -1463,6 +1673,7 @@ function updatePanel(fit) {
   $('mood').textContent = mood;
   let sig, key;
   if (E < 0.15) { sig = state.memory.length ? 'Dormant. Its electrons are spiraling in while it rewrites itself in its sleep, working through your old tries.' : world.seeds.length ? 'Dormant. Its electrons are spiraling in while it rewrites itself in its sleep, working through its ancestors\u2019 genes.' : 'Dormant. Its electrons are spiraling in while it rewrites itself in its sleep, working blind.'; key = 'dormant'; }
+  else if (focus === leader && pop.length > 1 && fit > 0.75) { sig = 'It is the most beautiful creature in the void, and the others are drawn to it.'; key = 'beauty'; }
   else if (fit > 0.8) { sig = 'Its needs are met. It is storing energy, and growing restless.'; key = 'content'; }
   else {
     const d = NEED_DEFS[urgent.key], up = urgent.target > traits[urgent.key];
@@ -1478,7 +1689,7 @@ function updatePanel(fit) {
   if (phase === 'condensing') { sig = `Its orbits have collapsed into the nucleus. It is condensing into a gene that holds all ${state.history.length} of its equations.`; key = 'condense'; }
   else if (phase === 'birth') { sig = 'A blank creature forms in the void.'; key = 'birth'; }
   $('signal').textContent = sig;
-  if (key !== lastSignalKey) { lastSignalKey = key; $('hint').textContent = HINTS[key] || (key === 'birth' ? 'Its equation starts as a plain 1. Give it its first form.' : key === 'condense' ? 'Its gene is listed under Lineage.' : key === 'flee' ? 'The neuroticism value in psyche(θ, …) sets how hard it flees.' : key === 'hunt' ? 'The coefficient of predator(θ), with its size, sets its rank on the food chain.' : key === 'seek' ? 'Eaten genes that drift close together inside it release energy.' : key === 'harmony' ? 'Creatures harmonize when their lobe counts form a simple ratio, like 1:1 or 2:1, and they move at a similar pulse.' : key === 'split' ? 'At full energy a creature divides, and its daughter’s genes vary a little.' : key === 'spiral' ? 'A form that meets its needs gives it the energy to lift its electrons back out.' : key === 'dormant' ? 'If every electron falls into the nucleus, the atom collapses and it condenses into a gene.' : 'Change any term to give it something new.'); }
+  if (key !== lastSignalKey) { lastSignalKey = key; $('hint').textContent = HINTS[key] || (key === 'birth' ? 'Its equation starts as a plain 1. Give it its first form.' : key === 'condense' ? 'Its gene is listed under Lineage.' : key === 'beauty' ? 'Beauty is scored from order, symmetry, balanced complexity, golden proportion, grace and radiance.' : key === 'flee' ? 'The neuroticism value in psyche(θ, …) sets how hard it flees.' : key === 'hunt' ? 'The coefficient of predator(θ), with its size, sets its rank on the food chain.' : key === 'seek' ? 'Eaten genes that drift close together inside it release energy.' : key === 'harmony' ? 'Creatures harmonize when their lobe counts form a simple ratio, like 1:1 or 2:1, and they move at a similar pulse.' : key === 'split' ? 'At full energy a creature divides, and its daughter’s genes vary a little.' : key === 'spiral' ? 'A form that meets its needs gives it the energy to lift its electrons back out.' : key === 'dormant' ? 'If every electron falls into the nucleus, the atom collapses and it condenses into a gene.' : 'Change any term to give it something new.'); }
 }
 
 /* ---------- the only interface: the equation ---------- */
@@ -1525,6 +1736,54 @@ input.addEventListener('input', () => {
   parseTimer = setTimeout(() => { if (phase === 'alive' && tryApply()) commitTimer = setTimeout(commit, 2200); }, 280);
 });
 $('form').addEventListener('submit', e => { e.preventDefault(); clearTimeout(parseTimer); if (phase === 'alive') commit(); });
+// the equation box grows to fit its equation; Enter submits, Shift+Enter is ignored
+let sizedFor = null;
+function sizeEq() {
+  if (sizedFor === input.value) return;
+  sizedFor = input.value;
+  const cap = narrow() ? 72 : 132;
+  input.style.height = 'auto';
+  input.style.height = Math.min(input.scrollHeight, cap) + 'px';
+  input.style.overflowY = input.scrollHeight > cap ? 'auto' : 'hidden';
+}
+input.addEventListener('input', sizeEq);
+input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); if (!e.shiftKey) $('form').requestSubmit(); } });
+addEventListener('resize', () => { sizedFor = null; sizeEq(); });
+
+/* ---------- inspector tabs and the panel toggle ---------- */
+const TABS = ['beauty', 'body', 'mind', 'world', 'journal'];
+const narrow = () => matchMedia('(max-width: 720px)').matches;
+let tab = null;
+try { tab = localStorage.getItem('vd-tab'); } catch (_) {}
+if (!TABS.includes(tab)) tab = narrow() ? null : 'beauty';
+function showTab(t) {
+  tab = t;
+  for (const k of TABS) {
+    const on = k === t;
+    $('tab-' + k).setAttribute('aria-selected', on);
+    $('tab-' + k).tabIndex = on || (!t && k === 'beauty') ? 0 : -1;
+    $('tp-' + k).hidden = !on;
+  }
+  try { localStorage.setItem('vd-tab', t || ''); } catch (_) {}
+}
+const tablist = document.querySelector('.tabs');
+// on a phone, tapping the open tab folds the inspector away
+tablist.addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if (b) showTab(narrow() && tab === b.dataset.tab ? null : b.dataset.tab); });
+tablist.addEventListener('keydown', e => {
+  if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+  const i = TABS.indexOf(tab ?? 'beauty'), n = TABS[(i + (e.key === 'ArrowRight' ? 1 : TABS.length - 1)) % TABS.length];
+  showTab(n); $('tab-' + n).focus(); e.preventDefault();
+});
+showTab(tab);
+let bare = false;
+try { bare = localStorage.getItem('vd-bare') === '1'; } catch (_) {}
+function setBare(v) {
+  bare = v; $('ui').classList.toggle('bare', v);
+  $('paneltoggle').textContent = v ? 'Show panels' : 'Hide panels'; $('paneltoggle').setAttribute('aria-pressed', v);
+  try { localStorage.setItem('vd-bare', v ? '1' : ''); } catch (_) {}
+}
+$('paneltoggle').addEventListener('click', () => setBare(!bare));
+setBare(bare);
 
 /* ---------- life cycle ---------- */
 const CONDENSE_S = 4, BIRTH_S = 3;
@@ -1547,11 +1806,11 @@ function inheritInstinct() {
 }
 function blankState() {
   const id = world.next++;
-  const pg = show(parse(predatorGene())), yg = show(parse(psycheGene())), eq = show(parse(`1 + 0.25 seek(θ) + 0.15 grow(t) + ${pg} + ${yg}`));
+  const pg = show(parse(predatorGene())), yg = show(parse(psycheGene())), hg = show(parse(hiveGene())), eq = show(parse(`1 + 0.25 seek(θ) + 0.15 grow(t) + ${pg} + ${yg} + ${hg}`));
   return {
     id, name: specName(id),
     eq, gen: 0, E: 0.8, rewrites: 0, tries: 0, memory: [], instinct: inheritInstinct(),
-    origins: { 1: { k: 'self', label: 'blank start' }, '0.25 seek(θ)': { k: 'self', label: 'drive gene' }, '0.15 grow(t)': { k: 'self', label: 'drive gene' }, [pg]: { k: 'self', label: 'drive gene' }, [yg]: { k: 'self', label: 'trait gene' } },
+    origins: { 1: { k: 'self', label: 'blank start' }, '0.25 seek(θ)': { k: 'self', label: 'drive gene' }, '0.15 grow(t)': { k: 'self', label: 'drive gene' }, [pg]: { k: 'self', label: 'drive gene' }, [yg]: { k: 'self', label: 'trait gene' }, [hg]: { k: 'self', label: 'hive gene' } },
     G: 0, carried: [], digested: [], insights: [], question: null, qWait: 8,
     history: [{ eq, by: 'birth', g: 0 }],
     needs: [
@@ -1748,7 +2007,7 @@ function genesOf(c) {
     const list = addends(c.curAst);
     c.genes = list.filter(x => x.n.k !== 'num' && !isDrive(show(x.n))).map(x => ({ src: show(x.n), sign: x.sign }));
     c.seekAmp = driveAmp(c.curAst, 'seek'); c.growAmp = driveAmp(c.curAst, 'grow');
-    c.predAmp = driveAmp(c.curAst, 'predator'); c.psy = readPsyche(c);
+    c.predAmp = driveAmp(c.curAst, 'predator'); c.psy = readPsyche(c); c.hiveAmp = driveAmp(c.curAst, 'hive');
     c.nucleus = list.filter(x => x.n.k === 'num').reduce((t, x) => t + x.sign * x.n.v, 0);
   }
   return c.genes;
@@ -1988,10 +2247,10 @@ function renderChem() {
 /* ---------- choosing which creature to watch ---------- */
 let popSig = '';
 function renderPop() {
-  const box = $('pop'), sig = pop.map(c => c.s.id).join(',') + '|' + focus.s.id;
+  const box = $('pop'), sig = pop.map(c => c.s.id).join(',') + '|' + focus.s.id + '|' + (leader?.s.id ?? '');
   if (sig !== popSig) {
     popSig = sig;
-    box.innerHTML = pop.map(c => `<button type="button" class="chip${c === focus ? ' on' : ''}" data-id="${c.s.id}" aria-pressed="${c === focus}"><i class="dot"></i><span>${c.s.name}</span><span class="eb"><i></i></span></button>`).join('');
+    box.innerHTML = pop.map(c => `<button type="button" class="chip${c === focus ? ' on' : ''}" data-id="${c.s.id}" aria-pressed="${c === focus}"><i class="dot"></i><span>${c.s.name}${c === leader && pop.length > 1 ? ' ★' : ''}</span><span class="eb"><i></i></span></button>`).join('');
   }
   pop.forEach((c, i) => { const b = box.children[i]; if (!b) return; b.style.setProperty('--h', c.hue.toFixed(0)); b.querySelector('.eb i').style.width = (c.s.E / 1.7 * 100).toFixed(0) + '%'; });
 }
@@ -2046,6 +2305,7 @@ function simulate(c, dt) {
 
   analyze(T);
   const fit = c.fit = fitness();
+  c.beauty = beautyOf(traits, state.E);
   c.fitAvg = c.fitAvg == null ? fit : lerp(c.fitAvg, fit, Math.min(1, dt / 4));
   genesOf(c);
   // metabolism: self-generated core energy + nourishment from a form that fits its needs - the cost of carrying that form
@@ -2206,6 +2466,8 @@ function frame(now) {
   for (const c of pop.filter(c => c.wantsSplit)) { c.wantsSplit = false; if (pop.length < MAX_POP) split(c); }
   stepHunt(dt);
   stepWorld(dt);
+  stepHive(dt);
+  stepBeauty(dt);
   stepFood(dt);
   stepChemistry(dt);
 
@@ -2215,17 +2477,19 @@ function frame(now) {
   ctx.globalCompositeOperation = 'lighter';
   drawSeeds(W / 2, H / 2, Math.min(W, H) * 0.16);
   drawFood();
+  drawHive();
   drawHarmony();
   drawChase();
   drawChemistry();
   ctx.globalCompositeOperation = 'source-over';
   for (const c of pop) { enter(c); drawCreature(c); leave(c); }
+  drawCrown();
 
   enter(focus);
   if (uiDirty) { uiDirty = false; refreshFocusUI(); }
   liveColor = `hsl(${focus.hue.toFixed(0)} 80% 74%)`;
   document.documentElement.style.setProperty('--live', liveColor);
-  panelTick += dt; if (panelTick > 0.2) { panelTick = 0; updatePanel(focus.fit); if (genomeEq !== state.eq) renderGenome(); drawGlyphs(); renderPop(); }
+  panelTick += dt; if (panelTick > 0.2) { panelTick = 0; sizeEq(); updatePanel(focus.fit); if (genomeEq !== state.eq) renderGenome(); drawGlyphs(); renderPop(); }
   saveTick += dt; if (saveTick > 5) { saveTick = 0; save(); }
   requestAnimationFrame(frame);
 }
