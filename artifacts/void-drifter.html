@@ -74,6 +74,20 @@ h1 { margin: 0; font-family: var(--display); font-weight: 500; font-size: 34px; 
 .origin.you { color: var(--ink); }
 .origin.stone { color: var(--gold); }
 .origin.self { color: var(--live); }
+.seed summary { cursor: pointer; list-style: none; display: flex; justify-content: space-between; gap: 8px; font-size: 11.5px; }
+.seed summary::-webkit-details-marker { display: none; }
+.seed summary::before { content: "▸"; color: var(--dim); margin-right: 6px; }
+.seed[open] summary::before { content: "▾"; }
+.seed summary .sname { margin-right: auto; }
+.seed summary .smeta { color: var(--dim); font-size: 10.5px; }
+.seed summary:focus-visible { outline: 1px solid var(--live); outline-offset: 2px; }
+.eqs { margin: 8px 0 4px; padding: 0; list-style: none; max-height: 200px; overflow-y: auto; display: grid; gap: 4px; font-size: 10.5px; }
+.eqs li { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 6px; }
+.eqs code { color: var(--ink); overflow-wrap: anywhere; }
+.by { color: var(--dim); }
+.by.you { color: var(--ink); }
+.by.self, .by.dormant { color: var(--live); }
+.lineage .empty { margin: 0; color: var(--dim); font-size: 11px; line-height: 1.5; }
 .instinct { display: grid; gap: 4px; padding-top: 10px; border-top: 1px solid var(--faint); font-size: 10.5px; color: var(--dim); }
 .instinct .ttl { letter-spacing: 0.14em; text-transform: uppercase; font-size: 10px; margin-bottom: 2px; }
 .inst { display: grid; grid-template-columns: 1fr 70px; gap: 8px; align-items: center; }
@@ -97,7 +111,7 @@ form.eq { width: min(780px, 100%); background: var(--panel); backdrop-filter: bl
 @media (max-width: 720px) {
   .top { flex-direction: column; justify-content: flex-start; gap: 10px; overflow-y: auto; pointer-events: auto; }
   .col { width: 100%; max-height: none; overflow: visible; gap: 10px; }
-  .journal, .instinct { display: none; }
+  .journal, .instinct, .lineage { display: none; }
   .genome { padding: 10px 12px; gap: 8px; }
   #genes { display: flex; gap: 14px; overflow-x: auto; scrollbar-width: none; }
   .gene { min-width: 250px; }
@@ -124,13 +138,14 @@ form.eq { width: min(780px, 100%); background: var(--panel); backdrop-filter: bl
   <div class="top">
     <div class="col left">
       <div class="id">
-        <div class="eyebrow">Specimen VD‑01 · deep field</div>
+        <div class="eyebrow">Specimen <span id="spec">VD-01</span> · deep field</div>
         <h1>Void Drifter</h1>
-        <p class="lede">It drifts alone in empty space and makes its own energy. Its body is the equation at the bottom of the screen, and that equation is the only way to reach it. It remembers every equation you try. Your misses become stepping stones it builds from when it rewrites itself, even while dormant.</p>
+        <p class="lede">It drifts alone in empty space and makes its own energy. Its body is the equation at the bottom of the screen, and that equation is the only way to reach it. It remembers every equation you try. Your misses become stepping stones it builds from when it rewrites itself, even while dormant. If its energy reaches zero, it condenses into a gene holding all its equations, and a blank creature takes its place.</p>
         <dl class="vitals">
           <dt>Gen</dt><dd id="gen">0</dd>
           <dt>Rewrites</dt><dd id="rw">0</dd>
           <dt>Memory</dt><dd id="mem">no tries yet</dd>
+          <dt>Lineage</dt><dd id="lin">none yet</dd>
           <dt>State</dt><dd id="mood">Steady</dd>
           <dt>Energy</dt><dd><span id="energy">0.80</span><div class="ebar"><i id="ebar"></i></div></dd>
         </dl>
@@ -138,6 +153,10 @@ form.eq { width: min(780px, 100%); background: var(--panel); backdrop-filter: bl
       <section class="panel journal" aria-label="Journal">
         <h2><span>Journal</span></h2>
         <ul class="log" id="log"></ul>
+      </section>
+      <section class="panel lineage" aria-label="Lineage">
+        <h2><span>Lineage · condensed genes</span><span id="lcount"></span></h2>
+        <div id="seeds"></div>
       </section>
     </div>
     <div class="col right">
@@ -377,11 +396,16 @@ let state = {
 };
 const SAVE_KEY = 'void-drifter-v1';
 try { const s = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); if (s && s.eq && Array.isArray(s.needs)) state = s; } catch (_) {}
+// the world outlives each creature: it holds the genes they condense into
+const WORLD_KEY = 'void-drifter-world';
+let world = { specimen: 1, seeds: [] };
+try { const w = JSON.parse(localStorage.getItem(WORLD_KEY) || 'null'); if (w && Array.isArray(w.seeds)) world = w; } catch (_) {}
 const hotData = window.claude?.hot?.data;
-if (hotData && hotData.eq) state = hotData;
-function save() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); } catch (_) {} }
-for (const [k, d] of [['memory', []], ['origins', {}], ['instinct', {}], ['tries', 0], ['rewrites', 0]]) if (state[k] == null) state[k] = d;
-window.claude?.hot?.snapshot?.(() => state);
+if (hotData && hotData.state && hotData.state.eq) { state = hotData.state; if (hotData.world) world = hotData.world; }
+else if (hotData && hotData.eq) state = hotData;
+function save() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); localStorage.setItem(WORLD_KEY, JSON.stringify(world)); } catch (_) {} }
+for (const [k, d] of [['memory', []], ['origins', {}], ['instinct', {}], ['tries', 0], ['rewrites', 0], ['history', null]]) if (state[k] == null) state[k] = d ?? [{ eq: state.eq, by: 'origin', g: state.gen }];
+window.claude?.hot?.snapshot?.(() => ({ state, world }));
 
 let cur, curAst, committedF, committedAst, prev = null, morph = 1;
 { let c; try { c = compile(state.eq); } catch (_) { state.eq = '1 + 0.3 sin(3θ + t)·E'; c = compile(state.eq); } cur = committedF = c.f; curAst = committedAst = c.ast; }
@@ -610,6 +634,7 @@ function selfRewrite(dormant) {
     ? { k: g.failed ? 'stone' : 'you', label: `${g.failed ? 'stone' : 'yours'} · try #${g.try}` }
     : { k: 'self', label: g && g.whole ? `self · from #${g.try}` : 'self' });
   state.rewrites = (state.rewrites || 0) + 1;
+  recordEq(dormant ? 'dormant' : 'self');
   input.value = best.src;
   input.classList.remove('rewritten'); void input.offsetWidth; input.classList.add('rewritten');
   const tag = dormant ? '<i>Rewrote itself while dormant:</i>' : '<i>Rewrote itself:</i>';
@@ -857,15 +882,17 @@ function updatePanel(fit) {
   const mood = E < 0.15 ? 'Dormant' : E < 0.4 ? 'Hungry' : E < 0.85 ? 'Steady' : E < 1.3 ? 'Thriving' : 'Radiant';
   $('mood').textContent = mood;
   let sig, key;
-  if (E < 0.15) { sig = state.memory.length ? 'Dormant. It is rewriting itself in its sleep, working through your old tries.' : 'Dormant. It is rewriting itself in its sleep, working blind.'; key = 'dormant'; }
+  if (E < 0.15) { sig = state.memory.length ? 'Dormant. It is rewriting itself in its sleep, working through your old tries. At zero it condenses into a gene.' : 'Dormant. It is rewriting itself in its sleep, working blind. At zero it condenses into a gene.'; key = 'dormant'; }
   else if (fit > 0.8) { sig = 'Its needs are met. It is storing energy, and growing restless.'; key = 'content'; }
   else {
     const d = NEED_DEFS[urgent.key], up = urgent.target > traits[urgent.key];
     sig = SIGNALS[urgent.key][up ? 0 : 1](d.fmt(traits[urgent.key]), d.fmt(urgent.target));
     key = urgent.key;
   }
+  if (phase === 'condensing') { sig = `Its energy is gone. It is condensing into a gene that holds all ${state.history.length} of its equations.`; key = 'condense'; }
+  else if (phase === 'birth') { sig = 'A blank creature forms in the void and takes over.'; key = 'birth'; }
   $('signal').textContent = sig;
-  if (key !== lastSignalKey) { lastSignalKey = key; $('hint').textContent = HINTS[key] || 'Change any term to give it something new.'; }
+  if (key !== lastSignalKey) { lastSignalKey = key; $('hint').textContent = HINTS[key] || (key === 'birth' ? 'Its equation starts as a plain 1. Give it its first form.' : key === 'condense' ? 'Its gene is listed under Lineage.' : 'Change any term to give it something new.'); }
 }
 
 /* ---------- the only interface: the equation ---------- */
@@ -899,6 +926,7 @@ function commit() {
   if (failed) for (const op of MEMORY_OPS) learn(op, 1, 0.1); // more stones to step on
   claimOrigins(c.ast, () => ({ k: 'you', label: `yours · try #${n}` }));
   committedEq = state.eq; committedF = c.f; committedAst = c.ast;
+  recordEq('you');
   addLog(failed
     ? `<b>Your try #${n}</b> missed (fit ${after.toFixed(2)}). <em>Its ${addends(c.ast).length} genes are kept as stepping stones.</em>`
     : `<b>Your try #${n}</b> worked (fit ${after.toFixed(2)}). It learned to ${moves.map(m => OP_LABEL[m]).join(', ')}.`);
@@ -908,9 +936,95 @@ function commit() {
 input.addEventListener('input', () => {
   lastKeyAt = wall;
   clearTimeout(parseTimer); clearTimeout(commitTimer);
-  parseTimer = setTimeout(() => { if (tryApply()) commitTimer = setTimeout(commit, 2200); }, 280);
+  parseTimer = setTimeout(() => { if (phase === 'alive' && tryApply()) commitTimer = setTimeout(commit, 2200); }, 280);
 });
-$('form').addEventListener('submit', e => { e.preventDefault(); clearTimeout(parseTimer); commit(); });
+$('form').addEventListener('submit', e => { e.preventDefault(); clearTimeout(parseTimer); if (phase === 'alive') commit(); });
+
+/* ---------- life cycle: at zero energy it condenses into a gene ---------- */
+const CONDENSE_S = 4, BIRTH_S = 3;
+let phase = 'alive', phaseT = 0, zeroFor = 0, lastHue = 230, lastCx = 0, lastCy = 0;
+const seedAnim = new Map(), seedFns = new Map();
+const specName = n => 'VD-' + String(n).padStart(2, '0');
+const BY = { you: 'you', self: 'self', dormant: 'asleep', birth: 'birth', origin: 'origin' };
+function recordEq(by) {
+  state.history.push({ eq: state.eq, by, g: state.gen });
+  if (state.history.length > 300) state.history.splice(1, state.history.length - 300);
+}
+function blankState() {
+  return {
+    eq: '1', gen: 0, E: 0.8, rewrites: 0, tries: 0, memory: [], origins: { 1: { k: 'self', label: 'blank start' } }, instinct: {},
+    history: [{ eq: '1', by: 'birth', g: 0 }],
+    needs: [
+      { key: 'mass', target: +(0.8 + Math.random() * 0.6).toFixed(2), w: 1 },
+      { key: 'symmetry', target: pick([2, 3, 4, 5, 6, 7]), w: 1.3 },
+      { key: 'pulse', target: +(0.2 + Math.random() * 0.5).toFixed(2), w: 1 },
+      { key: 'intricacy', target: +(2.5 + Math.random() * 3).toFixed(1), w: 0.8 },
+    ],
+    log: [],
+  };
+}
+function adopt() {
+  const c = compile(state.eq);
+  cur = committedF = c.f; curAst = committedAst = c.ast; committedEq = state.eq; prev = null; morph = 1;
+  input.value = state.eq; genomeEq = null; glyphs = []; contentFor = 0; rewriteClock = 0;
+  analyze(T, 1);
+  buildNeeds();
+  $('spec').textContent = specName(world.specimen);
+}
+function startCondense() {
+  phase = 'condensing'; phaseT = 0;
+  clearTimeout(parseTimer); clearTimeout(commitTimer);
+  input.readOnly = true;
+  setStatus(`Its energy is gone. ${specName(world.specimen)} is condensing into a gene.`);
+}
+function finishCondense() {
+  const n = world.specimen;
+  const seed = {
+    id: n, name: specName(n), eq: state.eq, equations: state.history.slice(), gens: state.gen,
+    rewrites: state.rewrites, tries: state.tries, hue: Math.round(lastHue),
+    a: Math.random() * 6.283, d: 0.8 + Math.random() * 0.5, died: Date.now(),
+  };
+  world.seeds.push(seed); world.specimen++;
+  seedAnim.set(seed.id, { t0: wall, sx: lastCx, sy: lastCy });
+  state = blankState();
+  state.log = [{ g: 0, text: `Formed blank in the void after <b>${seed.name}</b> condensed into a gene of ${seed.equations.length} equations.` }];
+  adopt();
+  phase = 'birth'; phaseT = 0; zeroFor = 0;
+  setStatus(`${seed.name} condensed into a gene. A blank creature has taken over.`);
+  renderLineage(); save();
+}
+function renderLineage() {
+  const n = world.seeds.length;
+  $('lcount').textContent = n ? `${n} gene${n === 1 ? '' : 's'}` : '';
+  $('lin').textContent = n ? `${n} gene${n === 1 ? '' : 's'}` : 'none yet';
+  const box = $('seeds');
+  if (!n) { box.innerHTML = '<p class="empty">When a creature’s energy reaches zero, it condenses into a gene holding every equation it had. The gene is kept here and drifts in the void.</p>'; return; }
+  box.innerHTML = world.seeds.slice().reverse().map(s => `<details class="seed"><summary><span class="sname" style="color:hsl(${s.hue} 80% 74%)">${s.name}</span><span class="smeta">${s.gens} gen${s.gens === 1 ? '' : 's'} · ${s.equations.length} equation${s.equations.length === 1 ? '' : 's'}</span></summary><ol class="eqs">${s.equations.map(e => `<li><span class="by ${e.by}">${BY[e.by] || esc(String(e.by))}</span><code>${esc(e.eq)}</code></li>`).join('')}</ol></details>`).join('');
+}
+// condensed genes hold a slow ring around whoever is alive now
+function drawSeeds(ox, oy, R0) {
+  const e = { theta: 0, t: T * 0.4, E: 0.5, g: 1 };
+  for (const s of world.seeds) {
+    if (!seedFns.has(s.id)) { let f; try { f = compile(s.eq).f; } catch (_) { f = () => 1; } seedFns.set(s.id, f); }
+    const f = seedFns.get(s.id), an = seedAnim.get(s.id);
+    const k = an ? ease(clamp((wall - an.t0) / 7, 0, 1)) : 1;
+    const ang = (s.a ?? s.id * 2.4) + wall * 0.012, dist = R0 * (2.1 + 0.5 * (s.d ?? 1));
+    const tx = ox + Math.cos(ang) * dist * 1.25 + Math.sin(wall * 0.09 + s.id * 1.7) * 6, ty = oy + Math.sin(ang) * dist * 0.8 + Math.cos(wall * 0.07 + s.id) * 5;
+    const x = an ? lerp(an.sx, tx, k) : tx, y = an ? lerp(an.sy, ty, k) : ty;
+    const pulse = 0.75 + 0.25 * Math.sin(wall * 1.3 + s.id);
+    const g = ctx.createRadialGradient(x, y, 0, x, y, 26);
+    g.addColorStop(0, `hsla(${s.hue}, 90%, 75%, ${0.35 * pulse})`);
+    g.addColorStop(1, `hsla(${s.hue}, 90%, 50%, 0)`);
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, 26, 0, 6.283); ctx.fill();
+    ctx.beginPath();
+    let mx = 1e-6; const vals = [];
+    for (let i = 0; i < 48; i++) { e.theta = i / 48 * 6.283; let r = Math.abs(f(e)); if (!Number.isFinite(r)) r = 0; vals.push(r); mx = Math.max(mx, r); }
+    for (let i = 0; i <= 48; i++) { const th = i / 48 * 6.283 + wall * 0.15, r = 3 + 6 * vals[i % 48] / mx; const px = x + Math.cos(th) * r, py = y + Math.sin(th) * r; i ? ctx.lineTo(px, py) : ctx.moveTo(px, py); }
+    ctx.closePath();
+    ctx.strokeStyle = `hsla(${s.hue}, 90%, 82%, ${0.85 * pulse})`; ctx.lineWidth = 1; ctx.stroke();
+    ctx.fillStyle = `hsla(${s.hue + 40}, 100%, 92%, ${pulse})`; ctx.beginPath(); ctx.arc(x, y, 1.4, 0, 6.283); ctx.fill();
+  }
+}
 
 /* ---------- drawing ---------- */
 let T = 0, wall = 0, last = performance.now(), panelTick = 0, saveTick = 0;
@@ -941,32 +1055,50 @@ function frame(now) {
   if (morph < 1) { morph = Math.min(1, morph + dt / 1.4); if (morph >= 1) prev = null; }
   env.E = E; env.g = state.gen;
 
+  if (phase !== 'alive') phaseT += dt;
+  if (phase === 'condensing' && phaseT >= CONDENSE_S) finishCondense();
+  if (phase === 'birth' && phaseT >= BIRTH_S) { phase = 'alive'; input.readOnly = false; setStatus('Edit the equation. Press Enter, or pause, to let it absorb the change.'); }
+  const alive = phase === 'alive';
+  const bodyScale = phase === 'condensing' ? 1 - ease(Math.min(1, phaseT / CONDENSE_S)) : phase === 'birth' ? ease(Math.min(1, phaseT / BIRTH_S)) : 1;
+  const flare = phase === 'condensing' ? Math.sin(Math.min(1, phaseT / CONDENSE_S) * Math.PI) : 0;
+
   analyze(T);
   const fit = fitness();
   // metabolism: self-generated core energy + nourishment from a form that fits its needs - the cost of carrying that form
   const core = 0.06 * E * (1.7 - E);
-  const feed = 0.16 * (fit - 0.5);
-  // dormant, its metabolism slows to a crawl so a good form can wake it again
-  const cost = (0.025 * traits.mass * (0.5 + traits.pulse) + 0.012 * traits.intricacy / 8) * (E < 0.15 ? 0.3 : 1);
-  E = state.E = clamp(E + (core + feed - cost + 0.004) * dt, 0, 1.7);
-  restless(dt, fit);
+  // dormant, its metabolism slows to a crawl, which buys time for a better form to wake it again
+  const slow = E < 0.15 ? 0.3 : 1;
+  const feed = 0.16 * (fit - 0.5) * (fit < 0.5 ? slow : 1);
+  const cost = (0.025 * traits.mass * (0.5 + traits.pulse) + 0.012 * traits.intricacy / 8) * slow;
+  if (alive) {
+    E = state.E = clamp(E + (core + feed - cost + 0.004) * dt, 0, 1.7);
+    restless(dt, fit);
+    zeroFor = E <= 0.0005 ? zeroFor + dt : 0;
+    if (zeroFor > 2.5) startCondense();
+  }
   // when it has energy to spare and you are not mid-edit, it rewrites its own equation
   const busy = wall - lastKeyAt < 7 || (document.activeElement === input && wall - lastKeyAt < 15) || state.eq !== committedEq || input.classList.contains('bad');
   const dormant = E < 0.15;
-  if (!busy && morph >= 1) { rewriteClock += dt * (dormant ? 0.75 : 0.4 + E); if (rewriteClock > 9) { rewriteClock = 0; selfRewrite(dormant); } }
+  if (alive && !busy && morph >= 1) { rewriteClock += dt * (dormant ? 1.5 : 0.4 + E); if (rewriteClock > 9) { rewriteClock = 0; selfRewrite(dormant); } }
 
-  const { cx: bx, cy: by, R0 } = layout();
+  const { cx: bx, cy: by, R0: baseR0 } = layout();
+  const R0 = baseR0 * Math.max(0.001, bodyScale);
   const drift = reduce ? 0.3 : 1;
   const cx = bx + Math.sin(wall * 0.05) * R0 * 0.35 * drift;
   const cy = by + Math.sin(wall * 0.071 + 1) * R0 * 0.18 * drift;
+  lastCx = cx; lastCy = cy;
 
   ctx.globalCompositeOperation = 'source-over';
   ctx.fillStyle = '#03040a'; ctx.fillRect(0, 0, W, H);
   drawStars(dt);
+  ctx.globalCompositeOperation = 'lighter';
+  drawSeeds(bx, by, baseR0);
+  ctx.globalCompositeOperation = 'source-over';
 
   const hue = 205 + fit * 105;
   const light = 45 + Math.min(E, 1.4) * 18;
-  const glow = clamp(E / 1.2, 0.08, 1.2);
+  const glow = Math.max(clamp(E / 1.2, 0.08, 1.2), flare * 1.1);
+  lastHue = hue;
   liveColor = `hsl(${hue.toFixed(0)} 80% 74%)`;
   document.documentElement.style.setProperty('--live', liveColor);
 
@@ -1053,12 +1185,27 @@ function frame(now) {
   cg.addColorStop(1, `hsla(${hue}, 90%, 50%, 0)`);
   ctx.fillStyle = cg; ctx.beginPath(); ctx.arc(cx, cy, coreR * 3, 0, 6.283); ctx.fill();
 
+  // condensing: everything it was streams into one point
+  if (phase === 'condensing') {
+    const k = Math.min(1, phaseT / CONDENSE_S);
+    for (let i = 0; i < 48; i++) {
+      const u = (wall * 0.7 + i * 0.137) % 1, a = i * 2.39996 + wall * 0.3, r = baseR0 * 1.5 * (1 - u) * (1 - k * 0.6);
+      ctx.fillStyle = `hsla(${hue + 30}, 90%, 80%, ${0.7 * u * flare})`;
+      ctx.beginPath(); ctx.arc(cx + Math.cos(a) * r, cy + Math.sin(a) * r, 1.3, 0, 6.283); ctx.fill();
+    }
+    const sr = 2 + 7 * k, sg = ctx.createRadialGradient(cx, cy, 0, cx, cy, sr * 4);
+    sg.addColorStop(0, `hsla(${hue + 50}, 100%, 95%, ${0.4 + 0.6 * k})`);
+    sg.addColorStop(1, `hsla(${hue}, 90%, 60%, 0)`);
+    ctx.fillStyle = sg; ctx.beginPath(); ctx.arc(cx, cy, sr * 4, 0, 6.283); ctx.fill();
+  }
   ctx.globalCompositeOperation = 'source-over';
 
   panelTick += dt; if (panelTick > 0.2) { panelTick = 0; updatePanel(fit); if (genomeEq !== state.eq) renderGenome(); drawGlyphs(); }
   saveTick += dt; if (saveTick > 5) { saveTick = 0; save(); }
   requestAnimationFrame(frame);
 }
+renderLineage();
+$('spec').textContent = specName(world.specimen);
 updatePanel(0);
 requestAnimationFrame(frame);
 })();
