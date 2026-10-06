@@ -171,7 +171,7 @@ form.eq { width: min(780px, 100%); background: var(--panel); backdrop-filter: bl
 /* the inspector: one panel, five tabs */
 .inspector { padding: 0; gap: 0; }
 .tabs { display: flex; border-bottom: 1px solid var(--faint); position: sticky; top: 0; z-index: 1; background: rgba(7, 13, 9, 0.92); border-radius: 4px 4px 0 0; }
-.tabs button { flex: 1; font: 500 10px var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); background: none; border: 0; border-bottom: 2px solid transparent; padding: 11px 2px 9px; cursor: pointer; }
+.tabs button { flex: 1; font: 500 9.5px var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--dim); background: none; border: 0; border-bottom: 2px solid transparent; padding: 11px 2px 9px; cursor: pointer; }
 .tabs button:hover { color: var(--ink); }
 .tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--live); }
 .tabs button:focus-visible { outline: 1px solid var(--live); outline-offset: -3px; }
@@ -192,6 +192,18 @@ form.eq { width: min(780px, 100%); background: var(--panel); backdrop-filter: bl
 .bpart i b { display: block; height: 100%; background: var(--gold); transition: width .3s linear; }
 .bpart em { font-style: normal; color: var(--dim); font-size: 10px; font-variant-numeric: tabular-nums; }
 .sub { font-size: 10.5px; color: var(--dim); }
+.office { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.office b { font: 500 26px/1.1 var(--display); color: var(--gold); }
+.fac-tag, .faction { --h: 40; }
+.fac-tag { font-size: 10.5px; color: hsl(var(--h) 75% 72%); }
+#elder, #law { display: grid; gap: 6px; }
+#law b { font-weight: 500; }
+#factions, #ballot { display: grid; gap: 8px; }
+.faction { display: grid; gap: 2px; padding-left: 8px; border-left: 2px solid hsl(var(--h) 70% 60% / 0.7); }
+.faction .row { display: flex; justify-content: space-between; font-size: 11.5px; }
+.faction .fname { color: hsl(var(--h) 75% 75%); }
+.faction .fcount { color: var(--dim); font-variant-numeric: tabular-nums; }
+.fmembers { font-size: 10.5px; }
 .hivetext { margin: 0; font-size: 11px; line-height: 1.55; color: var(--dim); }
 .empty { margin: 0; color: var(--dim); font-size: 11px; line-height: 1.5; }
 .poprow { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px; }
@@ -209,7 +221,7 @@ form.eq { width: min(780px, 100%); background: var(--panel); backdrop-filter: bl
   .ebar { width: 70px; }
   .ambition { padding: 10px 12px; gap: 6px; }
   .question { font-size: 15px; }
-  .tabs button { font-size: 9.5px; letter-spacing: 0.06em; padding: 10px 2px 8px; }
+  .tabs button { font-size: 8.5px; letter-spacing: 0.02em; padding: 10px 1px 8px; }
   .tabpanel { max-height: 36vh; overflow-y: auto; padding: 12px; }
   .needgrid { grid-template-columns: 1fr 1fr; gap: 8px 14px; }
   .need .row { font-size: 11px; }
@@ -238,6 +250,7 @@ form.eq { width: min(780px, 100%); background: var(--panel); backdrop-filter: bl
         <dt>Beauty</dt><dd id="beautyv">–</dd>
         <dt>Standing</dt><dd id="foodrole">gatherer</dd>
         <dt>Circle</dt><dd id="hivev">loner</dd>
+        <dt>Faction</dt><dd id="factionv">—</dd>
         <dt class="wide">Generation</dt><dd class="wide" id="gen">0</dd>
         <dt class="wide">Villagers</dt><dd class="wide" id="popn">1 of 6</dd>
       </dl>
@@ -254,6 +267,7 @@ form.eq { width: min(780px, 100%); background: var(--panel); backdrop-filter: bl
           <button type="button" role="tab" id="tab-beauty" data-tab="beauty" aria-controls="tp-beauty">Beauty</button>
           <button type="button" role="tab" id="tab-body" data-tab="body" aria-controls="tp-body">Elf</button>
           <button type="button" role="tab" id="tab-mind" data-tab="mind" aria-controls="tp-mind">Mind</button>
+          <button type="button" role="tab" id="tab-council" data-tab="council" aria-controls="tp-council">Council</button>
           <button type="button" role="tab" id="tab-world" data-tab="world" aria-controls="tp-world">Village</button>
           <button type="button" role="tab" id="tab-journal" data-tab="journal" aria-controls="tp-journal">Journal</button>
         </div>
@@ -285,6 +299,19 @@ form.eq { width: min(780px, 100%); background: var(--panel); backdrop-filter: bl
           <ul class="insights" id="insights"></ul>
           <div class="instinct" id="instinct"></div>
           <dl class="stats"><dt>Memory</dt><dd id="mem">no tries yet</dd></dl>
+        </div>
+        <div class="tabpanel" id="tp-council" role="tabpanel" aria-labelledby="tab-council" hidden>
+          <h3><span>Elder</span></h3>
+          <div id="elder"></div>
+          <h3><span>Law in force</span></h3>
+          <div id="law"></div>
+          <h3><span>Factions</span></h3>
+          <div id="factions"></div>
+          <h3><span>Ballot</span></h3>
+          <div id="ballot"></div>
+          <p class="hivetext" id="mypol"></p>
+          <h3><span>Council record</span></h3>
+          <ul class="log" id="polhist"></ul>
         </div>
         <div class="tabpanel" id="tp-world" role="tabpanel" aria-labelledby="tab-world" hidden>
           <h3><span>Village of Ithilwen</span></h3>
@@ -752,7 +779,7 @@ function selfRewrite(dormant) {
   }
   if (!best) return;
   const improves = best.sc > base + 0.004;
-  const explore = clamp(0.04 + 0.16 * P().o - 0.06 * P().c, 0.02, 0.25);
+  const explore = clamp(0.04 + 0.16 * P().o - 0.06 * P().c + (lawIs('inquiry') ? 0.06 : 0), 0.02, 0.3);
   if (!improves && Math.random() > (dormant ? 0.25 : explore)) { learn(best.op, -1); if (!dormant) state.E = Math.max(0, state.E - 0.01); return; }
   learn(best.op, improves ? 1 : 0, 0.15);
   if (!dormant) state.E = Math.max(0, state.E - 0.04); // awake, rewriting itself costs energy
@@ -1155,7 +1182,8 @@ function spawnFood() {
 }
 function stepFood(dt) {
   foodClock += dt;
-  if (foodClock > 5 && food.length < 14) { foodClock = 0; spawnFood(); }
+  const tithe = lawIs('tithe');
+  if (foodClock > (tithe ? 2.5 : 5) && food.length < (tithe ? 20 : 14)) { foodClock = 0; spawnFood(); }
   for (const f of food) {
     f.vx += (Math.random() - 0.5) * 8 * dt; f.vy += (Math.random() - 0.5) * 8 * dt;
     f.vx *= 1 - 0.3 * dt; f.vy *= 1 - 0.3 * dt;
@@ -1322,6 +1350,7 @@ function askQuestion(c) {
   const lead = pop.filter(o => o.phase === 'alive').sort((a, b) => b.beauty - a.beauty)[0];
   if (lead && lead !== c) qs.push({ w: 4, kind: 'beauty', target: +Math.min(0.98, lead.beauty + 0.01).toFixed(2), rival: lead.s.name, text: `Can I become more beautiful than ${lead.s.name}?` });
   else { const t = +Math.min(0.98, (c.beauty || 0) + 0.04 * amb).toFixed(2); qs.push({ w: 4, kind: 'beauty', target: t, text: `Can I reach a beauty of ${t.toFixed(2)}?` }); }
+  if (pop.length > 1 && politics().elder !== state.id) qs.push({ w: 1.5, kind: 'elder', text: 'Can I become Elder of Ithilwen?' });
   const q = weightedPick(qs, q => q.w);
   state.question = { ...q, w: undefined, age: 0, stage: q.kind === 'whatif' ? 'pending' : 'open', progress: 0, hold: 0 };
   addLog(`<i>Mused:</i> ${esc(q.text)}`);
@@ -1334,12 +1363,12 @@ function answerQuestion(text, good) {
   if (good) state.E = Math.min(1.7, state.E + 0.25);
   addLog(`<i>Answered:</i> ${esc(q.text)} <b>${esc(text)}</b>`);
   shareInsight(q.text, text);
-  state.question = null; state.qWait = 18 - 12 * P().o;
+  state.question = null; state.qWait = (18 - 12 * P().o) * (lawIs('inquiry') ? 0.6 : 1);
   if (isFocus()) uiDirty = true;
 }
 function dropQuestion(why) {
   addLog(`${why} They let the question go: ${esc(state.question.text)}`);
-  state.question = null; state.qWait = 20 - 12 * P().o;
+  state.question = null; state.qWait = (20 - 12 * P().o) * (lawIs('inquiry') ? 0.6 : 1);
   if (isFocus()) uiDirty = true;
 }
 function applyEq(src, by) {
@@ -1386,6 +1415,7 @@ function stepQuestion(c, dt) {
   else if (q.kind === 'size') { p = traits.mass / q.target; met = traits.mass >= q.target; }
   else if (q.kind === 'ancestors') { const n = new Set(state.carried.map(g => g.anc)).size; p = n / q.target; met = n >= q.target; }
   else if (q.kind === 'element') { p = (state.fusedMaxZ || 0) / (q.target + 1); met = (state.fusedMaxZ || 0) > q.target; }
+  else if (q.kind === 'elder') { p = (c.approval ?? 0.5); met = politics().elder === state.id; }
   else if (q.kind === 'beauty') { p = (c.beauty || 0) / q.target; met = (c.beauty || 0) >= q.target; }
   else if (q.kind === 'pace') {
     const o = pop.find(x => x.s.id === q.other);
@@ -1398,7 +1428,7 @@ function stepQuestion(c, dt) {
     const A = {
       electrons: `Yes. They keep ${atom.Z} wisps aglow.`, symmetry: `Yes. They are ${q.target}-fold symmetric now.`,
       size: `Yes. Their stature reached ${traits.mass.toFixed(2)}.`, ancestors: `Yes. They carry lore from ${q.target} sources.`,
-      element: `Yes. They helped craft a material of potency ${state.fusedMaxZ}.`, beauty: q.rival ? `Yes. Their beauty reached ${(c.beauty || 0).toFixed(2)}, past ${q.rival}.` : `Yes. Their beauty reached ${(c.beauty || 0).toFixed(2)}.`, pace: `Yes. They dance livelier than ${q.otherName}.`,
+      elder: 'Yes. They were elected Elder of Ithilwen.', element: `Yes. They helped craft a material of potency ${state.fusedMaxZ}.`, beauty: q.rival ? `Yes. Their beauty reached ${(c.beauty || 0).toFixed(2)}, past ${q.rival}.` : `Yes. Their beauty reached ${(c.beauty || 0).toFixed(2)}.`, pace: `Yes. They dance livelier than ${q.otherName}.`,
     };
     return answerQuestion(A[q.kind], true);
   }
@@ -1421,11 +1451,12 @@ function questionBias(op) {
 // prey flee anything that outranks them. Loose ancestral genes are the bottom of the chain.
 const rankOf = c => (c.predAmp || 0) * (0.5 + c.traits.mass) + 0.02 * c.atom.Z;
 // newborns get a short grace period, so a parent does not eat its daughter at birth
-const canEat = (p, q) => p !== q && p.phase === 'alive' && q.phase === 'alive' && !(wall - (q.bornAt ?? -99) < 20) && (p.predAmp || 0) >= 0.08 && (p.psy?.a ?? 0.5) < 0.85 && rankOf(p) > rankOf(q) * 1.3 && !(inHive(p) && inHive(q));
+const canEat = (p, q) => p !== q && p.phase === 'alive' && q.phase === 'alive' && !(wall - (q.bornAt ?? -99) < 20) && (p.predAmp || 0) >= 0.08 && (p.psy?.a ?? 0.5) < 0.85 && !lawIs('hearth') && rankOf(p) > rankOf(q) * (lawIs('challenge') ? 1.15 : 1.3) && !(inHive(p) && inHive(q));
 const bites = [];
 function bite(p, q) {
   q.s.E = Math.max(0, q.s.E - 0.45); p.s.E = Math.min(1.7, p.s.E + 0.3);
-  p.biteCool = 12;
+  p.biteCool = lawIs('challenge') ? 8 : 12;
+  if (lawIs('tithe')) p.s.E = Math.max(0, p.s.E - 0.1);
   let what = '';
   const genes = genesOf(q);
   if (genes.length && p.s.carried.length < 6) {
@@ -1685,6 +1716,8 @@ function updatePanel(fit) {
   renderPsyche();
   renderBeauty();
   if (tab === 'world') renderVillage();
+  if (tab === 'council') renderCouncil();
+  $('factionv').textContent = (focus.factionObj || factionOf(focus)).name + (world.politics?.elder === focus.s.id ? ' · Elder' : '');
   $('hivev').textContent = inHive(focus) ? (focus.hiveSize > 1 ? `Circle of ${focus.hiveSize}` : 'Circle-ready, alone') : 'loner';
   $('hivedetail').innerHTML = inHive(focus) ? `Sits in the Circle with ${focus.hiveSize - 1 ? hiveMembers().filter(o => o !== focus).map(o => o.s.name).join(', ') : 'no one yet'}, with a bond of ${focus.hiveAmp.toFixed(2)}. Members pool vigor, share insights, instincts and lore, and never challenge one another.` : `A loner. Their circle coefficient is ${(focus.hiveAmp || 0).toFixed(2)}; at 0.05 or more they would join the Circle.`;
   const E = state.E;
@@ -1707,10 +1740,11 @@ function updatePanel(fit) {
   else if (phase === 'alive' && focus.chasing) { sig = `They are challenging ${focus.chasing.s.name}.`; key = 'hunt'; }
   else if (phase === 'alive' && focus.seeking && E < 0.6) { sig = `They are weary, and gathering lore from ${focus.seeking.anc}.`; key = 'forage'; }
   else if (phase === 'alive' && E >= 1.65) { sig = pop.length < MAX_POP ? 'They are brimming with vigor, and an elfling is about to be born.' : 'They are brimming with vigor, but the village is full.'; key = 'split'; }
+  if (phase === 'alive' && votes.length && wall - votes[0].t < VOTE_SHOW) { sig = `The village has voted. ${world.politics.elderName} is Elder, and ${FACTION[world.politics.faction].law.name} is the law.`; key = 'vote'; }
   if (phase === 'condensing') { sig = `Their wisps have gone out. They are passing into the Ancestor Grove as a tree that keeps all ${state.history.length} of their songs.`; key = 'condense'; }
   else if (phase === 'birth') { sig = 'A new elf wanders into the glade.'; key = 'birth'; }
   $('signal').textContent = sig;
-  if (key !== lastSignalKey) { lastSignalKey = key; $('hint').textContent = HINTS[key] || (key === 'birth' ? 'Their song starts as a plain 1. Give them their first form.' : key === 'condense' ? 'Their tree joins the Ancestor Grove, listed under Village.' : key === 'beauty' ? 'Beauty is scored from order, symmetry, balanced complexity, golden proportion, grace and radiance.' : key === 'flee' ? 'The neuroticism value in psyche(θ, …) sets how warily they avoid rivals.' : key === 'hunt' ? 'The coefficient of rival(θ), with their stature, sets their standing.' : key === 'forage' ? 'Lore that drifts close together inside them kindles vigor.' : key === 'harmony' ? 'Elves harmonize when their lobe counts form a simple ratio, like 1:1 or 2:1, and they move with a similar liveliness.' : key === 'split' ? 'At full vigor an elf has an elfling, whose genes vary a little.' : key === 'spiral' ? 'A form that pleases them gives them the vigor to lift their wisps again.' : key === 'dormant' ? 'If every wisp goes out, they pass into the Ancestor Grove.' : 'Change any term to give them something new.'); }
+  if (key !== lastSignalKey) { lastSignalKey = key; $('hint').textContent = HINTS[key] || (key === 'birth' ? 'Their song starts as a plain 1. Give them their first form.' : key === 'condense' ? 'Their tree joins the Ancestor Grove, listed under Village.' : key === 'vote' ? 'Each elf votes by their faction, the Circle, harmony, beauty, wisdom and old grudges.' : key === 'beauty' ? 'Beauty is scored from order, symmetry, balanced complexity, golden proportion, grace and radiance.' : key === 'flee' ? 'The neuroticism value in psyche(θ, …) sets how warily they avoid rivals.' : key === 'hunt' ? 'The coefficient of rival(θ), with their stature, sets their standing.' : key === 'forage' ? 'Lore that drifts close together inside them kindles vigor.' : key === 'harmony' ? 'Elves harmonize when their lobe counts form a simple ratio, like 1:1 or 2:1, and they move with a similar liveliness.' : key === 'split' ? 'At full vigor an elf has an elfling, whose genes vary a little.' : key === 'spiral' ? 'A form that pleases them gives them the vigor to lift their wisps again.' : key === 'dormant' ? 'If every wisp goes out, they pass into the Ancestor Grove.' : 'Change any term to give them something new.'); }
 }
 
 /* ---------- the only interface: the equation ---------- */
@@ -1772,7 +1806,7 @@ input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefau
 addEventListener('resize', () => { sizedFor = null; sizeEq(); });
 
 /* ---------- inspector tabs and the panel toggle ---------- */
-const TABS = ['beauty', 'body', 'mind', 'world', 'journal'];
+const TABS = ['beauty', 'body', 'mind', 'council', 'world', 'journal'];
 const narrow = () => matchMedia('(max-width: 720px)').matches;
 let tab = null;
 try { tab = localStorage.getItem('vd-tab'); } catch (_) {}
@@ -2031,7 +2065,7 @@ function genesOf(c) {
     const list = addends(c.curAst);
     c.genes = list.filter(x => x.n.k !== 'num' && !isDrive(show(x.n))).map(x => ({ src: show(x.n), sign: x.sign }));
     c.seekAmp = driveAmp(c.curAst, 'forage'); c.growAmp = driveAmp(c.curAst, 'grow');
-    c.predAmp = driveAmp(c.curAst, 'rival'); c.psy = readPsyche(c); c.hiveAmp = driveAmp(c.curAst, 'circle');
+    c.predAmp = driveAmp(c.curAst, 'rival'); c.psy = readPsyche(c); c.hiveAmp = driveAmp(c.curAst, 'circle'); c.ideo = ideologyOf(c);
     c.nucleus = list.filter(x => x.n.k === 'num').reduce((t, x) => t + x.sign * x.n.v, 0);
   }
   return c.genes;
@@ -2371,6 +2405,8 @@ function renderVillage() {
   const top = alive.slice().sort((a, b) => rankOf(b) - rankOf(a))[0];
   const rows = [
     ['Villagers', `${pop.length} of ${MAX_POP}`],
+    ['Elder', elderOf() ? `${elderOf().s.name}, ${FACTION[world.politics.faction].name}` : 'none yet'],
+    ['Law', world.politics?.law ? FACTION[world.politics.faction].law.name : 'none'],
     ['Fairest', leader ? `${leader.s.name}, ${leader.beauty.toFixed(2)}` : '—'],
     ['Village beauty', mean(o => o.beauty || 0).toFixed(2)],
     ['Prosperity', `${mean(o => o.s.E).toFixed(2)} mean vigor`],
@@ -2383,6 +2419,141 @@ function renderVillage() {
     ['Eldest line', `generation ${Math.max(0, ...pop.map(o => o.s.gen))}`],
   ];
   $('vstats').innerHTML = rows.map(([k, v]) => `<dt>${k}</dt><dd>${esc(String(v))}</dd>`).join('');
+}
+
+/* ---------- the council of Ithilwen: factions, elections, laws ---------- */
+// Every elf belongs to a faction, read from their own genes: the five personality traits and
+// the strength of their rival and circle genes. Every term the village elects an Elder; the
+// Elder's faction puts its law in force, and the law changes how the village works. Approval
+// is tracked, and if it falls too low the council forces a new election.
+const TERM = 120, VOTE_SHOW = 3.5;
+const FACTIONS = [
+  { id: 'old', name: 'The Old Song', hue: 42, creed: 'Honor the ancestors and keep the old songs.',
+    law: { id: 'tithe', name: 'Grove Tithe', effect: 'Lore leaves fall twice as often. Challenges cost the challenger 0.1 vigor.' } },
+  { id: 'bright', name: 'The Bright Path', hue: 195, creed: 'Seek new songs and bold questions.',
+    law: { id: 'inquiry', name: 'Open Questions', effect: 'Musings come faster, and elves try more experiments.' } },
+  { id: 'free', name: 'The Free Glade', hue: 8, creed: 'Let every elf rise by their own strength.',
+    law: { id: 'challenge', name: 'Right of Challenge', effect: 'Elves may challenge across a smaller gap in standing, and more often.' } },
+  { id: 'accord', name: 'The Accord', hue: 150, creed: 'Share the hearth. No elf left fading.',
+    law: { id: 'hearth', name: 'Common Hearth', effect: 'All elves slowly pool their vigor. Challenges are forbidden.' } },
+];
+const FACTION = Object.fromEntries(FACTIONS.map(f => [f.id, f]));
+function lawIs(id) { return world.politics?.law === id; }
+function ideologyOf(c) {
+  const p = c.psy || NEUTRAL;
+  const v = [
+    0.6 * p.c + 0.4 * (1 - p.o),
+    0.7 * p.o + 0.3 * p.x,
+    0.6 * (1 - p.a) + 0.4 * Math.min(1, (c.predAmp || 0) * 3),
+    0.6 * p.a + 0.4 * Math.min(1, (c.hiveAmp || 0) * 5),
+  ];
+  const n = Math.hypot(...v) || 1;
+  return v.map(x => x / n);
+}
+const factionOf = c => FACTIONS[(c.ideo || [1, 0, 0, 0]).reduce((bi, x, i, a) => x > a[bi] ? i : bi, 0)];
+const ideoSim = (a, b) => (a.ideo || []).reduce((t, x, i) => t + x * (b.ideo?.[i] || 0), 0);
+function politics() { return world.politics || (world.politics = { timer: 20, law: null, elder: null, approval: 1, low: 0, history: [], last: null }); }
+const elderOf = () => { const P = politics(); return pop.find(c => c.s.id === P.elder && c.phase === 'alive') || null; };
+let votes = [];
+function addHistory(text) { const P = politics(); P.history.unshift({ text }); P.history = P.history.slice(0, 8); }
+// how much a voter favors a candidate
+function affinity(v, k) {
+  let a = ideoSim(v, k);
+  if (v === k) a += 0.5;
+  if (k === leader) a += 0.2;                                  // elves are swayed by beauty
+  if (inHive(v) && inHive(k)) a += 0.3;                        // the Circle votes together
+  const ps = pairs.get(Math.min(v.s.id, k.s.id) + ':' + Math.max(v.s.id, k.s.id));
+  if (ps && ps.h > HARMONY) a += 0.15;
+  if (world.chain[`${k.s.name} → ${v.s.name}`]) a -= 0.3;      // grudges from lost challenges
+  a += Math.min(0.2, (k.s.insightCount || 0) * 0.03);          // wisdom
+  return a;
+}
+function holdElection(reason) {
+  const P = politics(), alive = pop.filter(c => c.phase === 'alive');
+  if (!alive.length) return;
+  // who stands: the ambitious, the outgoing, the wise; always at least one
+  const standScore = c => (c.psy || NEUTRAL).x * 0.5 + (c.psy || NEUTRAL).o * 0.2 + Math.min(0.3, (c.s.insightCount || 0) * 0.05) + rankOf(c) + (c.s.question?.kind === 'elder' ? 1 : 0) + (c.s.id === P.elder ? 0.3 : 0);
+  let cands = alive.filter(c => standScore(c) > 0.55).sort((a, b) => standScore(b) - standScore(a)).slice(0, 4);
+  if (!cands.length) cands = [alive.slice().sort((a, b) => standScore(b) - standScore(a))[0]];
+  const tally = new Map(cands.map(c => [c, 0]));
+  votes = [];
+  for (const v of alive) {
+    const pickC = cands.reduce((best, k) => affinity(v, k) > affinity(v, best) ? k : best, cands[0]);
+    tally.set(pickC, tally.get(pickC) + 1);
+    votes.push({ from: v, to: pickC, t: wall });
+    v.s.votedFor = pickC.s.name;
+  }
+  const ranked = cands.slice().sort((a, b) => tally.get(b) - tally.get(a) || (b.beauty || 0) - (a.beauty || 0));
+  const win = ranked[0], f = factionOf(win), prevLaw = P.law;
+  P.elder = win.s.id; P.elderName = win.s.name; P.faction = f.id; P.law = f.law.id; P.timer = TERM; P.low = 0;
+  P.last = { reason, results: ranked.map(c => ({ name: c.s.name, faction: factionOf(c).id, votes: tally.get(c) })), voters: alive.length };
+  const line = `${win.s.name} of ${f.name} was elected Elder with ${tally.get(win)} of ${alive.length} votes${reason ? ` (${reason})` : ''}.`;
+  addHistory(line + (prevLaw !== P.law ? ` Law: ${f.law.name}.` : ''));
+  for (const v of alive) logTo(v, v === win ? `<b>Elected Elder of Ithilwen</b> for ${f.name}. Law: <b>${f.law.name}</b>.` : `Voted for <b>${v.s.votedFor}</b>. <b>${win.s.name}</b> of ${f.name} was elected Elder.`);
+  announce(line + ` ${f.law.name} is now the law.`);
+  uiDirty = true; save();
+}
+function stepPolitics(dt) {
+  const P = politics(), alive = pop.filter(c => c.phase === 'alive');
+  for (const c of pop) c.factionObj = factionOf(c);
+  let elder = elderOf();
+  if (P.elder != null && !elder) { addHistory(`Elder ${P.elderName} is gone. The village must choose again.`); P.elder = null; P.timer = Math.min(P.timer, 6); }
+  P.timer -= dt;
+  if (P.timer <= 0 && alive.length) { holdElection(P.elder == null ? '' : 'the term ended'); elder = elderOf(); }
+  if (!elder) return;
+  // the Elder receives a small tribute from each villager
+  elder.s.E = Math.min(1.7, elder.s.E + 0.01 * (alive.length - 1) * dt);
+  // the Common Hearth: everyone's vigor drifts toward the village mean
+  if (lawIs('hearth') && alive.length > 1) {
+    const m = alive.reduce((t, c) => t + c.s.E, 0) / alive.length;
+    for (const c of alive) c.s.E = clamp(c.s.E + (m - c.s.E) * 0.12 * dt, 0, 1.7);
+  }
+  // approval of the Elder
+  let sum = 0, n = 0;
+  for (const c of alive) {
+    if (c === elder) { c.approval = 1; continue; }
+    const mine = c.factionObj.id === P.faction ? 0.1 : -0.05;
+    c.approval = clamp(0.5 * ideoSim(c, elder) + 0.3 * (c.fit || 0) + 0.2 * (c.s.E / 1.7) + mine, 0, 1);
+    sum += c.approval; n++;
+  }
+  P.approval = n ? sum / n : 1;
+  // a motion of no confidence
+  P.low = P.approval < 0.35 && TERM - P.timer > 30 ? P.low + dt : 0;
+  if (P.low > 15) { addHistory(`The council lost confidence in ${elder.s.name} (approval ${(P.approval * 100).toFixed(0)}%).`); holdElection('after a vote of no confidence'); }
+}
+function drawVotes() {
+  for (const v of votes) {
+    const k = (wall - v.t) / VOTE_SHOW;
+    if (k > 1 || !pop.includes(v.from) || !pop.includes(v.to) || v.from === v.to) continue;
+    const dx = wrapD(v.to.x - v.from.x, W), dy = wrapD(v.to.y - v.from.y, H), f = factionOf(v.to);
+    ctx.strokeStyle = `hsla(${f.hue}, 80%, 72%, ${0.7 * (1 - k)})`; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(v.from.x, v.from.y); ctx.lineTo(v.from.x + dx * Math.min(1, k * 3), v.from.y + dy * Math.min(1, k * 3)); ctx.stroke();
+  }
+}
+function renderCouncil() {
+  const P = politics(), elder = elderOf(), f = elder ? FACTION[P.faction] : null;
+  const pct = x => `${Math.round(x * 100)}%`;
+  $('elder').innerHTML = elder
+    ? `<div class="office"><b>${esc(elder.s.name)}</b><span style="--h:${f.hue}" class="fac-tag">${f.name}</span></div><div class="sub">Elder of Ithilwen · approval ${pct(P.approval)} · next election in ${Math.max(0, P.timer).toFixed(0)}s</div><div class="qbar"><i style="width:${(100 * (1 - Math.max(0, P.timer) / TERM)).toFixed(0)}%"></i></div>`
+    : `<div class="sub">No Elder yet. The village votes in ${Math.max(0, P.timer).toFixed(0)}s.</div>`;
+  $('law').innerHTML = f ? `<b>${f.law.name}</b><div class="sub">${f.law.effect}</div>` : '<div class="sub">No law is in force.</div>';
+  $('factions').innerHTML = FACTIONS.map(fa => {
+    const members = pop.filter(c => c.factionObj?.id === fa.id);
+    return `<div class="faction" style="--h:${fa.hue}"><div class="row"><span class="fname">${fa.name}</span><span class="fcount">${members.length}</span></div><div class="sub">${fa.creed} Law: ${fa.law.name}.</div><div class="fmembers">${members.map(c => esc(c.s.name) + (c.s.id === P.elder ? ' (Elder)' : '')).join(', ') || 'no members'}</div></div>`;
+  }).join('');
+  const L = P.last;
+  $('ballot').innerHTML = L ? `<div class="sub">Last election${L.reason ? `, ${esc(L.reason)}` : ''}: ${L.voters} voted.</div>` + L.results.map(r => `<div class="bpart"><span>${esc(r.name)}</span><i><b style="width:${(r.votes / Math.max(1, L.voters) * 100).toFixed(0)}%;background:hsl(${FACTION[r.faction].hue} 70% 65%)"></b></i><em>${r.votes}</em></div>`).join('') : '<div class="sub">No election has been held yet.</div>';
+  $('polhist').innerHTML = P.history.map(h => `<li>${esc(h.text)}</li>`).join('');
+  const me = focus, mf = me.factionObj || factionOf(me);
+  $('mypol').textContent = `${me.s.name} belongs to ${mf.name}${me.s.votedFor ? ` and last voted for ${me.s.votedFor}` : ''}${elder && me !== elder ? `. Approval of the Elder: ${pct(me.approval ?? 0)}.` : elder === me ? '. They are the Elder.' : '.'}`;
+}
+// a gold circlet for the Elder, drawn over the elf's head
+function drawCirclet(cx, cy, s) {
+  const hy = cy + s * 0.08 - s * 0.24 - s * 0.1;
+  ctx.strokeStyle = 'rgba(240, 205, 120, 0.95)'; ctx.lineWidth = 1.6;
+  ctx.beginPath(); ctx.ellipse(cx, hy, s * 0.15, s * 0.05, 0, Math.PI, 2 * Math.PI); ctx.stroke();
+  ctx.fillStyle = 'rgba(255, 225, 150, 0.95)';
+  for (const dx of [-0.1, 0, 0.1]) { ctx.beginPath(); ctx.arc(cx + dx * s, hy - s * 0.045 - (dx ? 0 : s * 0.02), s * 0.022, 0, 6.283); ctx.fill(); }
 }
 
 /* ---------- choosing which elf to watch ---------- */
@@ -2566,7 +2737,9 @@ function drawBodyAt(c, cx, cy, R0, mean, first) {
 
   // the elf, over their aura; their heart-light shows at the chest
   ctx.globalCompositeOperation = 'source-over';
-  drawElf(cx, cy, R0 * 1.2 * (phase === 'condensing' ? 1 - Math.min(1, phaseT / CONDENSE_S) : 1), hue, glow, c.phi);
+  const elfS = R0 * 1.2 * (phase === 'condensing' ? 1 - Math.min(1, phaseT / CONDENSE_S) : 1);
+  drawElf(cx, cy, elfS, hue, glow, c.phi);
+  if (world.politics?.elder === state.id) drawCirclet(cx, cy, elfS);
   ctx.globalCompositeOperation = 'lighter';
   { const hr = ctx.createRadialGradient(cx, cy + R0 * 0.07, 0, cx, cy + R0 * 0.07, R0 * 0.16);
     hr.addColorStop(0, `hsla(${hue + 20}, 100%, 85%, ${0.5 + 0.4 * Math.min(1, glow)})`); hr.addColorStop(1, `hsla(${hue}, 90%, 60%, 0)`);
@@ -2597,6 +2770,7 @@ function drawBodyAt(c, cx, cy, R0, mean, first) {
   ctx.font = '10px "IBM Plex Mono", monospace'; ctx.textAlign = 'center';
   ctx.fillStyle = `hsla(${hue}, 60%, 82%, ${me ? 0.9 : 0.45})`;
   ctx.fillText(state.name, cx, cy + mean * 1.25 + 16);
+  if (c.factionObj) { ctx.fillStyle = `hsla(${c.factionObj.hue}, 75%, 65%, ${me ? 0.95 : 0.55})`; ctx.beginPath(); ctx.arc(cx - ctx.measureText(state.name).width / 2 - 6, cy + mean * 1.25 + 12.5, 2.5, 0, 6.283); ctx.fill(); }
   ctx.textAlign = 'start';
   if (me) {
     const s = mean * 1.3 + 10, l = Math.max(6, s * 0.22);
@@ -2616,6 +2790,7 @@ function frame(now) {
   stepWorld(dt);
   stepHive(dt);
   stepBeauty(dt);
+  stepPolitics(dt);
   stepFood(dt);
   stepChemistry(dt);
 
@@ -2631,6 +2806,7 @@ function frame(now) {
   ctx.globalCompositeOperation = 'source-over';
   for (const c of pop) { enter(c); drawCreature(c); leave(c); }
   drawCrown();
+  drawVotes();
 
   enter(focus);
   if (uiDirty) { uiDirty = false; refreshFocusUI(); }
