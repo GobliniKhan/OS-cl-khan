@@ -69,6 +69,7 @@ h1 { margin: 0; font-family: var(--display); font-weight: 500; font-size: 34px; 
 .fac.wave { color: var(--live); }
 .fac.energy { color: var(--gold); }
 .facs .x, .facs .sg { color: var(--dim); font-size: 10px; }
+.facs .role { color: var(--dim); font-size: 10px; letter-spacing: 0.06em; min-width: 3.4em; }
 .gmeta { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0 8px; margin-top: 3px; font-size: 10.5px; color: var(--dim); }
 .gmeta .dec { min-width: 0; }
 .origin { white-space: nowrap; }
@@ -114,7 +115,7 @@ form.eq { width: min(780px, 100%); background: var(--panel); backdrop-filter: bl
 @media (max-width: 720px) {
   .top { flex-direction: column; justify-content: flex-start; gap: 10px; overflow-y: auto; pointer-events: auto; }
   .col { width: 100%; max-height: none; overflow: visible; gap: 10px; }
-  .journal, .instinct, .lineage { display: none; }
+  .journal, .instinct, .lineage, .vitals .wide { display: none; }
   .genome { padding: 10px 12px; gap: 8px; }
   #genes { display: flex; gap: 14px; overflow-x: auto; scrollbar-width: none; }
   .gene { min-width: 250px; }
@@ -143,12 +144,15 @@ form.eq { width: min(780px, 100%); background: var(--panel); backdrop-filter: bl
       <div class="id">
         <div class="eyebrow">Specimen <span id="spec">VD-01</span> · deep field</div>
         <h1>Void Drifter</h1>
-        <p class="lede">It drifts alone in empty space and makes its own energy. Its body is the equation at the bottom of the screen, and that equation is the only way to reach it. It remembers every equation you try. Your misses become stepping stones it builds from when it rewrites itself, even while dormant. If its energy reaches zero, it condenses into a gene holding all its equations, and a blank creature takes its place, learning from the genes of those before it.</p>
+        <p class="lede">Built like Rutherford’s atom: a tiny, dense nucleus with one electron per gene orbiting through empty space. Orbiting electrons radiate and spiral inward, and only its own energy holds them out. Its body is the equation below, the only way to reach it. It learns from your tries and rewrites itself. When its atom collapses, it condenses into a gene its successors learn from.</p>
         <dl class="vitals">
           <dt>Gen</dt><dd id="gen">0</dd>
-          <dt>Rewrites</dt><dd id="rw">0</dd>
-          <dt>Memory</dt><dd id="mem">no tries yet</dd>
-          <dt>Lineage</dt><dd id="lin">none yet</dd>
+          <dt class="wide">Rewrites</dt><dd class="wide" id="rw">0</dd>
+          <dt class="wide">Memory</dt><dd class="wide" id="mem">no tries yet</dd>
+          <dt class="wide">Lineage</dt><dd class="wide" id="lin">none yet</dd>
+          <dt>Nucleus</dt><dd id="nuc">+1</dd>
+          <dt>Electrons</dt><dd id="orb">1/1 in orbit</dd>
+          <dt class="wide">α foil</dt><dd class="wide" id="foil">0 through</dd>
           <dt>State</dt><dd id="mood">Steady</dd>
           <dt>Energy</dt><dd><span id="energy">0.80</span><div class="ebar"><i id="ebar"></i></div></dd>
         </dl>
@@ -184,7 +188,7 @@ form.eq { width: min(780px, 100%); background: var(--panel); backdrop-filter: bl
       </div>
       <div class="meta">
         <span id="status">Edit the equation. Press Enter, or pause, to let it absorb the change. Leave it alone and it edits itself.</span>
-        <span class="ref"><code>θ</code>/<code>theta</code> angle · <code>t</code> its clock · <code>E</code> its energy · <code>g</code> generation · <code>sin cos tan abs sqrt exp log pow min max mod noise(x,y)</code></span>
+        <span class="ref"><code>θ</code>/<code>theta</code> angle · <code>t</code> its clock · <code>E</code> its energy · <code>g</code> generation · <code>Z</code> nuclear charge · <code>sin cos tan abs sqrt exp log pow min max mod noise(x,y)</code></span>
       </div>
     </form>
   </div>
@@ -215,7 +219,7 @@ const FUNCS = {
   pow: [Math.pow, 2, 2], mod: [(a, b) => ((a % b) + b) % b, 2, 2],
   min: [Math.min, 1, 8], max: [Math.max, 1, 8], noise: [vnoise, 1, 2],
 };
-const NAMES = { theta: 'theta', 'θ': 'theta', th: 'theta', t: 't', E: 'E', g: 'g', pi: 'pi', 'π': 'pi' };
+const NAMES = { theta: 'theta', 'θ': 'theta', th: 'theta', t: 't', E: 'E', g: 'g', Z: 'Z', pi: 'pi', 'π': 'pi' };
 
 function tokenize(s) {
   const out = []; let i = 0;
@@ -285,7 +289,7 @@ function parse(src) {
         return call(name, args);
       }
       if (NAMES[name]) return v(NAMES[name]);
-      throw new Error(`"${name}" is unknown. Use θ (or theta), t, E, g, pi, or a listed function.`);
+      throw new Error(`"${name}" is unknown. Use θ (or theta), t, E, g, Z, pi, or a listed function.`);
     }
     throw new Error(`Unexpected "${tk.v}".`);
   }
@@ -328,7 +332,7 @@ function compile(src) {
   const f = build(ast);
   // it has to produce a body somewhere
   let ok = 0;
-  for (let k = 0; k < 24; k++) { const r = f({ theta: k / 24 * Math.PI * 2, t: k * 0.37, E: 0.8, g: 1 }); if (Number.isFinite(r)) ok++; }
+  for (let k = 0; k < 24; k++) { const r = f({ theta: k / 24 * Math.PI * 2, t: k * 0.37, E: 0.8, g: 1, Z: 2 }); if (Number.isFinite(r)) ok++; }
   if (!ok) throw new Error('That gives no finite radius at any angle.');
   return { ast, f };
 }
@@ -440,7 +444,7 @@ const N = 128, KMAX = 32;
 const COS = [], SIN = [];
 for (let k = 0; k <= KMAX; k++) { COS[k] = new Float32Array(N); SIN[k] = new Float32Array(N); for (let j = 0; j < N; j++) { const a = 2 * Math.PI * k * j / N; COS[k][j] = Math.cos(a); SIN[k][j] = Math.sin(a); } }
 const rA = new Float32Array(N), rB = new Float32Array(N);
-const env = { theta: 0, t: 0, E: 0.8, g: 0 };
+const env = { theta: 0, t: 0, E: 0.8, g: 0, Z: 1 };
 const ease = k => k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
 function safe(v) { v = Math.abs(v); return Number.isFinite(v) ? Math.min(v, 2.6) : 0; }
 function R(theta, t) {
@@ -781,20 +785,21 @@ function decode(n) {
     } else if (w.k === 'call' && w.f === 'noise') parts.push('texture');
     else parts.push('compound');
   }
-  return parts.length ? `amp ${fmtNum(amp)} · ${parts.join(' · ')}` : `core ${fmtNum(amp)}`;
+  return parts.length ? `amp ${fmtNum(amp)} · ${parts.join(' · ')}` : `mass ${fmtNum(amp)}`;
 }
 let genomeEq = null, glyphs = [], liveColor = 'hsl(230 80% 74%)';
 function renderGenome() {
   genomeEq = state.eq;
   const list = addends(curAst), old = new Set(glyphs.map(g => g.src));
   $('gcount').textContent = `${list.length} gene${list.length === 1 ? '' : 's'}`;
-  const box = $('genes'); box.innerHTML = ''; glyphs = [];
+  const box = $('genes'); box.innerHTML = ''; glyphs = []; let eIdx = 0;
   for (const x of list) {
     const src = show(x.n), o = state.origins[src] || { k: 'self', label: 'self' };
     const el = document.createElement('div');
     el.className = 'gene' + (old.size && !old.has(src) ? ' fresh' : '');
     const facs = factorsOf(x.n).map(f => `<span class="fac ${factorKind(f)}" title="${esc(show(f))}">${esc(show(f))}</span>`).join('<span class="x">×</span>');
-    el.innerHTML = `<canvas width="80" height="80" aria-hidden="true"></canvas><div><div class="facs">${x.sign < 0 ? '<span class="sg">−</span>' : ''}${facs}</div><div class="gmeta"><span class="dec">${esc(decode(x.n))}</span><span class="origin ${o.k}">${esc(o.label)}</span></div></div>`;
+    const role = x.n.k === 'num' ? 'nucleus' : `e⁻${++eIdx}`;
+    el.innerHTML = `<canvas width="80" height="80" aria-hidden="true"></canvas><div><div class="facs"><span class="role">${role}</span>${x.sign < 0 ? '<span class="sg">−</span>' : ''}${facs}</div><div class="gmeta"><span class="dec">${esc(decode(x.n))}</span><span class="origin ${o.k}">${esc(o.label)}</span></div></div>`;
     box.appendChild(el);
     glyphs.push({ src, f: build(x.n), sign: x.sign, cv: el.querySelector('canvas') });
   }
@@ -803,7 +808,7 @@ function renderGenome() {
   $('instinct').innerHTML = `<div class="ttl">Learned instincts</div>` + ranked.map(([op, w]) => `<div class="inst"><span>${OP_LABEL[op]}</span><i style="width:${(w / top * 100).toFixed(0)}%"></i></div>`).join('');
 }
 function drawGlyphs() {
-  const e = { theta: 0, t: T, E: state.E, g: state.gen };
+  const e = { theta: 0, t: T, E: state.E, g: state.gen, Z: atom.Z };
   for (const g of glyphs) {
     const c = g.cv.getContext('2d'), vals = [];
     let mx = 1e-6;
@@ -902,23 +907,27 @@ function updatePanel(fit) {
     e.el.classList.toggle('urgent', score > 0.45);
   }
   $('fit').textContent = 'fit ' + fit.toFixed(2);
+  $('nuc').textContent = `+${atom.Z} · mass ${traits.mass.toFixed(2)}`;
+  $('orb').textContent = `${atom.bound}/${atom.Z} in orbit · r ${atom.avgR.toFixed(2)}`;
+  $('foil').textContent = `${foil.passed} through · ${foil.deflected} >10° · ${foil.back} >90°`;
   const E = state.E;
   $('energy').textContent = E.toFixed(2);
   $('ebar').style.width = (E / 1.7 * 100).toFixed(1) + '%';
   const mood = E < 0.15 ? 'Dormant' : E < 0.4 ? 'Hungry' : E < 0.85 ? 'Steady' : E < 1.3 ? 'Thriving' : 'Radiant';
   $('mood').textContent = mood;
   let sig, key;
-  if (E < 0.15) { sig = state.memory.length ? 'Dormant. It is rewriting itself in its sleep, working through your old tries. At zero it condenses into a gene.' : world.seeds.length ? 'Dormant. It is rewriting itself in its sleep, working through its ancestors\u2019 genes. At zero it condenses into a gene.' : 'Dormant. It is rewriting itself in its sleep, working blind. At zero it condenses into a gene.'; key = 'dormant'; }
+  if (E < 0.15) { sig = state.memory.length ? 'Dormant. Its electrons are spiraling in while it rewrites itself in its sleep, working through your old tries.' : world.seeds.length ? 'Dormant. Its electrons are spiraling in while it rewrites itself in its sleep, working through its ancestors\u2019 genes.' : 'Dormant. Its electrons are spiraling in while it rewrites itself in its sleep, working blind.'; key = 'dormant'; }
   else if (fit > 0.8) { sig = 'Its needs are met. It is storing energy, and growing restless.'; key = 'content'; }
   else {
     const d = NEED_DEFS[urgent.key], up = urgent.target > traits[urgent.key];
     sig = SIGNALS[urgent.key][up ? 0 : 1](d.fmt(traits[urgent.key]), d.fmt(urgent.target));
     key = urgent.key;
   }
-  if (phase === 'condensing') { sig = `Its energy is gone. It is condensing into a gene that holds all ${state.history.length} of its equations.`; key = 'condense'; }
+  if (phase === 'alive' && atom.avgR < 0.55 && E >= 0.15) { sig = 'Its electrons radiate as they orbit and are spiraling toward the nucleus. It needs energy to hold them out.'; key = 'spiral'; }
+  if (phase === 'condensing') { sig = `Its orbits have collapsed into the nucleus. It is condensing into a gene that holds all ${state.history.length} of its equations.`; key = 'condense'; }
   else if (phase === 'birth') { sig = 'A blank creature forms in the void and takes over.'; key = 'birth'; }
   $('signal').textContent = sig;
-  if (key !== lastSignalKey) { lastSignalKey = key; $('hint').textContent = HINTS[key] || (key === 'birth' ? 'Its equation starts as a plain 1. Give it its first form.' : key === 'condense' ? 'Its gene is listed under Lineage.' : 'Change any term to give it something new.'); }
+  if (key !== lastSignalKey) { lastSignalKey = key; $('hint').textContent = HINTS[key] || (key === 'birth' ? 'Its equation starts as a plain 1. Give it its first form.' : key === 'condense' ? 'Its gene is listed under Lineage.' : key === 'spiral' ? 'A form that meets its needs gives it the energy to lift its electrons back out.' : key === 'dormant' ? 'If every electron falls into the nucleus, the atom collapses and it condenses into a gene.' : 'Change any term to give it something new.'); }
 }
 
 /* ---------- the only interface: the equation ---------- */
@@ -968,7 +977,7 @@ $('form').addEventListener('submit', e => { e.preventDefault(); clearTimeout(par
 
 /* ---------- life cycle: at zero energy it condenses into a gene ---------- */
 const CONDENSE_S = 4, BIRTH_S = 3;
-let phase = 'alive', phaseT = 0, zeroFor = 0, lastHue = 230, lastCx = 0, lastCy = 0;
+let phase = 'alive', phaseT = 0, lastHue = 230, lastCx = 0, lastCy = 0;
 const seedAnim = new Map(), seedFns = new Map();
 const specName = n => 'VD-' + String(n).padStart(2, '0');
 const BY = { you: 'you', self: 'self', dormant: 'asleep', birth: 'birth', origin: 'origin' };
@@ -1003,6 +1012,7 @@ function adopt() {
   const c = compile(state.eq);
   cur = committedF = c.f; curAst = committedAst = c.ast; committedEq = state.eq; prev = null; morph = 1;
   input.value = state.eq; genomeEq = null; glyphs = []; contentFor = 0; rewriteClock = 0;
+  electrons.length = 0; syncElectrons();
   analyze(T, 1);
   buildNeeds();
   $('spec').textContent = specName(world.specimen);
@@ -1026,7 +1036,7 @@ function finishCondense() {
   const ancN = world.seeds.reduce((t, sd) => t + ancestralGenes(sd).length, 0);
   state.log = [{ g: 0, text: `Formed blank in the void after <b>${seed.name}</b> condensed into a gene of ${seed.equations.length} equation${seed.equations.length === 1 ? '' : 's'}. It can learn from <span class="anc">${ancN} ancestral genes</span>${Object.keys(state.instinct).length ? ' and starts with instincts inherited from them' : ''}.` }];
   adopt();
-  phase = 'birth'; phaseT = 0; zeroFor = 0;
+  phase = 'birth'; phaseT = 0; collapseFor = 0;
   setStatus(`${seed.name} condensed into a gene. A blank creature has taken over.`);
   renderLineage(); save();
 }
@@ -1040,7 +1050,7 @@ function renderLineage() {
 }
 // condensed genes hold a slow ring around whoever is alive now
 function drawSeeds(ox, oy, R0) {
-  const e = { theta: 0, t: T * 0.4, E: 0.5, g: 1 };
+  const e = { theta: 0, t: T * 0.4, E: 0.5, g: 1, Z: 2 };
   for (const s of world.seeds) {
     if (!seedFns.has(s.id)) { let f; try { f = compile(s.eq).f; } catch (_) { f = () => 1; } seedFns.set(s.id, f); }
     const f = seedFns.get(s.id), an = seedAnim.get(s.id);
@@ -1060,6 +1070,118 @@ function drawSeeds(ox, oy, R0) {
     ctx.closePath();
     ctx.strokeStyle = `hsla(${s.hue}, 90%, 82%, ${0.85 * pulse})`; ctx.lineWidth = 1; ctx.stroke();
     ctx.fillStyle = `hsla(${s.hue + 40}, 100%, 92%, ${pulse})`; ctx.beginPath(); ctx.arc(x, y, 1.4, 0, 6.283); ctx.fill();
+  }
+}
+
+/* ---------- the Rutherford atom ---------- */
+// Nucleus: tiny and dense. It carries the mass (the constant term of r) and a positive charge +Z.
+// Electrons: one per remaining gene, held in orbit by Coulomb attraction, so ω = √(Z / r³).
+// The atom is mostly empty space. And, as in Rutherford's model, an orbiting electron is an
+// accelerating charge: it radiates (Larmor, P ∝ a² ∝ 1/r⁴), loses energy and spirals inward.
+// Only the creature's own energy lifts its electrons back out. When every electron has fallen
+// into the nucleus the atom has collapsed, and the creature condenses into a gene.
+const KAPPA = 0.012, SHELL = (i, n) => 0.35 + 0.65 * (i + 1) / n;
+const electrons = [];
+const atom = { Z: 1, bound: 1, avgR: 1 };
+let collapseFor = 0;
+const strHash = s => { let h = 7; for (const c of s) h = (h * 31 + c.codePointAt(0)) >>> 0; return h; };
+function syncElectrons() {
+  const genes = addends(curAst).filter(x => x.n.k !== 'num').map(x => show(x.n));
+  const Z = Math.max(1, genes.length);
+  atom.Z = env.Z = Z;
+  while (electrons.length < Z) { const i = electrons.length; electrons.push({ r: state.orbits?.[i] ?? 1, ang: Math.random() * 6.283, trail: [], src: null }); }
+  electrons.length = Z;
+  electrons.forEach((e, i) => {
+    const src = genes[i] || 'bare';
+    if (e.src !== src) { const h = strHash(src); e.src = src; e.ci = 0.25 + 0.75 * ((h % 97) / 97); e.rot = (h % 360) * Math.PI / 180; }
+  });
+}
+// returns the energy radiated away per second
+function updateAtom(dt, E) {
+  syncElectrons();
+  const pump = 0.4 * Math.min(E, 1.2);
+  let rad = 0, sum = 0, bound = 0;
+  electrons.forEach((e, i) => {
+    const was = e.r > 0.08;
+    e.r = clamp(e.r + (-KAPPA / (e.r * e.r) + pump * (1 - e.r)) * dt, 0.04, 1.05);
+    if (was && e.r <= 0.08) e.fell = wall;
+    const rho = SHELL(i, electrons.length) * e.r;
+    e.ang += dt * Math.min(20, 0.9 * Math.sqrt(atom.Z / (rho * rho * rho)));
+    rad += Math.min(30, 1 / (e.r ** 4));
+    sum += e.r; if (e.r > 0.08) bound++;
+  });
+  atom.bound = bound; atom.avgR = sum / electrons.length;
+  return 0.002 * rad;
+}
+function drawElectrons(cx, cy, mean, hue, glow) {
+  electrons.forEach((e, i) => {
+    const shell = mean * SHELL(i, electrons.length), R = shell * e.r;
+    const cr = Math.cos(e.rot), sr = Math.sin(e.rot);
+    // the orbit it would hold with energy to spare
+    ctx.strokeStyle = `hsla(${hue}, 70%, 75%, ${0.05 + 0.08 * glow})`; ctx.lineWidth = 0.7;
+    ctx.beginPath(); ctx.ellipse(cx, cy, Math.max(1, shell), Math.max(1, shell * e.ci), e.rot, 0, 6.283); ctx.stroke();
+    const lx = Math.cos(e.ang) * R, ly = Math.sin(e.ang) * R * e.ci;
+    const x = lx * cr - ly * sr, y = lx * sr + ly * cr;
+    e.trail.push(x, y); if (e.trail.length > 80) e.trail.splice(0, 2);
+    for (let j = 2; j < e.trail.length; j += 2) {
+      ctx.strokeStyle = `hsla(${hue + 30}, 90%, 80%, ${0.5 * j / e.trail.length})`; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(cx + e.trail[j - 2], cy + e.trail[j - 1]); ctx.lineTo(cx + e.trail[j], cy + e.trail[j + 1]); ctx.stroke();
+    }
+    if (e.r > 0.08) {
+      const g = ctx.createRadialGradient(cx + x, cy + y, 0, cx + x, cy + y, 7);
+      g.addColorStop(0, `hsla(${hue + 40}, 100%, 92%, 0.95)`); g.addColorStop(1, `hsla(${hue}, 90%, 60%, 0)`);
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx + x, cy + y, 7, 0, 6.283); ctx.fill();
+    } else e.trail.length = Math.max(0, e.trail.length - 4);
+    // the flash of an electron falling into the nucleus
+    if (e.fell && wall - e.fell < 0.8) {
+      const k = (wall - e.fell) / 0.8;
+      ctx.strokeStyle = `hsla(${hue + 40}, 100%, 85%, ${0.8 * (1 - k)})`; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(cx, cy, 4 + 22 * k, 0, 6.283); ctx.stroke();
+    }
+  });
+}
+
+/* ---------- α particles: the gold-foil experiment, run on each creature ---------- */
+// A faint beam crosses the void. Each α is repelled by the nucleus (charge +2 against +Z).
+// Most pass straight through the empty atom; a rare few come close and bounce back.
+const alphas = [], foil = { passed: 0, deflected: 0, back: 0 };
+let alphaClock = 0;
+function stepAlphas(dt, nx, ny, R0) {
+  const v0 = 240, span = R0 * 3;
+  const d = R0 * 0.015 * atom.Z; // distance of closest approach for a head-on hit
+  const k = d * v0 * v0 / 2;
+  alphaClock += dt;
+  const every = reduce ? 0.9 : 0.3;
+  while (alphaClock > every) {
+    alphaClock -= every;
+    if (alphas.length < 50) alphas.push({ x: -10, y: ny + (Math.random() * 2 - 1) * span, vx: v0, vy: 0, trail: [] });
+  }
+  for (let i = alphas.length - 1; i >= 0; i--) {
+    const a = alphas[i];
+    const near = Math.hypot(a.x - nx, a.y - ny) < d * 4;
+    const n = near ? 16 : 2, h = dt / n;
+    for (let s = 0; s < n; s++) {
+      const rx = a.x - nx, ry = a.y - ny, r2 = rx * rx + ry * ry + 1, r = Math.sqrt(r2);
+      const acc = k / r2;
+      a.vx += acc * rx / r * h; a.vy += acc * ry / r * h;
+      a.x += a.vx * h; a.y += a.vy * h;
+    }
+    a.trail.push(a.x, a.y); if (a.trail.length > 24) a.trail.splice(0, 2);
+    if (a.x < -40 || a.x > W + 40 || a.y < -40 || a.y > H + 40) {
+      const ang = Math.abs(Math.atan2(a.vy, a.vx)) * 180 / Math.PI;
+      foil.passed++; if (ang > 10) foil.deflected++; if (ang > 90) foil.back++;
+      alphas.splice(i, 1);
+    }
+  }
+}
+function drawAlphas() {
+  ctx.lineWidth = 1;
+  for (const a of alphas) {
+    const t = a.trail;
+    for (let j = 2; j < t.length; j += 2) {
+      ctx.strokeStyle = `rgba(230, 194, 127, ${0.32 * j / t.length})`;
+      ctx.beginPath(); ctx.moveTo(t[j - 2], t[j - 1]); ctx.lineTo(t[j], t[j + 1]); ctx.stroke();
+    }
   }
 }
 
@@ -1107,11 +1229,14 @@ function frame(now) {
   const slow = E < 0.15 ? 0.3 : 1;
   const feed = 0.16 * (fit - 0.5) * (fit < 0.5 ? slow : 1);
   const cost = (0.025 * traits.mass * (0.5 + traits.pulse) + 0.012 * traits.intricacy / 8) * slow;
+  // its electrons radiate as they orbit; that energy is lost
+  const radiated = updateAtom(dt, phase === 'condensing' ? 0 : E);
   if (alive) {
-    E = state.E = clamp(E + (core + feed - cost + 0.004) * dt, 0, 1.7);
+    E = state.E = clamp(E + (core + feed - cost + 0.004 - radiated) * dt, 0, 1.7);
     restless(dt, fit);
-    zeroFor = E <= 0.0005 ? zeroFor + dt : 0;
-    if (zeroFor > 2.5) startCondense();
+    // every electron has spiraled into the nucleus: the atom has collapsed
+    collapseFor = atom.bound === 0 ? collapseFor + dt : 0;
+    if (collapseFor > 1.5) startCondense();
   }
   // when it has energy to spare and you are not mid-edit, it rewrites its own equation
   const busy = wall - lastKeyAt < 7 || (document.activeElement === input && wall - lastKeyAt < 15) || state.eq !== committedEq || input.classList.contains('bad');
@@ -1130,6 +1255,8 @@ function frame(now) {
   drawStars(dt);
   ctx.globalCompositeOperation = 'lighter';
   drawSeeds(bx, by, baseR0);
+  stepAlphas(dt, cx, cy, baseR0);
+  drawAlphas();
   ctx.globalCompositeOperation = 'source-over';
 
   const hue = 205 + fit * 105;
@@ -1186,9 +1313,9 @@ function frame(now) {
   }
   ctx.closePath();
   const body = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(4, mean * 1.6));
-  body.addColorStop(0, `hsla(${hue + 30}, 85%, ${light}%, ${0.32 * glow})`);
-  body.addColorStop(0.7, `hsla(${hue}, 80%, ${light - 15}%, ${0.14 * glow})`);
-  body.addColorStop(1, `hsla(${hue - 20}, 80%, 35%, ${0.05 * glow})`);
+  body.addColorStop(0, `hsla(${hue + 30}, 85%, ${light}%, ${0.12 * glow})`);
+  body.addColorStop(0.7, `hsla(${hue}, 80%, ${light - 15}%, ${0.05 * glow})`);
+  body.addColorStop(1, `hsla(${hue - 20}, 80%, 35%, ${0.03 * glow})`);
   ctx.fillStyle = body; ctx.fill();
   ctx.shadowColor = `hsla(${hue}, 90%, 65%, ${0.9 * glow})`;
   ctx.shadowBlur = 18 * glow;
@@ -1205,22 +1332,19 @@ function frame(now) {
   }
   ctx.strokeStyle = `hsla(${hue + 20}, 70%, 70%, ${0.18 * glow})`; ctx.lineWidth = 0.8; ctx.stroke();
 
-  // organelles: one per generation, orbiting the core
-  const nO = Math.min(state.gen, 10);
-  for (let o = 0; o < nO; o++) {
-    const oa = T * (0.3 + o * 0.07) + o * 2.4, orr = mean * (0.22 + 0.04 * (o % 4));
-    ctx.fillStyle = `hsla(${hue + 50 + o * 8}, 90%, 75%, ${0.55 * glow})`;
-    ctx.beginPath(); ctx.arc(cx + Math.cos(oa) * orr, cy + Math.sin(oa) * orr, 1.5 + (o % 3) * 0.6, 0, 6.283); ctx.fill();
-  }
+  // electrons, one per gene, on Coulomb orbits through mostly empty space
+  drawElectrons(cx, cy, mean, hue, glow);
 
-  // core: its own energy source
-  const beat = 1 + 0.15 * Math.sin(T * 3.1) * Math.min(E, 1.2);
-  const coreR = Math.max(3, mean * 0.16) * (0.6 + 0.5 * Math.min(E, 1.5)) * beat;
-  const cg = ctx.createRadialGradient(cx, cy, 0, cx, cy, coreR * 3);
-  cg.addColorStop(0, `hsla(${hue + 60}, 100%, 92%, ${0.9 * glow})`);
-  cg.addColorStop(0.3, `hsla(${hue + 40}, 95%, 70%, ${0.45 * glow})`);
+  // nucleus: tiny and dense, almost all of its mass, charge +Z
+  const beat = 1 + 0.12 * Math.sin(T * 3.1) * Math.min(E, 1.2);
+  const coreR = Math.max(2.2, mean * 0.03) * (0.8 + 0.3 * Math.min(E, 1.5)) * beat * (phase === 'condensing' ? 1 + flare : 1);
+  const cg = ctx.createRadialGradient(cx, cy, 0, cx, cy, coreR * 5);
+  cg.addColorStop(0, `hsla(${hue + 60}, 100%, 96%, ${Math.min(1, 0.6 + 0.6 * glow)})`);
+  cg.addColorStop(0.25, `hsla(${hue + 40}, 95%, 72%, ${0.5 * Math.max(glow, 0.4)})`);
   cg.addColorStop(1, `hsla(${hue}, 90%, 50%, 0)`);
-  ctx.fillStyle = cg; ctx.beginPath(); ctx.arc(cx, cy, coreR * 3, 0, 6.283); ctx.fill();
+  ctx.fillStyle = cg; ctx.beginPath(); ctx.arc(cx, cy, coreR * 5, 0, 6.283); ctx.fill();
+  ctx.fillStyle = `hsla(${hue + 60}, 100%, 85%, 0.75)`; ctx.font = '10px "IBM Plex Mono", monospace';
+  ctx.fillText(`+${atom.Z}`, cx + coreR * 2 + 3, cy - coreR * 2 - 2);
 
   // condensing: everything it was streams into one point
   if (phase === 'condensing') {
@@ -1238,7 +1362,7 @@ function frame(now) {
   ctx.globalCompositeOperation = 'source-over';
 
   panelTick += dt; if (panelTick > 0.2) { panelTick = 0; updatePanel(fit); if (genomeEq !== state.eq) renderGenome(); drawGlyphs(); }
-  saveTick += dt; if (saveTick > 5) { saveTick = 0; save(); }
+  saveTick += dt; if (saveTick > 5) { saveTick = 0; state.orbits = electrons.map(e => +e.r.toFixed(3)); save(); }
   requestAnimationFrame(frame);
 }
 renderLineage();
