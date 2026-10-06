@@ -118,3 +118,69 @@ It sends ordinary GET requests to the target's website and nothing else to the t
 You are still responsible for how you use it. Use it for legitimate purposes such as due diligence,
 vendor risk, or assessing organizations you are authorized to assess. Respect each data source's terms of
 service and rate limits, and follow privacy law (e.g. GDPR) when you process personal data such as staff emails.
+
+---
+
+# truelove
+
+> *"Your true love is always within 100 miles of you."*
+
+A second tool in this repo, built on the old adage. Give your date, time and place of birth. `truelove` casts
+your chart, reads today's sky and the latest zodiac feeds, and names the spot within 100 miles where the stars
+point your love. It also suggests signs to look for and the best days in the coming month.
+
+Pure Python standard library, Python 3.9+, installed alongside `bizosint` by `pip install .`.
+
+```bash
+truelove --born 1990-07-15 --time 2:30pm --place Paris
+truelove -b 1994-03-21 -t 06:45 -p "Austin, US" --near "Dallas"   # you were born in Austin, live in Dallas
+truelove -b 1988-11-02 -t unknown -p "34.05,-118.24" --tz America/Los_Angeles
+truelove -b 1990-07-15 -t 14:30 -p Paris --json                   # the whole reading as JSON
+truelove -b 1990-07-15 -t 14:30 -p Paris --offline --feed examples/zodiac-feed.xml
+```
+
+```
+  Chance your true love is within 100 miles of London, GB:  100%  (the adage)
+  Cosmic alignment of the hotspot below:  74%  ██████████████████░░░░░░
+
+  ✦ HOTSPOT
+    39 miles W (262°) of London, GB
+    51.4253, -1.0253
+    https://www.openstreetmap.org/?mlat=51.42532&mlon=-1.02531#map=11/51.42532/-1.02531
+
+  ♡ LOOK FOR
+    Aries        fire feeds your air Venus; sits on your Descendant  [feeds +0.57]
+    Gemini       shares your Venus's air  [feeds +0.50]
+
+  ☾ BEST DAYS (next 30 days)
+    Thu 29 Oct   Venus trines your natal Venus; Moon in Gemini, a partner sign
+```
+
+### How the reading is made
+
+1. **Chart.** The Sun, Moon and Venus are computed with Paul Schlyter's low-precision ephemeris, along with
+   the Ascendant and Descendant for your birth time and place. Positions match PyEphem to within 0.1°.
+   You get the sign of each, and where each one stood on the horizon at your birth.
+2. **Direction (local-space astrology).** Love travels along the compass line of your natal Venus (35%), your
+   Descendant, the classical partner point (25%), and the Moon (10%). The *partner signs*, those in harmony
+   with your Venus plus your Descendant's sign, add their element's compass point (fire S, earth N, air E,
+   water W) (30%). Each one pulls harder when the feeds currently give it strong love energy.
+3. **Distance.** Venus high in your birth sky keeps love close; Venus low or below the horizon sends it further
+   out. Your life path number sets the other half of the ring.
+4. **Feeds.** RSS/Atom feeds from astrology sites are fetched in parallel. Every sentence that names a sign
+   counts toward that sign: romantic words ("attraction", "chemistry", "soulmate") against blocking ones
+   ("delay", "breakup", "retrograde"). A "Venus retrograde" mention lowers the alignment. Unreachable feeds
+   are skipped and listed in `--json`. Add your own feeds with `--feed URL` (repeatable) or use only those with
+   `--only-feeds`. The default feed list is in `truelove/feeds.py`.
+5. **Alignment** combines how cleanly the lines converge, today's Venus sign versus your natal Venus, the
+   Moon phase (waxing helps) and the feeds' energy. The adage sets the chance within 100 miles at 100%;
+   alignment is how strongly the stars back *this particular spot*.
+6. **Best days** are those when transiting Venus conjoins, sextiles or trines your Descendant or natal Venus,
+   or the Moon passes through a partner sign.
+
+Places: about 100 major cities are built in and work offline. Other names are looked up with the free Open-Meteo
+geocoder; or pass `"lat,lon"` with `--tz`. Without a birth time, noon is used, which makes the Rising sign,
+Descendant and directions approximate.
+
+truelove is for fun and reflection. Astrology has no demonstrated power to predict where a person is, so
+treat the hotspot as an excuse for a day trip, not a forecast.

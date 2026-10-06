@@ -16,9 +16,10 @@ dev = ["pytest>=7"]
 
 [project.scripts]
 bizosint = "bizosint.cli:main"
+truelove = "truelove.cli:main"
 
 [tool.setuptools.packages.find]
-include = ["bizosint*"]
+include = ["bizosint*", "truelove*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

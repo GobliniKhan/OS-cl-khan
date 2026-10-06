@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+<channel>
+  <title>Sample zodiac feed (for offline runs and tests)</title>
+  <item>
+    <title>Weekly love horoscope</title>
+    <description><![CDATA[<p>Aries, a magnetic attraction sparks when you least expect it; say yes to the date.
+    Leo, romance and chemistry light up your week. Libra feels a sweet, tender connection with someone new.
+    Scorpio meets delays and tension in love, so take it slow. Capricorn, an ex resurfaces with drama.</p>]]></description>
+  </item>
+  <item>
+    <title>Gemini season of the heart</title>
+    <description>Gemini, flirty conversations turn into real passion. Aquarius may feel lonely, but it passes.</description>
+  </item>
+</channel>
+</rss>
