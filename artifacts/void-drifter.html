@@ -52,6 +52,9 @@ h1 { margin: 0; font-family: var(--display); font-weight: 500; font-size: 34px; 
 @keyframes arrive { from { background: rgba(255,255,255,0.08); } to { background: transparent; } }
 .log { list-style: none; margin: 0; padding: 10px 0 0; border-top: 1px solid var(--faint); display: grid; gap: 5px; font-size: 11px; color: var(--dim); line-height: 1.45; }
 .log li b { color: var(--ink); font-weight: 500; }
+.log li i { color: var(--live); font-style: normal; }
+#eq.rewritten { animation: rewrite 1.8s ease-out; }
+@keyframes rewrite { from { color: var(--live); text-shadow: 0 0 12px var(--live); } to { color: var(--ink); text-shadow: none; } }
 
 .bottom { display: grid; gap: 10px; justify-items: center; }
 .signal { margin: 0; font-family: var(--display); font-style: italic; font-size: 21px; line-height: 1.3; text-align: center; max-width: 40ch; text-wrap: balance; min-height: 1.3em; color: var(--ink); }
@@ -82,7 +85,7 @@ form.eq { width: min(780px, 100%); background: var(--panel); backdrop-filter: bl
   .ref { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .need.new { animation: none; }
+  .need.new, #eq.rewritten { animation: none; }
 }
 </style>
 
@@ -93,9 +96,10 @@ form.eq { width: min(780px, 100%); background: var(--panel); backdrop-filter: bl
     <div class="id">
       <div class="eyebrow">Specimen VD‑01 · deep field</div>
       <h1>Void Drifter</h1>
-      <p class="lede">It drifts alone in empty space and makes its own energy. Its body is the equation at the bottom of the screen, and that equation is the only way to reach it. Each form you give it changes what it needs next.</p>
+      <p class="lede">It drifts alone in empty space and makes its own energy. Its body is the equation at the bottom of the screen, and that equation is the only way to reach it. Each form you give it changes what it needs next. When it has energy to spare, it rewrites the equation itself.</p>
       <dl class="vitals">
         <dt>Gen</dt><dd id="gen">0</dd>
+        <dt>Rewrites</dt><dd id="rw">0</dd>
         <dt>State</dt><dd id="mood">Steady</dd>
         <dt>Energy</dt><dd><span id="energy">0.80</span><div class="ebar"><i id="ebar"></i></div></dd>
       </dl>
@@ -116,7 +120,7 @@ form.eq { width: min(780px, 100%); background: var(--panel); backdrop-filter: bl
         <input id="eq" type="text" spellcheck="false" autocapitalize="off" autocorrect="off" aria-describedby="status">
       </div>
       <div class="meta">
-        <span id="status">Edit the equation. Press Enter, or pause, to let it absorb the change.</span>
+        <span id="status">Edit the equation. Press Enter, or pause, to let it absorb the change. Leave it alone and it edits itself.</span>
         <span class="ref"><code>θ</code>/<code>theta</code> angle · <code>t</code> its clock · <code>E</code> its energy · <code>g</code> generation · <code>sin cos tan abs sqrt exp log pow min max mod noise(x,y)</code></span>
       </div>
     </form>
@@ -166,7 +170,8 @@ function tokenize(s) {
   return out;
 }
 
-function compile(src) {
+// Source -> syntax tree. The tree is the creature's genome: it can be compiled, printed, and edited.
+function parse(src) {
   let s = src.replace(/[×·]/g, '*').replace(/[−–]/g, '-').replace(/²/g, '^2');
   s = s.replace(/^\s*r\s*(\([^)]*\))?\s*=/, '');
   if (!s.trim()) throw new Error('Write an expression for r.');
@@ -176,68 +181,121 @@ function compile(src) {
   function expect(v) { const tk = next(); if (!isOp(tk, v)) throw new Error(`Expected "${v}"` + (tk ? ` before "${tk.v}".` : ' at the end.')); }
   function expr() {
     let a = term();
-    while (isOp(peek(), '+') || isOp(peek(), '-')) {
-      const op = next().v, b = term(), x = a;
-      a = op === '+' ? e => x(e) + b(e) : e => x(e) - b(e);
-    }
+    while (isOp(peek(), '+') || isOp(peek(), '-')) { const op = next().v; a = bin(op, a, term()); }
     return a;
   }
   function term() {
     let a = unary();
     for (;;) {
       const tk = peek(); if (!tk) break;
-      if (isOp(tk, '*') || isOp(tk, '/') || isOp(tk, '%')) {
-        next(); const b = unary(), x = a;
-        a = tk.v === '*' ? e => x(e) * b(e) : tk.v === '/' ? e => x(e) / b(e) : e => x(e) % b(e);
-      } else if (tk.t === 'num' || tk.t === 'id' || isOp(tk, '(')) {
-        const b = power(), x = a; a = e => x(e) * b(e); // implicit: 3θ, 2(t+1)
-      } else break;
+      if (isOp(tk, '*') || isOp(tk, '/') || isOp(tk, '%')) { next(); a = bin(tk.v, a, unary()); }
+      else if (tk.t === 'num' || tk.t === 'id' || isOp(tk, '(')) a = bin('*', a, power()); // implicit: 3θ, 2(t+1)
+      else break;
     }
     return a;
   }
   function unary() {
     const tk = peek();
-    if (isOp(tk, '-')) { next(); const a = unary(); return e => -a(e); }
+    if (isOp(tk, '-')) { next(); return { k: 'neg', a: unary() }; }
     if (isOp(tk, '+')) { next(); return unary(); }
     return power();
   }
   function power() {
     const a = atom();
-    if (isOp(peek(), '^')) { next(); const b = unary(); return e => Math.pow(a(e), b(e)); }
+    if (isOp(peek(), '^')) { next(); return bin('^', a, unary()); }
     return a;
   }
   function atom() {
     const tk = next();
     if (!tk) throw new Error('The equation ends too early.');
-    if (tk.t === 'num') { const v = tk.n; return () => v; }
+    if (tk.t === 'num') return num(tk.n);
     if (isOp(tk, '(')) { const a = expr(); expect(')'); return a; }
     if (tk.t === 'id') {
       const name = tk.v;
       if (FUNCS[name]) {
-        const [fn, lo, hi] = FUNCS[name];
+        const [, lo, hi] = FUNCS[name];
         if (!isOp(peek(), '(')) throw new Error(`${name} needs parentheses, like ${name}(θ).`);
         next(); const args = [];
         if (!isOp(peek(), ')')) { args.push(expr()); while (isOp(peek(), ',')) { next(); args.push(expr()); } }
         expect(')');
         if (args.length < lo || args.length > hi) throw new Error(`${name} takes ${lo === hi ? lo : lo + '–' + hi} value${hi > 1 ? 's' : ''}.`);
-        if (args.length === 1) { const a0 = args[0]; return e => fn(a0(e)); }
-        if (args.length === 2) { const a0 = args[0], a1 = args[1]; return e => fn(a0(e), a1(e)); }
-        return e => fn(...args.map(a => a(e)));
+        return call(name, args);
       }
-      const v = NAMES[name];
-      if (v === 'pi') return () => Math.PI;
-      if (v) return e => e[v];
+      if (NAMES[name]) return v(NAMES[name]);
       throw new Error(`"${name}" is unknown. Use θ (or theta), t, E, g, pi, or a listed function.`);
     }
     throw new Error(`Unexpected "${tk.v}".`);
   }
-  const f = expr();
+  const ast = expr();
   if (i < toks.length) throw new Error(`Unexpected "${toks[i].v}".`);
+  return ast;
+}
+const num = n => ({ k: 'num', v: n });
+const v = n => ({ k: 'var', n });
+const bin = (op, a, b) => ({ k: 'bin', op, a, b });
+const call = (f, args) => ({ k: 'call', f, args });
+
+// Tree -> function
+function build(n) {
+  switch (n.k) {
+    case 'num': { const x = n.v; return () => x; }
+    case 'var': { if (n.n === 'pi') return () => Math.PI; const nm = n.n; return e => e[nm]; }
+    case 'neg': { const a = build(n.a); return e => -a(e); }
+    case 'bin': {
+      const a = build(n.a), b = build(n.b);
+      switch (n.op) {
+        case '+': return e => a(e) + b(e);
+        case '-': return e => a(e) - b(e);
+        case '*': return e => a(e) * b(e);
+        case '/': return e => a(e) / b(e);
+        case '%': return e => a(e) % b(e);
+        default: return e => Math.pow(a(e), b(e));
+      }
+    }
+    case 'call': {
+      const fn = FUNCS[n.f][0], args = n.args.map(build);
+      if (args.length === 1) { const a0 = args[0]; return e => fn(a0(e)); }
+      if (args.length === 2) { const a0 = args[0], a1 = args[1]; return e => fn(a0(e), a1(e)); }
+      return e => fn(...args.map(a => a(e)));
+    }
+  }
+}
+function compile(src) {
+  const ast = typeof src === 'string' ? parse(src) : src;
+  const f = build(ast);
   // it has to produce a body somewhere
   let ok = 0;
-  for (let k = 0; k < 24; k++) { const v = f({ theta: k / 24 * Math.PI * 2, t: k * 0.37, E: 0.8, g: 1 }); if (Number.isFinite(v)) ok++; }
+  for (let k = 0; k < 24; k++) { const r = f({ theta: k / 24 * Math.PI * 2, t: k * 0.37, E: 0.8, g: 1 }); if (Number.isFinite(r)) ok++; }
   if (!ok) throw new Error('That gives no finite radius at any angle.');
-  return f;
+  return { ast, f };
+}
+
+// Tree -> source, written the way a person would write it
+const PREC = { '+': 1, '-': 1, '*': 2, '/': 2, '%': 2, '^': 4 };
+const prec = n => n.k === 'bin' ? PREC[n.op] : n.k === 'neg' || (n.k === 'num' && n.v < 0) ? 3 : 5;
+const fmtNum = x => String(+x.toFixed(Math.abs(x) >= 10 ? 1 : 3));
+const wrap = (n, p) => { const s = show(n); return prec(n) < p ? `(${s})` : s; };
+function show(n) {
+  switch (n.k) {
+    case 'num': return fmtNum(n.v);
+    case 'var': return n.n === 'theta' ? 'θ' : n.n === 'pi' ? 'π' : n.n;
+    case 'call': return `${n.f}(${n.args.map(show).join(', ')})`;
+    case 'neg': return '-' + wrap(n.a, 3);
+    case 'bin': {
+      const { op, a, b } = n;
+      if (op === '^') return wrap(a, 5) + '^' + wrap(b, 5);
+      if (op === '*') {
+        if (a.k === 'num' && a.v >= 0 && b.k === 'var') return fmtNum(a.v) + show(b);
+        if (a.k === 'num' && a.v >= 0 && b.k === 'call') return fmtNum(a.v) + ' ' + show(b);
+        return wrap(a, 2) + '·' + wrap(b, 3);
+      }
+      if (op === '+' && b.k === 'neg') return wrap(a, 1) + ' - ' + wrap(b.a, 2);
+      if (op === '+' && b.k === 'num' && b.v < 0) return wrap(a, 1) + ' - ' + fmtNum(-b.v);
+      if (op === '-' && b.k === 'num' && b.v < 0) return wrap(a, 1) + ' + ' + fmtNum(-b.v);
+      const tight = op === '-' || op === '/' || op === '%';
+      return wrap(a, PREC[op]) + (op === '/' ? '/' : ` ${op} `) + wrap(b, PREC[op] + (tight ? 1 : 0));
+    }
+  }
 }
 
 /* ---------- needs ---------- */
@@ -266,7 +324,7 @@ const HINTS = {
 
 let state = {
   eq: '1 + 0.3 sin(3θ + t)·E + 0.05 sin(11θ - 2t)',
-  gen: 0, E: 0.8,
+  gen: 0, E: 0.8, rewrites: 0,
   needs: [
     { key: 'mass', target: 1.15, w: 1 },
     { key: 'symmetry', target: 5, w: 1.3 },
@@ -282,8 +340,8 @@ if (hotData && hotData.eq) state = hotData;
 function save() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); } catch (_) {} }
 window.claude?.hot?.snapshot?.(() => state);
 
-let cur, prev = null, morph = 1;
-try { cur = compile(state.eq); } catch (_) { state.eq = '1 + 0.3 sin(3θ + t)·E'; cur = compile(state.eq); }
+let cur, curAst, prev = null, morph = 1;
+{ let c; try { c = compile(state.eq); } catch (_) { state.eq = '1 + 0.3 sin(3θ + t)·E'; c = compile(state.eq); } cur = c.f; curAst = c.ast; }
 let committedEq = state.eq;
 
 /* ---------- canvas ---------- */
@@ -322,10 +380,12 @@ function R(theta, t) {
   return a;
 }
 const traits = { mass: 1, symmetry: 0, pulse: 0, intricacy: 0, reach: 1 };
-function analyze(T, a = 0.12) {
+const raw = { mass: 1, symmetry: 0, pulse: 0, intricacy: 0, reach: 1 };
+// measure any body: sample(theta, t) -> radius
+function measure(sample, T) {
   const h = 0.04;
   let sum = 0, mx = 0, dsum = 0;
-  for (let j = 0; j < N; j++) { const th = 2 * Math.PI * j / N; rA[j] = R(th, T); rB[j] = R(th, T + h); sum += rA[j]; if (rA[j] > mx) mx = rA[j]; dsum += Math.abs(rB[j] - rA[j]); }
+  for (let j = 0; j < N; j++) { const th = 2 * Math.PI * j / N; rA[j] = sample(th, T); rB[j] = sample(th, T + h); sum += rA[j]; if (rA[j] > mx) mx = rA[j]; dsum += Math.abs(rB[j] - rA[j]); }
   const mean = sum / N;
   let best = 0, bestK = 0, tot = 0, cen = 0;
   for (let k = 1; k <= KMAX; k++) {
@@ -335,15 +395,176 @@ function analyze(T, a = 0.12) {
     if (k <= 16 && m > best) { best = m; bestK = k; }
     tot += m; cen += k * m;
   }
-  const sym = best < 0.015 * Math.max(mean, 0.2) ? 0 : bestK;
-  traits.mass = lerp(traits.mass, mean, a);
-  traits.symmetry = sym;
-  traits.pulse = lerp(traits.pulse, dsum / N / h, a);
-  traits.intricacy = lerp(traits.intricacy, tot > 1e-4 ? cen / tot : 0, a);
-  traits.reach = lerp(traits.reach, mean > 1e-3 ? mx / mean : 1, a);
+  raw.mass = mean;
+  raw.symmetry = best < 0.015 * Math.max(mean, 0.2) ? 0 : bestK;
+  raw.pulse = dsum / N / h;
+  raw.intricacy = tot > 1e-4 ? cen / tot : 0;
+  raw.reach = mean > 1e-3 ? mx / mean : 1;
+  return raw;
 }
-function sat(n) { const d = NEED_DEFS[n.key]; const x = (traits[n.key] - n.target) / d.tol; return Math.exp(-x * x); }
-function fitness() { let s = 0, w = 0; for (const n of state.needs) { s += n.w * sat(n); w += n.w; } return w ? s / w : 0; }
+function analyze(T, a = 0.12) {
+  const m = measure(R, T);
+  traits.mass = lerp(traits.mass, m.mass, a);
+  traits.symmetry = m.symmetry;
+  traits.pulse = lerp(traits.pulse, m.pulse, a);
+  traits.intricacy = lerp(traits.intricacy, m.intricacy, a);
+  traits.reach = lerp(traits.reach, m.reach, a);
+}
+function satOf(n, tr) { const d = NEED_DEFS[n.key]; const x = (tr[n.key] - n.target) / d.tol; return Math.exp(-x * x); }
+function fitOf(tr) { let s = 0, w = 0; for (const n of state.needs) { s += n.w * satOf(n, tr); w += n.w; } return w ? s / w : 0; }
+function sat(n) { return satOf(n, traits); }
+function fitness() { return fitOf(traits); }
+
+/* ---------- self-rewriting: it edits its own equation ---------- */
+const clone = n => JSON.parse(JSON.stringify(n));
+function nodes(root) {
+  const out = [];
+  (function w(n, parent, key) {
+    out.push({ n, parent, key });
+    if (n.k === 'bin') { w(n.a, n, 'a'); w(n.b, n, 'b'); }
+    else if (n.k === 'neg') w(n.a, n, 'a');
+    else if (n.k === 'call') n.args.forEach((c, i) => w(c, n.args, i));
+  })(root, null, null);
+  return out;
+}
+const swap = (root, hit, repl) => { if (!hit.parent) return repl; hit.parent[hit.key] = repl; return root; };
+const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+const isTheta = n => n.k === 'var' && n.n === 'theta';
+const isTrig = n => n.k === 'call' && (n.f === 'sin' || n.f === 'cos');
+function addends(root) {
+  const out = [];
+  (function w(n, sign) {
+    if (n.k === 'bin' && (n.op === '+' || n.op === '-')) { w(n.a, sign); w(n.b, n.op === '-' ? -sign : sign); }
+    else out.push({ n, sign });
+  })(root, 1);
+  return out;
+}
+const join = list => list.reduce((acc, { n, sign }) => acc ? bin(sign < 0 ? '-' : '+', acc, n) : (sign < 0 ? { k: 'neg', a: n } : n), null);
+const need = key => state.needs.find(n => n.key === key);
+const wants = key => { const n = need(key); return n ? n.target - traits[key] : 0; }; // > 0 means it wants more
+
+// each mutation edits a copy of the tree and says what it did
+const MUTATIONS = {
+  retune(ast) {
+    const hits = nodes(ast).filter(h => h.n.k === 'bin' && h.n.op === '*' && h.n.a.k === 'num' && isTheta(h.n.b));
+    if (!hits.length) return null;
+    const h = pick(hits), old = h.n.a.v, sym = need('symmetry');
+    let k = sym && sym.target > 0 && Math.random() < 0.6 ? sym.target : Math.max(1, Math.round(old) + pick([-2, -1, 1, 2]));
+    if (k === old) k = old + 1;
+    h.n.a.v = k;
+    return { ast, what: `retuned ${fmtNum(old)}θ to ${fmtNum(k)}θ` };
+  },
+  nudge(ast) {
+    const hits = nodes(ast).filter(h => h.n.k === 'num' && !(h.key === 'a' && h.parent && h.parent.op === '*' && isTheta(h.parent.b)));
+    if (!hits.length) return null;
+    const h = pick(hits), old = h.n.v;
+    h.n.v = +(old === 0 ? 0.1 : old * (0.75 + Math.random() * 0.5)).toFixed(3);
+    if (h.n.v === old) return null;
+    return { ast, what: `nudged ${fmtNum(old)} to ${fmtNum(h.n.v)}` };
+  },
+  grow(ast) {
+    if (addends(ast).length >= 6) return null;
+    const it = need('intricacy'), sym = need('symmetry');
+    const k = it && wants('intricacy') > 0.5 && Math.random() < 0.6 ? Math.round(it.target * 1.4 + Math.random() * 4)
+      : sym && sym.target > 0 ? sym.target * pick([1, 1, 2, 3]) : 2 + Math.floor(Math.random() * 10);
+    let arg = bin('*', num(k), v('theta'));
+    if (wants('pulse') > 0 || Math.random() < 0.4) arg = bin(Math.random() < 0.5 ? '+' : '-', arg, bin('*', num(+(0.5 + Math.random() * 2).toFixed(1)), v('t')));
+    const term = bin('*', num(+(0.03 + Math.random() * 0.15).toFixed(2)), call(pick(['sin', 'cos']), [arg]));
+    return { ast: bin('+', ast, term), what: `grew a new term, ${show(term)}` };
+  },
+  shed(ast) {
+    const list = addends(ast);
+    if (list.length < 2) return null;
+    const choices = list.map((x, i) => i).filter(i => list[i].n.k !== 'num');
+    if (!choices.length) return null;
+    const [gone] = list.splice(pick(choices), 1);
+    return { ast: join(list), what: `shed ${show(gone.n)}` };
+  },
+  tempo(ast) {
+    const up = wants('pulse') > 0;
+    const scaled = nodes(ast).filter(h => h.n.k === 'bin' && h.n.op === '*' && h.n.a.k === 'num' && h.n.b.k === 'var' && h.n.b.n === 't');
+    if (scaled.length) {
+      const h = pick(scaled), old = h.n.a.v;
+      h.n.a.v = +(old * (up ? 1.3 + Math.random() * 0.6 : 0.4 + Math.random() * 0.4)).toFixed(2);
+      return { ast, what: `${up ? 'quickened' : 'slowed'} ${fmtNum(old)}t to ${fmtNum(h.n.a.v)}t` };
+    }
+    const bare = nodes(ast).filter(h => h.n.k === 'var' && h.n.n === 't' && !(h.parent && h.parent.op === '*' && h.parent.a.k === 'num'));
+    if (bare.length) { const c = up ? 2 : 0.5; return { ast: swap(ast, pick(bare), bin('*', num(c), v('t'))), what: `${up ? 'quickened' : 'slowed'} t to ${c}t` }; }
+    const trig = nodes(ast).filter(h => isTrig(h.n));
+    if (!trig.length || !up) return null;
+    const h = pick(trig); h.n.args[0] = bin('+', h.n.args[0], v('t'));
+    return { ast, what: `set ${show(h.n)} in motion` };
+  },
+  mass(ast) {
+    const d = wants('mass');
+    if (Math.abs(d) < 0.05) return null;
+    const list = addends(ast), c = list.find(x => x.n.k === 'num');
+    if (c) {
+      const old = c.n.v;
+      c.n.v = +Math.max(0.05, old + d * c.sign * (0.5 + Math.random() * 0.5)).toFixed(2);
+      return { ast: join(list), what: `${d > 0 ? 'thickened' : 'thinned'} its core from ${fmtNum(old)} to ${fmtNum(c.n.v)}` };
+    }
+    list.unshift({ n: num(+Math.max(0.1, d).toFixed(2)), sign: 1 });
+    return { ast: join(list), what: `added a core of ${fmtNum(list[0].n.v)}` };
+  },
+  sharpen(ast) {
+    const all = nodes(ast);
+    const sharp = all.filter(h => h.n.k === 'bin' && h.n.op === '^' && h.n.a.k === 'call' && h.n.a.f === 'abs');
+    if (wants('reach') < 0 && sharp.length) { const h = pick(sharp); return { ast: swap(ast, h, h.n.a.args[0]), what: `softened its peaks back to ${show(h.n.a.args[0])}` }; }
+    const inside = new Set(sharp.map(h => h.n.a.args[0]));
+    const trig = all.filter(h => isTrig(h.n) && !inside.has(h.n));
+    if (!trig.length) return null;
+    const h = pick(trig), p = 2 + Math.floor(Math.random() * 3);
+    return { ast: swap(ast, h, bin('^', call('abs', [h.n]), num(p))), what: `sharpened ${show(h.n)} to the power ${p}` };
+  },
+  feed(ast) {
+    if (nodes(ast).some(h => h.n.k === 'var' && h.n.n === 'E') && Math.random() < 0.7) return null;
+    const all = addends(ast), opts = all.filter(x => x.n.k !== 'num');
+    if (!opts.length) return null;
+    const tgt = pick(opts);
+    all[all.indexOf(tgt)] = { n: bin('*', tgt.n, v('E')), sign: tgt.sign };
+    return { ast: join(all), what: `wired its energy E into ${show(tgt.n)}` };
+  },
+};
+const MUT_LIST = Object.values(MUTATIONS);
+
+// how well a candidate body would meet its needs, measured over a short stretch of its future
+function score(f, size) {
+  const sample = (th, t) => { env.theta = th; env.t = t; return safe(f(env)); };
+  const acc = { mass: 0, symmetry: 0, pulse: 0, intricacy: 0, reach: 0 };
+  for (const ahead of [0, 0.9, 1.8]) { const m = measure(sample, T + ahead); for (const k in acc) acc[k] += m[k] / 3; }
+  acc.symmetry = Math.round(acc.symmetry);
+  return fitOf(acc) - 0.003 * size;
+}
+const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+let rewriteClock = 0, lastKeyAt = -1e9;
+function selfRewrite() {
+  const size = nodes(curAst).length;
+  const base = score(cur, size);
+  let best = null;
+  for (let i = 0; i < 10; i++) {
+    const m = size > 70 ? MUTATIONS.shed : pick(MUT_LIST);
+    let res = null; try { res = m(clone(curAst)); } catch (_) {}
+    if (!res) continue;
+    const src = show(res.ast);
+    if (src === state.eq) continue;
+    let c; try { c = compile(src); } catch (_) { continue; } // it must be able to read what it wrote
+    const sc = score(c.f, nodes(c.ast).length);
+    if (!best || sc > best.sc) best = { sc, src, c, what: res.what };
+  }
+  if (!best) return;
+  const improves = best.sc > base + 0.004;
+  if (!improves && Math.random() > 0.12) { state.E = Math.max(0, state.E - 0.01); return; } // considered and rejected
+  state.E = Math.max(0, state.E - 0.04); // rewriting itself costs energy
+  prev = cur; cur = best.c.f; curAst = best.c.ast; morph = 0;
+  state.eq = committedEq = best.src;
+  state.rewrites = (state.rewrites || 0) + 1;
+  input.value = best.src;
+  input.classList.remove('rewritten'); void input.offsetWidth; input.classList.add('rewritten');
+  addLog(`<i>Rewrote itself:</i> ${esc(best.what)}${improves ? '.' : ', as a blind experiment.'}`);
+  setStatus(`It rewrote its own equation: ${best.what}.`);
+  save(); buildNeeds();
+}
 
 /* ---------- evolution ---------- */
 function shiftTarget(n, scale = 1) {
@@ -357,7 +578,7 @@ function shiftTarget(n, scale = 1) {
   if (d.int) { t = Math.round(t); if (t === Math.round(traits[n.key])) t = clamp(t + (dir || 1), d.min, d.max); }
   n.target = t;
 }
-function addLog(text) { state.log.unshift({ g: state.gen, text }); state.log = state.log.slice(0, 5); }
+function addLog(text) { state.log.unshift({ g: state.gen, text }); state.log = state.log.slice(0, 6); }
 let newNeedKey = null;
 function evolve() {
   // judge the form it was actually given, not the half-finished morph
@@ -408,6 +629,7 @@ function buildNeeds() {
   newNeedKey = null;
   $('log').innerHTML = state.log.map(l => `<li>Gen ${l.g} · ${l.text}</li>`).join('');
   $('gen').textContent = state.gen;
+  $('rw').textContent = state.rewrites || 0;
 }
 buildNeeds();
 const pct = (v, d) => (clamp((v - d.min) / (d.max - d.min), 0, 1) * 100).toFixed(1) + '%';
@@ -452,9 +674,9 @@ function setStatus(text, err) { status.textContent = text; status.classList.togg
 function tryApply() {
   const src = input.value;
   try {
-    const f = compile(src);
+    const c = compile(src);
     if (src !== state.eq) {
-      prev = cur; cur = f; morph = 0; state.eq = src;
+      prev = cur; cur = c.f; curAst = c.ast; morph = 0; state.eq = src;
     }
     setStatus(src === committedEq ? 'Stable. This is its current form.' : 'It senses the change. Press Enter, or wait, and it will adapt.');
     return true;
@@ -469,6 +691,7 @@ function commit() {
   setStatus(`Absorbed. Generation ${state.gen}.`);
 }
 input.addEventListener('input', () => {
+  lastKeyAt = wall;
   clearTimeout(parseTimer); clearTimeout(commitTimer);
   parseTimer = setTimeout(() => { if (tryApply()) commitTimer = setTimeout(commit, 2200); }, 280);
 });
@@ -512,6 +735,9 @@ function frame(now) {
   const cost = 0.025 * traits.mass * (0.5 + traits.pulse) + 0.012 * traits.intricacy / 8;
   E = state.E = clamp(E + (core + feed - cost + 0.004) * dt, 0, 1.7);
   restless(dt, fit);
+  // when it has energy to spare and you are not mid-edit, it rewrites its own equation
+  const busy = wall - lastKeyAt < 7 || (document.activeElement === input && wall - lastKeyAt < 15) || state.eq !== committedEq || input.classList.contains('bad');
+  if (!busy && morph >= 1 && E > 0.25) { rewriteClock += dt * (0.4 + E); if (rewriteClock > 9) { rewriteClock = 0; selfRewrite(); } }
 
   const { cx: bx, cy: by, R0 } = layout();
   const drift = reduce ? 0.3 : 1;
