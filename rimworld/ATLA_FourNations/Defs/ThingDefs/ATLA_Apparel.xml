@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Defs>
+
+  <!--
+    Nation clothing reuses vanilla worn-apparel art, recoloured through graphicData.color,
+    so the mod ships no large body-type texture sheets. A fixed cost list (no stuff)
+    keeps the nation colours instead of tinting them by fabric.
+  -->
+  <ThingDef Name="ATLA_ApparelBase" Abstract="True">
+    <thingClass>Apparel</thingClass>
+    <category>Item</category>
+    <drawerType>MapMeshOnly</drawerType>
+    <altitudeLayer>Item</altitudeLayer>
+    <selectable>true</selectable>
+    <pathCost>14</pathCost>
+    <useHitPoints>true</useHitPoints>
+    <drawGUIOverlay>true</drawGUIOverlay>
+    <alwaysHaulable>true</alwaysHaulable>
+    <tickerType>Never</tickerType>
+    <techLevel>Medieval</techLevel>
+    <smeltable>false</smeltable>
+    <burnableByRecipe>true</burnableByRecipe>
+    <thingCategories>
+      <li>Apparel</li>
+    </thingCategories>
+    <tradeTags>
+      <li>Clothing</li>
+    </tradeTags>
+    <graphicData>
+      <graphicClass>Graphic_Single</graphicClass>
+    </graphicData>
+    <comps>
+      <li Class="CompProperties_Forbiddable"/>
+      <li>
+        <compClass>CompColorable</compClass>
+      </li>
+      <li>
+        <compClass>CompQuality</compClass>
+      </li>
+    </comps>
+    <recipeMaker>
+      <workSpeedStat>GeneralLaborSpeed</workSpeedStat>
+      <workSkill>Crafting</workSkill>
+      <effectWorking>Tailor</effectWorking>
+      <soundWorking>Recipe_Tailor</soundWorking>
+      <unfinishedThingDef>UnfinishedApparel</unfinishedThingDef>
+      <recipeUsers>
+        <li>HandTailoringBench</li>
+        <li>ElectricTailoringBench</li>
+      </recipeUsers>
+      <researchPrerequisite>ATLA_BendingBasics</researchPrerequisite>
+    </recipeMaker>
+  </ThingDef>
+
+  <ThingDef ParentName="ATLA_ApparelBase">
+    <defName>ATLA_AirNomadRobes</defName>
+    <label>Air Nomad robes</label>
+    <description>Flowing saffron and yellow robes worn by the monks of the Air Temples. Light, airy and easy to move in.</description>
+    <graphicData>
+      <texPath>Things/Pawn/Humanlike/Apparel/Duster/Duster</texPath>
+      <color>(232, 140, 40)</color>
+    </graphicData>
+    <costList>
+      <Cloth>70</Cloth>
+    </costList>
+    <statBases>
+      <WorkToMake>6000</WorkToMake>
+      <MaxHitPoints>140</MaxHitPoints>
+      <Mass>1.2</Mass>
+      <Flammability>1.0</Flammability>
+      <DeteriorationRate>1</DeteriorationRate>
+      <ArmorRating_Sharp>0.06</ArmorRating_Sharp>
+      <ArmorRating_Blunt>0.04</ArmorRating_Blunt>
+      <Insulation_Cold>10</Insulation_Cold>
+      <Insulation_Heat>12</Insulation_Heat>
+    </statBases>
+    <equippedStatOffsets>
+      <MoveSpeed>0.15</MoveSpeed>
+    </equippedStatOffsets>
+    <apparel>
+      <bodyPartGroups>
+        <li>Torso</li>
+        <li>Neck</li>
+        <li>Shoulders</li>
+        <li>Arms</li>
+        <li>Legs</li>
+      </bodyPartGroups>
+      <wornGraphicPath>Things/Pawn/Humanlike/Apparel/Duster/Duster</wornGraphicPath>
+      <layers>
+        <li>Shell</li>
+      </layers>
+      <tags>
+        <li>ATLA_AirNomad</li>
+      </tags>
+    </apparel>
+  </ThingDef>
+
+  <ThingDef ParentName="ATLA_ApparelBase">
+    <defName>ATLA_WaterTribeParka</defName>
+    <label>Water Tribe parka</label>
+    <description>A fur-lined blue parka from the poles, built to keep out the bitterest southern winds.</description>
+    <graphicData>
+      <texPath>Things/Pawn/Humanlike/Apparel/Parka/Parka</texPath>
+      <color>(50, 105, 190)</color>
+    </graphicData>
+    <costList>
+      <Cloth>40</Cloth>
+      <Leather_Plain>40</Leather_Plain>
+    </costList>
+    <statBases>
+      <WorkToMake>8000</WorkToMake>
+      <MaxHitPoints>180</MaxHitPoints>
+      <Mass>2.5</Mass>
+      <Flammability>1.0</Flammability>
+      <DeteriorationRate>1</DeteriorationRate>
+      <ArmorRating_Sharp>0.12</ArmorRating_Sharp>
+      <ArmorRating_Blunt>0.08</ArmorRating_Blunt>
+      <Insulation_Cold>60</Insulation_Cold>
+      <Insulation_Heat>-6</Insulation_Heat>
+    </statBases>
+    <apparel>
+      <bodyPartGroups>
+        <li>Torso</li>
+        <li>Neck</li>
+        <li>Shoulders</li>
+        <li>Arms</li>
+        <li>Legs</li>
+      </bodyPartGroups>
+      <wornGraphicPath>Things/Pawn/Humanlike/Apparel/Parka/Parka</wornGraphicPath>
+      <layers>
+        <li>Shell</li>
+      </layers>
+      <tags>
+        <li>ATLA_WaterTribe</li>
+      </tags>
+    </apparel>
+  </ThingDef>
+
+  <ThingDef ParentName="ATLA_ApparelBase">
+    <defName>ATLA_FireNationUniform</defName>
+    <label>Fire Nation uniform</label>
+    <description>A crimson jacket with padded shoulders, worn by Fire Nation soldiers. It is treated to resist flame.</description>
+    <graphicData>
+      <texPath>Things/Pawn/Humanlike/Apparel/Jacket/Jacket</texPath>
+      <color>(170, 30, 25)</color>
+    </graphicData>
+    <costList>
+      <Cloth>50</Cloth>
+      <Steel>15</Steel>
+    </costList>
+    <statBases>
+      <WorkToMake>8000</WorkToMake>
+      <MaxHitPoints>200</MaxHitPoints>
+      <Mass>2.2</Mass>
+      <Flammability>0.4</Flammability>
+      <DeteriorationRate>1</DeteriorationRate>
+      <ArmorRating_Sharp>0.20</ArmorRating_Sharp>
+      <ArmorRating_Blunt>0.10</ArmorRating_Blunt>
+      <ArmorRating_Heat>0.35</ArmorRating_Heat>
+      <Insulation_Cold>14</Insulation_Cold>
+      <Insulation_Heat>6</Insulation_Heat>
+    </statBases>
+    <apparel>
+      <bodyPartGroups>
+        <li>Torso</li>
+        <li>Neck</li>
+        <li>Shoulders</li>
+        <li>Arms</li>
+      </bodyPartGroups>
+      <wornGraphicPath>Things/Pawn/Humanlike/Apparel/Jacket/Jacket</wornGraphicPath>
+      <layers>
+        <li>Shell</li>
+      </layers>
+      <tags>
+        <li>ATLA_FireNation</li>
+      </tags>
+    </apparel>
+  </ThingDef>
+
+  <ThingDef ParentName="ATLA_ApparelBase">
+    <defName>ATLA_EarthKingdomGarb</defName>
+    <label>Earth Kingdom garb</label>
+    <description>Sturdy green and tan clothes in the style of Ba Sing Se. Made for long days working stone.</description>
+    <graphicData>
+      <texPath>Things/Pawn/Humanlike/Apparel/TribalA/TribalA</texPath>
+      <color>(75, 125, 60)</color>
+    </graphicData>
+    <costList>
+      <Cloth>60</Cloth>
+    </costList>
+    <statBases>
+      <WorkToMake>5000</WorkToMake>
+      <MaxHitPoints>160</MaxHitPoints>
+      <Mass>1.5</Mass>
+      <Flammability>1.0</Flammability>
+      <DeteriorationRate>1</DeteriorationRate>
+      <ArmorRating_Sharp>0.08</ArmorRating_Sharp>
+      <ArmorRating_Blunt>0.14</ArmorRating_Blunt>
+      <Insulation_Cold>12</Insulation_Cold>
+      <Insulation_Heat>8</Insulation_Heat>
+    </statBases>
+    <equippedStatOffsets>
+      <MiningSpeed>0.1</MiningSpeed>
+    </equippedStatOffsets>
+    <apparel>
+      <bodyPartGroups>
+        <li>Torso</li>
+        <li>Shoulders</li>
+        <li>Arms</li>
+        <li>Legs</li>
+      </bodyPartGroups>
+      <wornGraphicPath>Things/Pawn/Humanlike/Apparel/TribalA/TribalA</wornGraphicPath>
+      <layers>
+        <li>OnSkin</li>
+      </layers>
+      <tags>
+        <li>ATLA_EarthKingdom</li>
+      </tags>
+    </apparel>
+  </ThingDef>
+
+</Defs>

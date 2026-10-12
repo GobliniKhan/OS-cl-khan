@@ -1,0 +1,293 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Defs>
+
+  <!--
+    Bending is modelled as equipment: a colonist "equips" a bending form and then
+    attacks with it like a ranged weapon. This needs no C# at all.
+  -->
+  <ThingDef Name="ATLA_BendingFormBase" Abstract="True">
+    <thingClass>ThingWithComps</thingClass>
+    <category>Item</category>
+    <drawerType>MapMeshOnly</drawerType>
+    <altitudeLayer>Item</altitudeLayer>
+    <alwaysHaulable>true</alwaysHaulable>
+    <tickerType>Never</tickerType>
+    <selectable>true</selectable>
+    <useHitPoints>true</useHitPoints>
+    <pathCost>14</pathCost>
+    <drawGUIOverlay>true</drawGUIOverlay>
+    <equipmentType>Primary</equipmentType>
+    <techLevel>Neolithic</techLevel>
+    <smeltable>false</smeltable>
+    <burnableByRecipe>true</burnableByRecipe>
+    <graphicData>
+      <graphicClass>Graphic_Single</graphicClass>
+    </graphicData>
+    <thingCategories>
+      <li>WeaponsRanged</li>
+    </thingCategories>
+    <weaponTags>
+      <li>ATLA_Bending</li>
+    </weaponTags>
+    <tradeTags>
+      <li>WeaponRanged</li>
+    </tradeTags>
+    <statBases>
+      <MaxHitPoints>80</MaxHitPoints>
+      <Flammability>0.5</Flammability>
+      <DeteriorationRate>0.5</DeteriorationRate>
+      <Beauty>1</Beauty>
+      <SellPriceFactor>0.6</SellPriceFactor>
+      <Mass>0.4</Mass>
+    </statBases>
+    <comps>
+      <li Class="CompProperties_Forbiddable"/>
+      <li>
+        <compClass>CompEquippable</compClass>
+      </li>
+    </comps>
+    <recipeMaker>
+      <workSpeedStat>GeneralLaborSpeed</workSpeedStat>
+      <workSkill>Crafting</workSkill>
+      <effectWorking>Smith</effectWorking>
+      <soundWorking>Recipe_Smith</soundWorking>
+      <recipeUsers>
+        <li>CraftingSpot</li>
+        <li>FueledSmithy</li>
+        <li>ElectricSmithy</li>
+      </recipeUsers>
+      <researchPrerequisite>ATLA_BendingBasics</researchPrerequisite>
+    </recipeMaker>
+  </ThingDef>
+
+  <!-- ===================== Fire ===================== -->
+  <ThingDef ParentName="ATLA_BendingFormBase">
+    <defName>ATLA_FireForms</defName>
+    <label>firebending forms</label>
+    <description>The forms of the Fire Nation: quick, aggressive punches and kicks that launch bursts of flame. Set targets alight, but watch your own walls.</description>
+    <graphicData>
+      <texPath>ATLA/Weapons/FireForms</texPath>
+      <drawSize>0.8</drawSize>
+    </graphicData>
+    <costList>
+      <WoodLog>30</WoodLog>
+      <Cloth>15</Cloth>
+    </costList>
+    <statBases>
+      <WorkToMake>4000</WorkToMake>
+      <AccuracyTouch>0.70</AccuracyTouch>
+      <AccuracyShort>0.65</AccuracyShort>
+      <AccuracyMedium>0.50</AccuracyMedium>
+      <AccuracyLong>0.30</AccuracyLong>
+      <RangedWeapon_Cooldown>1.4</RangedWeapon_Cooldown>
+    </statBases>
+    <verbs>
+      <li>
+        <verbClass>Verb_Shoot</verbClass>
+        <hasStandardCommand>true</hasStandardCommand>
+        <defaultProjectile>ATLA_Proj_Fireblast</defaultProjectile>
+        <warmupTime>1.0</warmupTime>
+        <range>20.9</range>
+        <burstShotCount>3</burstShotCount>
+        <ticksBetweenBurstShots>9</ticksBetweenBurstShots>
+        <soundCast>Shot_IncendiaryLauncher</soundCast>
+        <muzzleFlashScale>9</muzzleFlashScale>
+      </li>
+    </verbs>
+  </ThingDef>
+
+  <ThingDef ParentName="ATLA_BendingFormBase">
+    <defName>ATLA_LightningForms</defName>
+    <label>lightning generation</label>
+    <description>The cold-blooded fire. The bender separates positive and negative energy, then guides a single, precise bolt of lightning through the body and out at the enemy. It ignores much of their armor and starts no fires.</description>
+    <techLevel>Medieval</techLevel>
+    <graphicData>
+      <texPath>ATLA/Weapons/LightningForms</texPath>
+      <drawSize>0.9</drawSize>
+    </graphicData>
+    <costList>
+      <Silver>60</Silver>
+      <Cloth>20</Cloth>
+    </costList>
+    <statBases>
+      <WorkToMake>9000</WorkToMake>
+      <AccuracyTouch>0.85</AccuracyTouch>
+      <AccuracyShort>0.85</AccuracyShort>
+      <AccuracyMedium>0.80</AccuracyMedium>
+      <AccuracyLong>0.70</AccuracyLong>
+      <RangedWeapon_Cooldown>2.4</RangedWeapon_Cooldown>
+    </statBases>
+    <recipeMaker>
+      <researchPrerequisite>ATLA_AdvancedBending</researchPrerequisite>
+    </recipeMaker>
+    <verbs>
+      <li>
+        <verbClass>Verb_Shoot</verbClass>
+        <hasStandardCommand>true</hasStandardCommand>
+        <defaultProjectile>ATLA_Proj_Lightning</defaultProjectile>
+        <warmupTime>2.5</warmupTime>
+        <range>34.9</range>
+        <soundCast>Shot_ChargeRifle</soundCast>
+        <muzzleFlashScale>12</muzzleFlashScale>
+      </li>
+    </verbs>
+  </ThingDef>
+
+  <!-- ===================== Water ===================== -->
+  <ThingDef ParentName="ATLA_BendingFormBase">
+    <defName>ATLA_WaterForms</defName>
+    <label>waterbending forms</label>
+    <description>The flowing forms of the Water Tribes. The bender redirects the enemy's energy and lashes them with whips of water that knock them off balance.</description>
+    <graphicData>
+      <texPath>ATLA/Weapons/WaterForms</texPath>
+      <drawSize>0.8</drawSize>
+    </graphicData>
+    <costList>
+      <WoodLog>20</WoodLog>
+      <Cloth>20</Cloth>
+    </costList>
+    <statBases>
+      <WorkToMake>4000</WorkToMake>
+      <AccuracyTouch>0.80</AccuracyTouch>
+      <AccuracyShort>0.70</AccuracyShort>
+      <AccuracyMedium>0.55</AccuracyMedium>
+      <AccuracyLong>0.35</AccuracyLong>
+      <RangedWeapon_Cooldown>1.2</RangedWeapon_Cooldown>
+    </statBases>
+    <verbs>
+      <li>
+        <verbClass>Verb_Shoot</verbClass>
+        <hasStandardCommand>true</hasStandardCommand>
+        <defaultProjectile>ATLA_Proj_WaterWhip</defaultProjectile>
+        <warmupTime>1.1</warmupTime>
+        <range>22.9</range>
+        <burstShotCount>2</burstShotCount>
+        <ticksBetweenBurstShots>12</ticksBetweenBurstShots>
+        <soundCast>ThrowGrenade</soundCast>
+        <muzzleFlashScale>0</muzzleFlashScale>
+      </li>
+    </verbs>
+  </ThingDef>
+
+  <!-- ===================== Earth ===================== -->
+  <ThingDef ParentName="ATLA_BendingFormBase">
+    <defName>ATLA_EarthForms</defName>
+    <label>earthbending forms</label>
+    <description>The rooted, neutral-jing forms of the Earth Kingdom. The bender waits, listens and strikes: tearing boulders from the ground and hurling them hard enough to flatten anyone they hit.</description>
+    <graphicData>
+      <texPath>ATLA/Weapons/EarthForms</texPath>
+      <drawSize>0.8</drawSize>
+    </graphicData>
+    <costList>
+      <BlocksGranite>40</BlocksGranite>
+      <Cloth>10</Cloth>
+    </costList>
+    <statBases>
+      <WorkToMake>4000</WorkToMake>
+      <Mass>1.5</Mass>
+      <AccuracyTouch>0.75</AccuracyTouch>
+      <AccuracyShort>0.70</AccuracyShort>
+      <AccuracyMedium>0.55</AccuracyMedium>
+      <AccuracyLong>0.40</AccuracyLong>
+      <RangedWeapon_Cooldown>2.0</RangedWeapon_Cooldown>
+    </statBases>
+    <verbs>
+      <li>
+        <verbClass>Verb_Shoot</verbClass>
+        <hasStandardCommand>true</hasStandardCommand>
+        <defaultProjectile>ATLA_Proj_Boulder</defaultProjectile>
+        <warmupTime>1.8</warmupTime>
+        <range>24.9</range>
+        <soundCast>ThrowGrenade</soundCast>
+        <muzzleFlashScale>0</muzzleFlashScale>
+      </li>
+    </verbs>
+  </ThingDef>
+
+  <!-- ===================== Air ===================== -->
+  <ThingDef ParentName="ATLA_BendingFormBase">
+    <defName>ATLA_GliderStaff</defName>
+    <label>Air Nomad glider staff</label>
+    <description>A wooden staff that unfolds into a glider. Airbenders use it to send gusts that knock enemies off their feet, and it doubles as a fighting staff up close.</description>
+    <graphicData>
+      <texPath>ATLA/Weapons/GliderStaff</texPath>
+      <drawSize>1.1</drawSize>
+    </graphicData>
+    <costList>
+      <WoodLog>50</WoodLog>
+      <Cloth>25</Cloth>
+    </costList>
+    <statBases>
+      <WorkToMake>5000</WorkToMake>
+      <Mass>1.2</Mass>
+      <AccuracyTouch>0.80</AccuracyTouch>
+      <AccuracyShort>0.75</AccuracyShort>
+      <AccuracyMedium>0.60</AccuracyMedium>
+      <AccuracyLong>0.40</AccuracyLong>
+      <RangedWeapon_Cooldown>1.0</RangedWeapon_Cooldown>
+    </statBases>
+    <verbs>
+      <li>
+        <verbClass>Verb_Shoot</verbClass>
+        <hasStandardCommand>true</hasStandardCommand>
+        <defaultProjectile>ATLA_Proj_AirBlast</defaultProjectile>
+        <warmupTime>0.8</warmupTime>
+        <range>26.9</range>
+        <burstShotCount>2</burstShotCount>
+        <ticksBetweenBurstShots>8</ticksBetweenBurstShots>
+        <soundCast>ThrowGrenade</soundCast>
+        <muzzleFlashScale>0</muzzleFlashScale>
+      </li>
+    </verbs>
+    <tools>
+      <li>
+        <label>staff</label>
+        <capacities>
+          <li>Blunt</li>
+        </capacities>
+        <power>10</power>
+        <cooldownTime>1.8</cooldownTime>
+      </li>
+    </tools>
+  </ThingDef>
+
+  <!-- ===================== Avatar ===================== -->
+  <ThingDef ParentName="ATLA_BendingFormBase">
+    <defName>ATLA_AvatarState</defName>
+    <label>Avatar State</label>
+    <description>The eyes glow and the voices of every past Avatar speak as one. A devastating, slow blast of all four elements that explodes on impact. Keep your own colonists well clear.</description>
+    <techLevel>Medieval</techLevel>
+    <graphicData>
+      <texPath>ATLA/Weapons/AvatarState</texPath>
+      <drawSize>0.9</drawSize>
+    </graphicData>
+    <costList>
+      <Jade>40</Jade>
+      <Gold>15</Gold>
+    </costList>
+    <statBases>
+      <WorkToMake>16000</WorkToMake>
+      <AccuracyTouch>0.80</AccuracyTouch>
+      <AccuracyShort>0.75</AccuracyShort>
+      <AccuracyMedium>0.65</AccuracyMedium>
+      <AccuracyLong>0.50</AccuracyLong>
+      <RangedWeapon_Cooldown>4.0</RangedWeapon_Cooldown>
+    </statBases>
+    <recipeMaker>
+      <researchPrerequisite>ATLA_AvatarState</researchPrerequisite>
+    </recipeMaker>
+    <verbs>
+      <li>
+        <verbClass>Verb_Shoot</verbClass>
+        <hasStandardCommand>true</hasStandardCommand>
+        <defaultProjectile>ATLA_Proj_AvatarBlast</defaultProjectile>
+        <warmupTime>3.0</warmupTime>
+        <range>29.9</range>
+        <ai_AvoidFriendlyFireRadius>3</ai_AvoidFriendlyFireRadius>
+        <soundCast>Shot_IncendiaryLauncher</soundCast>
+        <muzzleFlashScale>14</muzzleFlashScale>
+      </li>
+    </verbs>
+  </ThingDef>
+
+</Defs>

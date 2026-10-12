@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Defs>
+
+  <HediffDef>
+    <defName>ATLA_SpiritWaterBlessing</defName>
+    <label>Spirit Oasis blessing</label>
+    <description>Blessed water from the Spirit Oasis is easing pain, slowing bleeding and strengthening the immune system.</description>
+    <hediffClass>HediffWithComps</hediffClass>
+    <defaultLabelColor>(0.45, 0.8, 1.0)</defaultLabelColor>
+    <isBad>false</isBad>
+    <comps>
+      <li Class="HediffCompProperties_Disappears">
+        <disappearsAfterTicks>30000~30000</disappearsAfterTicks>
+      </li>
+    </comps>
+    <stages>
+      <li>
+        <painFactor>0.6</painFactor>
+        <totalBleedFactor>0.5</totalBleedFactor>
+        <statOffsets>
+          <ImmunityGainSpeed>0.3</ImmunityGainSpeed>
+        </statOffsets>
+      </li>
+    </stages>
+  </HediffDef>
+
+</Defs>

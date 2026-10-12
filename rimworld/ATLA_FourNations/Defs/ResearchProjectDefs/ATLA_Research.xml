@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Defs>
+
+  <ResearchTabDef>
+    <defName>ATLA_FourNations</defName>
+    <label>Four Nations</label>
+  </ResearchTabDef>
+
+  <ResearchProjectDef>
+    <defName>ATLA_BendingBasics</defName>
+    <label>bending basics</label>
+    <description>Learn the fundamental forms of the four bending arts, and how to sew the traditional garments of each nation.</description>
+    <baseCost>500</baseCost>
+    <techLevel>Neolithic</techLevel>
+    <tab>ATLA_FourNations</tab>
+    <researchViewX>0.00</researchViewX>
+    <researchViewY>1.00</researchViewY>
+  </ResearchProjectDef>
+
+  <ResearchProjectDef>
+    <defName>ATLA_AdvancedBending</defName>
+    <label>advanced bending</label>
+    <description>Master advanced techniques such as lightning generation and the healing waters of the Spirit Oasis.</description>
+    <baseCost>1500</baseCost>
+    <techLevel>Medieval</techLevel>
+    <tab>ATLA_FourNations</tab>
+    <prerequisites>
+      <li>ATLA_BendingBasics</li>
+    </prerequisites>
+    <researchViewX>1.00</researchViewX>
+    <researchViewY>1.00</researchViewY>
+  </ResearchProjectDef>
+
+  <ResearchProjectDef>
+    <defName>ATLA_AvatarState</defName>
+    <label>Avatar State</label>
+    <description>Channel the combined power and knowledge of every past Avatar into a single devastating technique.</description>
+    <baseCost>3000</baseCost>
+    <techLevel>Medieval</techLevel>
+    <tab>ATLA_FourNations</tab>
+    <prerequisites>
+      <li>ATLA_AdvancedBending</li>
+    </prerequisites>
+    <researchViewX>2.00</researchViewX>
+    <researchViewY>1.00</researchViewY>
+  </ResearchProjectDef>
+
+</Defs>

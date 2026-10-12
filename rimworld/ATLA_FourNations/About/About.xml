@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ModMetaData>
+  <name>Avatar: The Last Airbender - Four Nations</name>
+  <author>GobliniKhan</author>
+  <packageId>GobliniKhan.ATLA.FourNations</packageId>
+  <supportedVersions>
+    <li>1.4</li>
+    <li>1.5</li>
+    <li>1.6</li>
+  </supportedVersions>
+  <description>Water. Earth. Fire. Air.
+
+Bring the four nations to the Rim. Your colonists can be born benders (or, very rarely, the Avatar), research the bending arts, and fight with fire blasts, water whips, thrown boulders, air gusts, lightning and the Avatar State.
+
+Built to run on old hardware such as an early-2014 Mac:
+ - XML only. No C# assemblies and no Harmony, so there is nothing platform-specific to break.
+ - No DLC required, and no other mods required.
+ - Tiny 64x64 textures (about 40 KB in total) for low-VRAM integrated graphics.
+ - Nothing ticks in the background, so it costs no TPS.
+
+Adds:
+ - Traits: Firebender, Waterbender, Earthbender, Airbender, and the Avatar.
+ - A "Four Nations" research tab with Bending Basics, Advanced Bending and the Avatar State.
+ - Six bending forms, which colonists equip like weapons: Firebending, Waterbending, Earthbending, the Air Nomad glider staff, Lightning Generation and the Avatar State.
+ - Nation clothing: Air Nomad robes, a Water Tribe parka, a Fire Nation uniform and Earth Kingdom garb.
+ - Spirit Oasis water, a healing draught.</description>
+</ModMetaData>

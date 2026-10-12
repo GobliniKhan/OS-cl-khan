@@ -118,3 +118,10 @@ It sends ordinary GET requests to the target's website and nothing else to the t
 You are still responsible for how you use it. Use it for legitimate purposes such as due diligence,
 vendor risk, or assessing organizations you are authorized to assess. Respect each data source's terms of
 service and rate limits, and follow privacy law (e.g. GDPR) when you process personal data such as staff emails.
+
+---
+
+## Also in this repo: RimWorld mod
+
+[`rimworld/ATLA_FourNations`](rimworld/ATLA_FourNations/README.md) is an XML-only *Avatar: The Last Airbender* mod
+for RimWorld 1.4–1.6. It is lightweight enough to run on an early-2014 Mac.

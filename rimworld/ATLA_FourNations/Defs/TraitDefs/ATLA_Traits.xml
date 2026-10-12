@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Defs>
+
+  <TraitDef>
+    <defName>ATLA_Firebender</defName>
+    <commonality>0.25</commonality>
+    <degreeDatas>
+      <li>
+        <label>firebender</label>
+        <description>{PAWN_nameDef} draws fire from {PAWN_possessive} own breath and drive, runs hot, shrugs off the cold and is hard to burn.</description>
+        <statOffsets>
+          <ShootingAccuracyPawn>2</ShootingAccuracyPawn>
+          <ComfyTemperatureMin>-10</ComfyTemperatureMin>
+          <Flammability>-0.4</Flammability>
+        </statOffsets>
+      </li>
+    </degreeDatas>
+    <conflictingTraits>
+      <li>ATLA_Waterbender</li>
+      <li>ATLA_Earthbender</li>
+      <li>ATLA_Airbender</li>
+      <li>ATLA_Avatar</li>
+    </conflictingTraits>
+  </TraitDef>
+
+  <TraitDef>
+    <defName>ATLA_Waterbender</defName>
+    <commonality>0.25</commonality>
+    <degreeDatas>
+      <li>
+        <label>waterbender</label>
+        <description>{PAWN_nameDef} moves with the push and pull of the moon on the tides, fights off sickness quickly and is a gifted healer.</description>
+        <statOffsets>
+          <MedicalTendQuality>0.15</MedicalTendQuality>
+          <ImmunityGainSpeed>0.15</ImmunityGainSpeed>
+          <ComfyTemperatureMin>-15</ComfyTemperatureMin>
+        </statOffsets>
+      </li>
+    </degreeDatas>
+    <conflictingTraits>
+      <li>ATLA_Firebender</li>
+      <li>ATLA_Earthbender</li>
+      <li>ATLA_Airbender</li>
+      <li>ATLA_Avatar</li>
+    </conflictingTraits>
+  </TraitDef>
+
+  <TraitDef>
+    <defName>ATLA_Earthbender</defName>
+    <commonality>0.25</commonality>
+    <degreeDatas>
+      <li>
+        <label>earthbender</label>
+        <description>{PAWN_nameDef} is as stubborn and steady as a mountain, and moves stone so easily that {PAWN_pronoun} makes an excellent miner and builder.</description>
+        <statOffsets>
+          <MiningSpeed>0.5</MiningSpeed>
+          <ConstructionSpeed>0.3</ConstructionSpeed>
+          <MentalBreakThreshold>-0.04</MentalBreakThreshold>
+        </statOffsets>
+      </li>
+    </degreeDatas>
+    <conflictingTraits>
+      <li>ATLA_Firebender</li>
+      <li>ATLA_Waterbender</li>
+      <li>ATLA_Airbender</li>
+      <li>ATLA_Avatar</li>
+    </conflictingTraits>
+  </TraitDef>
+
+  <TraitDef>
+    <defName>ATLA_Airbender</defName>
+    <commonality>0.15</commonality>
+    <degreeDatas>
+      <li>
+        <label>airbender</label>
+        <description>{PAWN_nameDef} was raised in the ways of the Air Nomads: light on {PAWN_possessive} feet, hard to hit and slow to anger.</description>
+        <statOffsets>
+          <MoveSpeed>0.6</MoveSpeed>
+          <MeleeDodgeChance>6</MeleeDodgeChance>
+          <MentalBreakThreshold>-0.06</MentalBreakThreshold>
+        </statOffsets>
+      </li>
+    </degreeDatas>
+    <conflictingTraits>
+      <li>ATLA_Firebender</li>
+      <li>ATLA_Waterbender</li>
+      <li>ATLA_Earthbender</li>
+      <li>ATLA_Avatar</li>
+    </conflictingTraits>
+  </TraitDef>
+
+  <TraitDef>
+    <defName>ATLA_Avatar</defName>
+    <commonality>0.02</commonality>
+    <degreeDatas>
+      <li>
+        <label>the Avatar</label>
+        <description>{PAWN_nameDef} is the Avatar, master of all four elements and bridge between the human and spirit worlds. Only the Avatar can bring balance to the Rim.</description>
+        <statOffsets>
+          <MoveSpeed>0.4</MoveSpeed>
+          <ShootingAccuracyPawn>2</ShootingAccuracyPawn>
+          <MeleeDodgeChance>4</MeleeDodgeChance>
+          <ImmunityGainSpeed>0.15</ImmunityGainSpeed>
+          <MiningSpeed>0.25</MiningSpeed>
+          <ComfyTemperatureMin>-10</ComfyTemperatureMin>
+          <PsychicSensitivity>0.4</PsychicSensitivity>
+          <MentalBreakThreshold>-0.05</MentalBreakThreshold>
+        </statOffsets>
+      </li>
+    </degreeDatas>
+    <conflictingTraits>
+      <li>ATLA_Firebender</li>
+      <li>ATLA_Waterbender</li>
+      <li>ATLA_Earthbender</li>
+      <li>ATLA_Airbender</li>
+    </conflictingTraits>
+  </TraitDef>
+
+</Defs>

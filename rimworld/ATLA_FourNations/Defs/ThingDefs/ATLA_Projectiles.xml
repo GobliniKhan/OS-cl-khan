@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Defs>
+
+  <!-- Self-contained base, so nothing depends on vanilla abstract defs that may be renamed between versions. -->
+  <ThingDef Name="ATLA_ProjectileBase" Abstract="True">
+    <category>Projectile</category>
+    <tickerType>Normal</tickerType>
+    <altitudeLayer>Projectile</altitudeLayer>
+    <thingClass>Bullet</thingClass>
+    <useHitPoints>False</useHitPoints>
+    <neverMultiSelect>True</neverMultiSelect>
+    <graphicData>
+      <graphicClass>Graphic_Single</graphicClass>
+      <shaderType>TransparentPostLight</shaderType>
+    </graphicData>
+  </ThingDef>
+
+  <ThingDef ParentName="ATLA_ProjectileBase">
+    <defName>ATLA_Proj_Fireblast</defName>
+    <label>fire blast</label>
+    <graphicData>
+      <texPath>ATLA/Projectiles/Fireblast</texPath>
+      <drawSize>0.9</drawSize>
+    </graphicData>
+    <projectile>
+      <damageDef>Flame</damageDef>
+      <damageAmountBase>9</damageAmountBase>
+      <speed>45</speed>
+      <ai_IsIncendiary>true</ai_IsIncendiary>
+    </projectile>
+  </ThingDef>
+
+  <ThingDef ParentName="ATLA_ProjectileBase">
+    <defName>ATLA_Proj_Lightning</defName>
+    <label>lightning bolt</label>
+    <graphicData>
+      <texPath>ATLA/Projectiles/Lightning</texPath>
+      <drawSize>1.4</drawSize>
+    </graphicData>
+    <projectile>
+      <damageDef>Burn</damageDef>
+      <damageAmountBase>26</damageAmountBase>
+      <armorPenetrationBase>0.6</armorPenetrationBase>
+      <stoppingPower>1.5</stoppingPower>
+      <speed>140</speed>
+    </projectile>
+  </ThingDef>
+
+  <ThingDef ParentName="ATLA_ProjectileBase">
+    <defName>ATLA_Proj_WaterWhip</defName>
+    <label>water whip</label>
+    <graphicData>
+      <texPath>ATLA/Projectiles/WaterWhip</texPath>
+      <drawSize>0.8</drawSize>
+    </graphicData>
+    <projectile>
+      <damageDef>Blunt</damageDef>
+      <damageAmountBase>10</damageAmountBase>
+      <armorPenetrationBase>0.15</armorPenetrationBase>
+      <stoppingPower>1.5</stoppingPower>
+      <speed>50</speed>
+    </projectile>
+  </ThingDef>
+
+  <ThingDef ParentName="ATLA_ProjectileBase">
+    <defName>ATLA_Proj_Boulder</defName>
+    <label>boulder</label>
+    <graphicData>
+      <texPath>ATLA/Projectiles/Boulder</texPath>
+      <shaderType>Cutout</shaderType>
+      <drawSize>0.9</drawSize>
+    </graphicData>
+    <projectile>
+      <damageDef>Blunt</damageDef>
+      <damageAmountBase>18</damageAmountBase>
+      <armorPenetrationBase>0.3</armorPenetrationBase>
+      <stoppingPower>2.5</stoppingPower>
+      <speed>32</speed>
+    </projectile>
+  </ThingDef>
+
+  <ThingDef ParentName="ATLA_ProjectileBase">
+    <defName>ATLA_Proj_AirBlast</defName>
+    <label>air blast</label>
+    <graphicData>
+      <texPath>ATLA/Projectiles/AirBlast</texPath>
+      <drawSize>1.0</drawSize>
+    </graphicData>
+    <projectile>
+      <damageDef>Blunt</damageDef>
+      <damageAmountBase>6</damageAmountBase>
+      <armorPenetrationBase>0.05</armorPenetrationBase>
+      <stoppingPower>3</stoppingPower>
+      <speed>70</speed>
+    </projectile>
+  </ThingDef>
+
+  <ThingDef ParentName="ATLA_ProjectileBase">
+    <defName>ATLA_Proj_AvatarBlast</defName>
+    <label>Avatar State blast</label>
+    <thingClass>Projectile_Explosive</thingClass>
+    <graphicData>
+      <texPath>ATLA/Projectiles/AvatarBlast</texPath>
+      <drawSize>1.3</drawSize>
+    </graphicData>
+    <projectile>
+      <damageDef>Bomb</damageDef>
+      <damageAmountBase>35</damageAmountBase>
+      <explosionRadius>2.4</explosionRadius>
+      <speed>40</speed>
+    </projectile>
+  </ThingDef>
+
+</Defs>
