@@ -6,7 +6,7 @@ import {
   Pause, Play, ChevronsRight, FastForward, Sun, Moon, Gem, Axe, Trash2, Crosshair,
   Square, DoorOpen, Bed, Flame, Coffee, AlertTriangle, Package, Sprout, Leaf,
   MousePointer2, Mountain, Droplets, Wind, Hand, Heart, Utensils, Swords, Triangle,
-  X, RotateCcw, ZoomIn, ZoomOut, ScrollText, Hammer, Footprints, Skull, HelpCircle, Sparkles, Eye,
+  X, RotateCcw, ZoomIn, ZoomOut, ScrollText, Hammer, Footprints, Skull, HelpCircle, Sparkles, Eye, Rocket, GitBranch,
 } from 'lucide-react';
 
 // ============================================================================
@@ -15,7 +15,7 @@ import {
 const W = 40, H = 40, TS = 32;
 const DAY_LEN = 180;            // game seconds per in-game day (1x speed)
 const MAXSTACK = 75;
-const SPEEDS = [0, 1, 2, 3];
+const SPEEDS = [0, 1, 2, 3, 8];
 const T = { GRASS: 0, SOIL: 1, WATER: 2, STONE: 3, DIRT: 4, SAND: 5 };
 const TERRAIN_NAME = ['Grass', 'Fertile Soil', 'Water', 'Stone Deposit', 'Bare Earth', 'Sand'];
 const TERRAIN_COLOR = ['#5f8f45', '#6b4a2d', '#2d6c9e', '#7d8088', '#8b7a5a', '#cdb27a'];
@@ -175,10 +175,132 @@ function darkness(G) {
   return d * (G.ev.fullmoon > 0 ? 0.42 : 0.62);
 }
 
+
+// ============================================================================
+// Lineage learning
+// Each colony carries a "genome" of habits. Generation 1 is naive and makes
+// real mistakes. When a colony falls, its chronicle (what killed people,
+// hunger, breaks, wounds, how far the wall got) becomes lessons for the next
+// generation, plus one small experiment so the colony keeps trying new things.
+// ============================================================================
+const NAIVE_GENOME = {
+  wallDay: 99,          // day the colonists start walling the camp (99 = never)
+  wallAfterRaid: false, // start walling as soon as the first raid hits
+  traps: 0,             // spike traps kept outside the gates
+  fightHealth: 15,      // health below which a colonist stops fighting and retreats
+  medic: false,         // one colonist leaves the fight to save a bleeding ally
+  huntEager: true,      // hunt the platypus-bear on sight
+  farmPerColonist: 2,   // cabbage tiles per colonist
+  mealReserve: 1,       // how many meals per colonist the cooks keep ready (x2)
+  waterFirst: false,    // drop other work to water crops during heatwaves
+  teaTable: false,      // build a tea table and jasmine patch for Harmony
+  woodReserve: 15,      // chop more trees when wood falls below this
+  stoneReserve: 10,     // mine more stone when it falls below this
+};
+const GENE_LIMITS = {
+  wallDay: [1.5, 99], traps: [0, 8], fightHealth: [15, 70], farmPerColonist: [2, 9],
+  mealReserve: [1, 4], woodReserve: [10, 80], stoneReserve: [10, 90],
+};
+function describeGenome(g) {
+  return [
+    g.wallDay >= 99 && !g.wallAfterRaid ? 'Trust the open valley: no walls' : `Wall the camp ${g.wallAfterRaid ? 'after the first raid' : ''}${g.wallAfterRaid && g.wallDay < 99 ? ' or ' : ''}${g.wallDay < 99 ? `by day ${g.wallDay.toFixed(1)}` : ''}`,
+    g.traps ? `Keep ${g.traps} spike traps outside the gates` : 'No traps',
+    g.fightHealth <= 15 ? 'Fight until they drop' : `Fall back when health drops below ${g.fightHealth}`,
+    g.medic ? 'A medic leaves the fight to save the bleeding' : 'Everyone fights; nobody tends wounds mid-battle',
+    g.huntEager ? 'Hunt the platypus-bear on sight' : 'Hunt the platypus-bear only when hungry and healthy',
+    `Farm ${g.farmPerColonist} cabbage tiles per colonist; keep ${g.mealReserve * 2} meals each`,
+    g.waterFirst ? 'Drop everything to water crops in a heatwave' : 'Water crops when there is time',
+    g.teaTable ? 'Build a tea table and grow jasmine' : 'No time for tea',
+    `Restock below ${g.woodReserve} wood and ${g.stoneReserve} stone`,
+  ];
+}
+function newStats() {
+  return { downedInCombat: 0, bledOut: 0, breaks: 0, withered: 0, hungryTime: 0, matWait: 0, bearInjuries: 0,
+    deaths: { raid: 0, bear: 0, starvation: 0, wounds: 0 }, peak: 4 };
+}
+function ringCompletion(G) {
+  let need = 0, done = 0;
+  for (const [x, y] of ringTiles()) {
+    const i = idx(x, y);
+    if (G.terrain[i] === T.WATER || G.terrain[i] === T.STONE) continue;
+    need++; const s = G.struct[i];
+    if (s && s.built && (s.type === 'wall' || s.type === 'door')) done++;
+  }
+  return need ? done / need : 1;
+}
+function chronicle(G) {
+  const st = G.stats, d = st.deaths;
+  const fell = Object.entries(d).sort((a, b) => b[1] - a[1])[0];
+  const cause = fell[1] === 0 ? 'unknown' : fell[0];
+  return { gen: G.gen, days: +(G.time / DAY_LEN).toFixed(2), cause, raids: G.raidsSeen, ring: +ringCompletion(G).toFixed(2), stats: JSON.parse(JSON.stringify(st)), genome: { ...G.genome } };
+}
+const CAUSE_TEXT = { raid: 'raiders', bear: 'the platypus-bear', starvation: 'starvation', wounds: 'untreated wounds', unknown: 'misfortune' };
+function learnFromFall(mem, rec, rand) {
+  mem.history.push(rec);
+  if (!mem.best || rec.days > mem.best.days) mem.best = { days: rec.days, genome: { ...rec.genome }, gen: rec.gen };
+  // A colony that did far worse than the best one goes back to the best habits before adding its own lessons.
+  const regress = mem.best && mem.best.gen !== rec.gen && rec.days < mem.best.days * 0.7;
+  const g = { ...(regress ? mem.best.genome : rec.genome) };
+  const st = rec.stats, lessons = [];
+  if (regress) lessons.push(`Generation ${rec.gen} did worse than generation ${mem.best.gen}, so its habits return as the starting point.`);
+  const raidLosses = st.deaths.raid + (st.downedInCombat >= 3 ? 1 : 0);
+  if (raidLosses > 0) {
+    if (rec.ring < 0.8) {
+      const day = Math.max(1.5, Math.min(g.wallDay, rec.days * 0.5));
+      if (day < g.wallDay - 0.05 || !g.wallAfterRaid) { g.wallDay = +day.toFixed(1); g.wallAfterRaid = true; lessons.push(`The wall was only ${Math.round(rec.ring * 100)}% built when raiders struck. Start walling after the first raid, or by day ${g.wallDay}.`); }
+    }
+    if (g.traps < 8) { g.traps += 2; lessons.push(`Raiders walked straight in. Keep ${g.traps} spike traps outside the gates.`); }
+  }
+  if (st.downedInCombat >= 2 && g.fightHealth < 60) { g.fightHealth += 10; lessons.push(`Colonists were downed ${st.downedInCombat} times fighting to the last. Fall back below ${g.fightHealth} health.`); }
+  if (st.bledOut > 0 && !g.medic) { g.medic = true; lessons.push(`${st.bledOut} bled out while everyone kept fighting. One colonist must act as medic.`); }
+  if ((st.deaths.bear > 0 || st.bearInjuries >= 3) && g.huntEager) { g.huntEager = false; lessons.push('The platypus-bear mauled the hunters. Only hunt it when hungry and healthy.'); }
+  if (st.deaths.starvation > 0 || st.hungryTime > 60) {
+    g.farmPerColonist = Math.min(9, g.farmPerColonist + 2); g.mealReserve = Math.min(4, g.mealReserve + 1);
+    lessons.push(`Hunger gnawed at the colony. Farm ${g.farmPerColonist} tiles per colonist and keep more meals cooked.`);
+  }
+  if (st.withered >= 3 && !g.waterFirst) { g.waterFirst = true; lessons.push(`${st.withered} crops withered in the heat. Water first during heatwaves.`); }
+  if (st.breaks >= 2 && !g.teaTable) { g.teaTable = true; lessons.push(`${st.breaks} mental breaks tore the colony apart. Build a tea table and grow jasmine.`); }
+  if (st.matWait > 60) {
+    g.woodReserve = Math.min(80, g.woodReserve + 15); g.stoneReserve = Math.min(90, g.stoneReserve + 15);
+    lessons.push(`Builders stood idle waiting for materials. Restock below ${g.woodReserve} wood and ${g.stoneReserve} stone.`);
+  }
+  if (!lessons.length || (lessons.length === 1 && regress)) lessons.push('No clear mistake this time. The colony keeps its habits.');
+  // One experiment: a small random change, which may well be a mistake.
+  let experiment = null;
+  if (rand() < 0.6) {
+    const keys = Object.keys(GENE_LIMITS).filter((k) => !(k === 'wallDay' && g.wallDay >= 99));
+    const k = keys[Math.floor(rand() * keys.length)];
+    const step = { wallDay: 1, traps: 2, fightHealth: 10, farmPerColonist: 1, mealReserve: 1, woodReserve: 10, stoneReserve: 10 }[k];
+    const [lo, hi] = GENE_LIMITS[k];
+    const before = g[k];
+    g[k] = clamp(+(g[k] + (rand() < 0.5 ? -step : step)).toFixed(1), lo, hi);
+    if (g[k] !== before) experiment = `Experiment: ${k.replace(/([A-Z])/g, ' $1').toLowerCase()} ${before} → ${g[k]}.`;
+  } else if (rand() < 0.25) {
+    const flips = ['huntEager', 'waterFirst', 'teaTable'];
+    const k = flips[Math.floor(rand() * flips.length)];
+    g[k] = !g[k];
+    experiment = `Experiment: ${k.replace(/([A-Z])/g, ' $1').toLowerCase()} is now ${g[k] ? 'on' : 'off'}.`;
+  }
+  mem.gen = rec.gen + 1;
+  mem.genome = g;
+  rec.lessons = lessons; rec.experiment = experiment;
+  return rec;
+}
+const LINEAGE_KEY = 'four-nations-colony-lineage-v1';
+function newMemory() { return { gen: 1, genome: { ...NAIVE_GENOME }, history: [], best: null }; }
+function loadMemory() {
+  try {
+    const raw = window.localStorage.getItem(LINEAGE_KEY);
+    if (raw) { const m = JSON.parse(raw); if (m && m.genome && Array.isArray(m.history)) return { ...m, genome: { ...NAIVE_GENOME, ...m.genome } }; }
+  } catch (e) { /* storage unavailable: start fresh */ }
+  return newMemory();
+}
+function saveMemory(mem) { try { window.localStorage.setItem(LINEAGE_KEY, JSON.stringify(mem)); } catch (e) { /* ignore */ } }
+
 // ============================================================================
 // World generation
 // ============================================================================
-function createGame(seed) {
+function createGame(seed, genome = NAIVE_GENOME, gen = 1, lastRec = null) {
   const r = mulberry(seed);
   const N = W * H;
   const G = {
@@ -193,6 +315,7 @@ function createGame(seed) {
     tool: 'select', selected: null, hover: null, drag: null, ptr: null,
     terrainDirty: true, over: false, witherLogT: 0,
     freeWill: true, dirT: 2, planLog: {}, raidsSeen: 0,
+    genome: { ...NAIVE_GENOME, ...genome }, gen, stats: newStats(), learned: false, restartIn: 0, report: null,
   };
   const elev = fbm(r), moist = fbm(r);
   const cx = 20, cy = 20;
@@ -278,7 +401,11 @@ function createGame(seed) {
   crew.forEach(([el, name], k) => G.pawns.push(makeColonist(G, el, name, cx - 1 + (k % 2) * 2, cy - 1 + Math.floor(k / 2) * 2)));
   G.cam.x = cx * TS; G.cam.y = cy * TS; // centred properly once the view size is known
   G.camCentered = false;
-  log(G, 'Four benders have settled a quiet valley. They talk over their plans around the fire.', 'iroh');
+  if (gen === 1) log(G, 'Four benders have settled a quiet valley. They have no idea what is coming.', 'iroh');
+  else {
+    log(G, `Generation ${gen} settles a new valley, carrying the memory of those before them.`, 'iroh');
+    if (lastRec) for (const l of [...lastRec.lessons, ...(lastRec.experiment ? [lastRec.experiment] : [])].reverse()) log(G, l, 'plan', '#c4b5fd');
+  }
   return G;
 }
 
@@ -442,8 +569,10 @@ function addThought(p, key, text, val, ttl) {
 }
 function healthOf(p) { return Math.max(0, 100 - p.injuries.reduce((s, j) => s + j.sev, 0)); }
 
-function hurt(G, p, dmg, type) {
+function hurt(G, p, dmg, type, src = 'raid') {
   if (p.dead) return;
+  p.lastHarm = src;
+  if (src === 'bear') G.stats.bearInjuries++;
   const bleeding = (type === 'Cut' || type === 'Claw wound') && dmg >= 5;
   const same = p.injuries.find((j) => j.type === type && !j.tended);
   if (same && p.injuries.length >= 5) { same.sev += dmg; same.bleeding = same.bleeding || bleeding; }
@@ -759,7 +888,7 @@ const WORK = {
   cook(G, p) {
     const lit = G._lit || []; if (!lit.length) return null;
     const alive = G.pawns.filter((q) => !q.dead).length;
-    if (countItems(G, 'meal') >= 6 + alive * 2) return null;
+    if (countItems(G, 'meal') >= 4 + alive * 2 * G.genome.mealReserve) return null;
     const r = seek(G, p, (x, y, i) => { const it = G.items[i]; return it && ITEMS[it.type].raw && !isRes(G, 'i' + i, p) ? { t: i } : null; });
     if (!r) return null; reserve(G, 'i' + r.goal.t, p);
     return { type: 'cook', item: r.goal.t, path: r.path, stage: 'fetch', work: 0, label: 'Fetching ingredients' };
@@ -803,6 +932,7 @@ function chooseJob(G, p) {
   if (p.rest < 22 || (isNight(G) && p.rest < 80)) return jobSleep(G, p);
   if ((j = jobTend(G, p))) return j;
   if ((j = jobRescue(G, p))) return j;
+  if (G.genome.waterFirst && G.ev.heatwave > 0 && (j = WORK.water(G, p))) return j;
   if (p.harmony < 45 && (j = jobTea(G, p))) return j;
   for (const w of PRIORITIES[p.el]) if ((j = WORK[w](G, p))) return j;
   if (p.harmony < 72 && (j = jobTea(G, p))) return j;
@@ -1211,7 +1341,7 @@ function enemyAttack(G, e, tgt) {
   e.facing = Math.atan2(tp.y - e.y, tp.x - e.x);
   if (e.melee) {
     if (tgt.struct !== undefined) damageStruct(G, tgt.struct, e.dmg);
-    else hurt(G, tgt, e.dmg, e.inj);
+    else hurt(G, tgt, e.dmg, e.inj, e.faction === 'animal' ? 'bear' : 'raid');
     emit(G, tp.x, tp.y, 5, 'dust');
     return;
   }
@@ -1267,7 +1397,7 @@ function hitProjectile(G, pr) {
     damageEnemy(G, t, pr.dmg, pr.shooter);
     if (pr.knock && !t.dead) knockback(G, t, pr.shooter.x, pr.shooter.y, pr.knock);
   } else if (t.kind === 'colonist') {
-    if (!t.downed) hurt(G, t, pr.dmg, pr.inj || 'Bruise');
+    if (!t.downed) hurt(G, t, pr.dmg, pr.inj || 'Bruise', pr.shooter && pr.shooter.faction === 'animal' ? 'bear' : 'raid');
   } else if (t.faction) {
     damageEnemy(G, t, pr.dmg, null);
   }
@@ -1280,10 +1410,16 @@ function becomeDowned(G, p) {
   const bed = p.inBed;
   abortJob(G, p);
   p.inBed = bed; p.downed = true; p.mental = null;
+  if (G.raid || G.enemies.some((e) => e.provoked)) G.stats.downedInCombat++;
   log(G, `${p.name} has been downed${p.injuries.some((j) => j.bleeding) ? ' and is bleeding' : ''}!`, 'azula');
   for (const q of G.pawns) if (q !== p && !q.dead) addThought(q, 'down' + p.id, `${p.name} was downed`, -6, 120);
 }
 function killColonist(G, p) {
+  const mal = p.injuries.find((j) => j.type === 'Malnutrition');
+  const worst = p.injuries.reduce((a, j) => (j.sev > (a ? a.sev : -1) ? j : a), null);
+  const cause = mal && worst === mal ? 'starvation' : p.lastHarm === 'bear' ? 'bear' : p.lastHarm === 'raid' ? 'raid' : 'wounds';
+  G.stats.deaths[cause]++;
+  if (cause !== 'starvation' && p.injuries.some((j) => j.bleeding)) G.stats.bledOut++;
   abortJob(G, p);
   for (const q of G.pawns) if (q.carrying && q.carrying.pawn === p.id) q.carrying = null;
   p.dead = true; p.downed = false; p.carriedBy = null; p.inBed = -1;
@@ -1312,6 +1448,7 @@ function startBreak(G, p) {
   abortJob(G, p);
   const type = p.el === 'fire' ? 'Fire Tantrum' : p.el === 'air' ? 'Gale Wandering' : 'Chi Catatonia';
   p.mental = { type, t: 25, cd: 1 };
+  G.stats.breaks++;
   banner(G, 'Mental break', `${p.name} has lost their harmony: ${type}!`, 'azula');
 }
 function doMental(G, p, dt) {
@@ -1345,6 +1482,7 @@ function doMental(G, p, dt) {
 function updateColonist(G, p, dt) {
   if (p.dead) return;
   if (p.hitFlash > 0) p.hitFlash -= dt;
+  if (p.hunger < 10) G.stats.hungryTime += dt;
   const eating = p.job && p.job.type === 'eat' && p.job.stage === 'eat';
   if (!eating) p.hunger = Math.max(0, p.hunger - dt * (p.downed ? 0.2 : 0.55));
   if (p.sleeping) p.rest = Math.min(100, p.rest + dt * (p.inBed >= 0 ? 2.4 : 1.4));
@@ -1395,11 +1533,11 @@ function updateColonist(G, p, dt) {
   // Self-defence and hunting
   const medic = p.id === G._medic && G.pawns.some((q) => q !== p && q.downed && !q.dead && q.injuries.some((j) => j.bleeding));
   if (medic && p.job && p.job.type === 'fight') abortJob(G, p);
-  if (!medic && p.health >= 40 && !(p.job && (p.job.type === 'fight' || p.job.type === 'rescue' || p.job.type === 'tend'))) {
+  if (!medic && p.health >= Math.max(G.genome.fightHealth, 15) && !(p.job && (p.job.type === 'fight' || p.job.type === 'rescue' || p.job.type === 'tend'))) {
     const h = findHostileFor(G, p);
     if (h) { abortJob(G, p); p.job = { type: 'fight', target: h, re: 0, label: `Fighting ${h.name}` }; }
   }
-  if (p.health < 40 && !(p.job && (p.job.type === 'retreat' || p.job.type === 'rescue')) && nearestThreat(G, p, 8)) {
+  if (p.health < G.genome.fightHealth && !(p.job && (p.job.type === 'retreat' || p.job.type === 'rescue')) && nearestThreat(G, p, 8)) {
     abortJob(G, p); p.job = jobRetreat(G, p); p.path = p.job.path;
   }
   if (!p.job) {
@@ -1415,7 +1553,7 @@ function updateColonist(G, p, dt) {
 function spawnRaid(G) {
   const kind = G.rand() < 0.5 ? 'scout' : 'sand';
   const def = RAIDERS[kind];
-  const n = Math.min(5, 2 + Math.floor(dayOf(G) * 0.3));
+  const n = Math.min(10, 2 + Math.floor(dayOf(G) * 0.3));
   const sides = [(s) => s[0] === 0, (s) => s[0] === W - 1, (s) => s[1] === 0, (s) => s[1] === H - 1];
   let pool = G.edgeSpawns.filter(sides[Math.floor(G.rand() * 4)]);
   if (!pool.length) pool = G.edgeSpawns;
@@ -1658,7 +1796,7 @@ function roomy(G, x, y) {
 }
 const placeStruct = (G, type, [x, y]) => { G.struct[idx(x, y)] = { type, built: false, delivered: 0, progress: 0, hp: 1, decon: false }; };
 const freeSpot = (G, i) => !G.zone[i] && !G.struct[i] && !G.plants[i] && !G.tree[i] && G.terrain[i] !== T.WATER && G.terrain[i] !== T.STONE;
-const ringActive = (G) => G.raidsSeen > 0 || G.time > 420;
+const ringActive = (G) => (G.genome.wallAfterRaid && G.raidsSeen > 0) || G.time / DAY_LEN >= G.genome.wallDay;
 
 const PLANS = [
   // Somewhere to sleep for everyone.
@@ -1684,7 +1822,7 @@ const PLANS = [
   (G, say) => {
     const alive = G.pawns.filter((p) => !p.dead).length;
     let cells = 0; for (const z of G.zone) if (z === 'cabbage') cells++;
-    if (cells >= alive * 5) return false;
+    if (cells >= alive * G.genome.farmPerColonist) return false;
     let added = 0;
     for (const soilOnly of [true, false]) {
       while (added < 4) {
@@ -1714,7 +1852,7 @@ const PLANS = [
   },
   // Timber.
   (G, say) => {
-    if (countItems(G, 'wood') >= 40) return false;
+    if (countItems(G, 'wood') >= G.genome.woodReserve) return false;
     let pending = 0; for (const d of G.desig) if (d === 'chop') pending++;
     if (pending >= 4) return false;
     const trees = [];
@@ -1727,7 +1865,7 @@ const PLANS = [
   },
   // Stone, more of it once the wall goes up.
   (G, say) => {
-    if (countItems(G, 'stone') >= (ringActive(G) ? 40 : 20)) return false;
+    if (countItems(G, 'stone') >= G.genome.stoneReserve) return false;
     let pending = 0; for (const d of G.desig) if (d === 'mine') pending++;
     if (pending >= 3) return false;
     const faces = [];
@@ -1744,7 +1882,7 @@ const PLANS = [
   },
   // Somewhere to share tea, once everyone has a bed.
   (G, say) => {
-    if (countStruct(G, 'teatable') || countStruct(G, 'bed', true) < G.pawns.filter((p) => !p.dead).length) return false;
+    if (!G.genome.teaTable || countStruct(G, 'teatable') || countStruct(G, 'bed', true) < G.pawns.filter((p) => !p.dead).length) return false;
     const t = spiral(HOME.cx + 3, HOME.cy - 3, 6, (x, y, i) => interior(x, y) && freeSpot(G, i) && !G.items[i] && roomy(G, x, y));
     if (!t) return false;
     placeStruct(G, 'teatable', t);
@@ -1788,10 +1926,12 @@ const PLANS = [
   },
   // Spike traps outside the gates after the first raid.
   (G, say) => {
-    if (!G.raidsSeen || countStruct(G, 'trap') >= 4) return false;
+    const have = countStruct(G, 'trap');
+    if (!(G.raidsSeen || ringActive(G)) || have >= G.genome.traps) return false;
     let added = 0;
-    for (const [dx, dy] of DOORS) {
-      const ox = dx + Math.sign(dx - HOME.cx) * 2, oy = dy + Math.sign(dy - HOME.cy) * 2;
+    for (const [dx, dy, r] of [...DOORS.map((d) => [...d, 2]), ...DOORS.map((d) => [...d, 3])]) {
+      if (have + added >= G.genome.traps) break;
+      const ox = dx + Math.sign(dx - HOME.cx) * r, oy = dy + Math.sign(dy - HOME.cy) * r;
       if (!inB(ox, oy)) continue;
       const i = idx(ox, oy);
       if (!freeSpot(G, i)) continue;
@@ -1807,6 +1947,12 @@ const PLANS = [
     if (!bear) return false;
     const fit = G.pawns.filter((p) => !p.dead && !p.downed && p.health > 70).length;
     const food = countItems(G, 'meal') + countItems(G, 'cabbage') + countItems(G, 'meat');
+    if (G.genome.huntEager) {
+      if (fit < 1) return false;
+      bear.hunted = true;
+      say('hunt', 'fire', 'Look at the size of that beast! Meat for a week. Let us take it down.', 200);
+      return true;
+    }
     if (fit < 3 || food >= G.pawns.filter((p) => !p.dead).length * 6) return false;
     bear.hunted = true;
     say('hunt', 'none', 'Food is running low. Together we can take that platypus-bear.', 200);
@@ -1821,6 +1967,9 @@ function director(G, dt) {
   G.dirT = 3;
   const able = G.pawns.filter((p) => !p.dead && !p.downed);
   if (!able.length) return;
+  for (const st of G.struct) {
+    if (st && !st.built && st.delivered < STRUCTS[st.type].cost && countItems(G, STRUCTS[st.type].mat) === 0) { G.stats.matWait += 3; break; }
+  }
   const say = (key, el, text, cool) => {
     if (G.time - (G.planLog[key] ?? -1e9) < cool) return;
     G.planLog[key] = G.time;
@@ -1853,6 +2002,7 @@ function update(G, dt) {
       pl.growth = Math.min(1, pl.growth + rate * dt);
     }
   }
+  G.stats.withered += withered;
   if (withered && G.time - G.witherLogT > 20) { G.witherLogT = G.time; log(G, 'Crops have withered from thirst.', 'azula'); }
   // Events
   if (G.ev.fullmoon > 0) { G.ev.fullmoon -= dt; if (G.ev.fullmoon <= 0) log(G, 'The full moon wanes.', 'info'); }
@@ -1866,7 +2016,8 @@ function update(G, dt) {
   // One colonist acts as medic in a crisis: the waterbender if able, otherwise a backup.
   const able = G.pawns.filter((p) => !p.dead && !p.downed && !p.mental);
   const medic = ['water', 'none', 'air', 'earth', 'fire'].map((el) => able.find((p) => p.el === el)).find(Boolean);
-  G._medic = medic ? medic.id : -1;
+  G._medic = medic && G.genome.medic ? medic.id : -1;
+  G.stats.peak = Math.max(G.stats.peak, G.pawns.filter((p) => !p.dead).length);
   for (const p of G.pawns) updateColonist(G, p, dt);
   for (const e of G.enemies) updateEnemy(G, e, dt);
   // Soft separation so raiders don't stack on one tile.
@@ -2497,7 +2648,19 @@ export default function AvatarColony() {
   const wrapRef = useRef(null);
   const canvasRef = useRef(null);
   const [seed, setSeed] = useState(() => (Math.random() * 1e9) | 0);
-  const G = useMemo(() => createGame(seed), [seed]);
+  const memRef = useRef(null);
+  if (!memRef.current) memRef.current = loadMemory();
+  const lastRecRef = useRef(null);
+  const carryRef = useRef({ speed: 0, lastSpeed: 1, freeWill: true });
+  const G = useMemo(() => {
+    const m = memRef.current, c = carryRef.current;
+    const g = createGame(seed, m.genome, m.gen, lastRecRef.current);
+    g.speed = c.speed; g.lastSpeed = c.lastSpeed; g.freeWill = c.freeWill;
+    return g;
+  }, [seed]);
+  const [showLineage, setShowLineage] = useState(false);
+  const [confirmForget, setConfirmForget] = useState(false);
+  const nextRef = useRef(null);
   const gRef = useRef(G); gRef.current = G;
   const [, force] = useState(0);
   const [tool, setToolState] = useState('select');
@@ -2513,7 +2676,7 @@ export default function AvatarColony() {
   useEffect(() => {
     const canvas = canvasRef.current, wrap = wrapRef.current;
     const ctx = canvas.getContext('2d');
-    if (globalThis.__COLONY_DEBUG__) globalThis.__colony = { G, sim: { update, fireEvent, applyTool } };
+    if (globalThis.__COLONY_DEBUG__) globalThis.__colony = { G, mem: memRef.current, sim: { update, fireEvent, applyTool } };
     let raf, last = performance.now(), hudT = 0;
     const keys = new Set();
     const resize = () => {
@@ -2533,8 +2696,17 @@ export default function AvatarColony() {
       if (kx || ky) { G.cam.x += (kx * 620 * rdt) / G.cam.zoom; G.cam.y += (ky * 620 * rdt) / G.cam.zoom; clampCam(G); }
       if (G.speed > 0 && !G.over) {
         let sim = rdt * SPEEDS[G.speed];
-        while (sim > 1e-6) { const s = Math.min(0.05, sim); update(G, s); sim -= s; }
+        while (sim > 1e-6 && !G.over) { const s = Math.min(0.05, sim); update(G, s); sim -= s; }
       }
+      // A fallen colony becomes a lesson, then the next generation begins on its own.
+      if (G.over && !G.learned) {
+        G.learned = true;
+        G.report = learnFromFall(memRef.current, chronicle(G), Math.random);
+        lastRecRef.current = G.report;
+        saveMemory(memRef.current);
+        G.restartIn = 12; G.hold = false;
+      }
+      if (G.over && G.learned && !G.hold) { G.restartIn -= rdt; if (G.restartIn <= 0 && nextRef.current) { G.hold = true; nextRef.current(); } }
       G.anim = (G.anim || 0) + rdt * (G.speed > 0 ? 1 : 0.25);
       render(G, ctx, canvas, G.anim);
       hudT += rdt; if (hudT > 0.2) { hudT = 0; force((v) => (v + 1) % 1e9); }
@@ -2599,7 +2771,7 @@ export default function AvatarColony() {
       const k = e.key.toLowerCase();
       if (['w', 'a', 's', 'd', 'arrowleft', 'arrowright', 'arrowup', 'arrowdown'].includes(k)) { keys.add(k); e.preventDefault(); }
       if (k === ' ') { e.preventDefault(); G.speed = G.speed === 0 ? (G.lastSpeed || 1) : (G.lastSpeed = G.speed, 0); }
-      if (k === '1' || k === '2' || k === '3') G.speed = Number(k);
+      if (k === '1' || k === '2' || k === '3' || k === '4') { G.speed = Number(k); G.lastSpeed = G.speed; }
       if (k === 'escape') { toolRef.current('select'); G.selected = null; }
     };
     const onKeyUp = (e) => keys.delete(e.key.toLowerCase());
@@ -2635,7 +2807,15 @@ export default function AvatarColony() {
     G.cam.x = p.x * TS - G.view.w / 2 / G.cam.zoom; G.cam.y = p.y * TS - G.view.h / 2 / G.cam.zoom; clampCam(G);
     force((v) => v + 1);
   };
-  const restart = () => { setSeed((Math.random() * 1e9) | 0); setShowHelp(false); setToolState('select'); setFreeWillState(true); };
+  const carry = () => { carryRef.current = { speed: G.speed || (G.over ? G.lastSpeed || 1 : 0), lastSpeed: G.lastSpeed || 1, freeWill: G.freeWill }; };
+  const nextGeneration = () => { carry(); setTool('select'); setSeed((Math.random() * 1e9) | 0); };
+  nextRef.current = nextGeneration;
+  const restart = () => { lastRecRef.current = null; carry(); carryRef.current.freeWill = true; setSeed((Math.random() * 1e9) | 0); setShowHelp(false); setToolState('select'); setFreeWillState(true); };
+  const forgetLineage = () => {
+    memRef.current = newMemory(); saveMemory(memRef.current); lastRecRef.current = null;
+    setConfirmForget(false); setShowLineage(false); carry(); setSeed((Math.random() * 1e9) | 0);
+  };
+  const mem = memRef.current;
   const setFreeWill = (on) => {
     G.freeWill = on; setFreeWillState(on);
     if (on) { setTool('select'); log(G, 'The colonists take charge of their own plans again.', 'iroh'); }
@@ -2705,7 +2885,7 @@ export default function AvatarColony() {
               </div>
             </div>
             <div className="ml-1 flex gap-0.5">
-              {[[0, Pause, 'Pause (Space)'], [1, Play, '1x (1)'], [2, ChevronsRight, '2x (2)'], [3, FastForward, '3x (3)']].map(([s, Ic, tl]) => (
+              {[[0, Pause, 'Pause (Space)'], [1, Play, '1x (1)'], [2, ChevronsRight, '2x (2)'], [3, FastForward, '3x (3)'], [4, Rocket, '8x (4)']].map(([s, Ic, tl]) => (
                 <button key={s} title={tl} aria-label={tl} onClick={() => setSpeed(s)}
                   className={`flex h-8 w-8 items-center justify-center rounded-md border text-[10px] ${G.speed === s ? 'border-amber-300/70 bg-amber-300/20 text-amber-200' : 'border-white/10 bg-black/20 text-stone-300 hover:bg-white/10'}`}>
                   <Ic size={14} />
@@ -2721,6 +2901,10 @@ export default function AvatarColony() {
               </span>
             ))}
           </div>
+          <button onClick={() => setShowLineage(true)} className="flex items-center gap-1.5 rounded-xl border border-violet-300/30 bg-[#11181b]/85 px-2.5 py-1 text-[11px] text-violet-200 backdrop-blur hover:bg-violet-400/10">
+            <GitBranch size={12} />Generation {G.gen}
+            <span className="text-stone-400">{mem.best ? `· best ${mem.best.days.toFixed(1)} days (gen ${mem.best.gen})` : '· first of the lineage'}</span>
+          </button>
           <div className="flex flex-wrap justify-end gap-1">
             {G.ev.fullmoon > 0 && <span className="flex items-center gap-1 rounded-full border border-sky-300/40 bg-sky-400/15 px-2 py-0.5 text-[11px] text-sky-200"><Moon size={11} />Full Moon {Math.ceil(G.ev.fullmoon)}s</span>}
             {G.ev.heatwave > 0 && <span className="flex items-center gap-1 rounded-full border border-orange-300/40 bg-orange-400/15 px-2 py-0.5 text-[11px] text-orange-200"><Sun size={11} />Heatwave {Math.ceil(G.ev.heatwave)}s</span>}
@@ -2825,7 +3009,7 @@ export default function AvatarColony() {
           <div className="max-h-full w-[min(560px,100%)] overflow-y-auto rounded-2xl border border-amber-200/20 bg-[#141c1f] p-5 shadow-2xl">
             <div className="text-[11px] uppercase tracking-[0.2em] text-amber-300">A colony of the four nations</div>
             <h1 className="mb-2 text-2xl font-semibold text-stone-50">Four Nations Colony</h1>
-            <p className="mb-3 text-[13px] text-stone-300">Kanto, Yuka, Ren and Tashi have settled a quiet valley. They have free will: they decide what to build, where to farm, what to mine and when to wall in the camp, then do the work themselves. You watch their story unfold and set the pace.</p>
+            <p className="mb-3 text-[13px] text-stone-300">Kanto, Yuka, Ren and Tashi have settled a quiet valley. They have free will and start out naive: they will make mistakes. Every colony that falls teaches the next generation how to do better. You watch their story unfold and set the pace.</p>
             <div className="mb-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
               {Object.entries(ELEMENTS).map(([k, el]) => { const EI = el.icon; return (
                 <div key={k} className="flex gap-2 rounded-lg bg-black/25 p-2">
@@ -2839,23 +3023,114 @@ export default function AvatarColony() {
               <li>Pan with WASD, arrow keys, or by dragging the map. Scroll to zoom.</li>
               <li>Click a colonist portrait or anyone on the map to see their needs, thoughts and wounds.</li>
               <li>Colonists announce their plans in the Storyteller log in their own colours.</li>
-              <li>Want to direct them yourself? Press Give orders at the bottom to unlock the build tools.</li>
+              <li>When a colony falls, its mistakes become lessons and the next generation starts on its own. Open Generation (top right) to follow the lineage.</li>
+              <li>Press 4 for 8x speed to watch generations go by. Give orders (bottom) lets you direct them yourself.</li>
             </ul>
             <button onClick={() => { setShowHelp(false); setSpeed(G.lastSpeed || 1); }} className="w-full rounded-lg bg-amber-400 py-2 text-[14px] font-semibold text-stone-900 hover:bg-amber-300">Watch the colony</button>
           </div>
         </div>
       )}
 
-      {G.over && (
+      {G.over && G.report && (
         <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/70 p-4">
-          <div className="w-[min(420px,100%)] rounded-2xl border border-rose-300/30 bg-[#1a1214] p-6 text-center">
-            <Skull className="mx-auto mb-2 text-rose-300" size={28} />
-            <h2 className="mb-1 text-xl font-semibold">The colony has fallen</h2>
-            <p className="mb-4 text-[13px] text-stone-300">Your benders held out until day {dayOf(G)}. "Even in the darkest times, hope can be found." Try a new valley.</p>
-            <button onClick={restart} className="rounded-lg bg-rose-400 px-4 py-2 font-semibold text-stone-900 hover:bg-rose-300">New colony</button>
+          <div className="max-h-full w-[min(520px,100%)] overflow-y-auto rounded-2xl border border-violet-300/30 bg-[#16131c] p-5">
+            <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-rose-300"><Skull size={14} />Generation {G.report.gen} has fallen</div>
+            <h2 className="mb-1 mt-1 text-xl font-semibold">Lost to {CAUSE_TEXT[G.report.cause]} on day {Math.floor(G.report.days) + 1}</h2>
+            <p className="mb-3 text-[12px] text-stone-400">They survived {G.report.days.toFixed(1)} days and {G.report.raids} raid{G.report.raids === 1 ? '' : 's'}. Their mistakes become the next generation's memory.</p>
+            <div className="mb-1 text-[10px] uppercase tracking-wider text-violet-300">Lessons carried forward</div>
+            <ul className="mb-3 list-disc space-y-1 pl-5 text-[12px] text-stone-200">
+              {G.report.lessons.map((l, k) => <li key={k}>{l}</li>)}
+              {G.report.experiment && <li className="text-violet-200">{G.report.experiment}</li>}
+            </ul>
+            <div className="flex flex-wrap items-center gap-2">
+              <button onClick={nextGeneration} className="rounded-lg bg-violet-300 px-4 py-2 text-[13px] font-semibold text-stone-900 hover:bg-violet-200">Begin generation {G.report.gen + 1}</button>
+              {G.hold
+                ? <button onClick={() => { G.hold = false; G.restartIn = 6; force((v) => v + 1); }} className="rounded-lg border border-white/15 px-3 py-2 text-[12px] text-stone-300 hover:bg-white/10">Resume countdown</button>
+                : <button onClick={() => { G.hold = true; force((v) => v + 1); }} className="rounded-lg border border-white/15 px-3 py-2 text-[12px] text-stone-300 hover:bg-white/10">Stay on this report</button>}
+              {!G.hold && <span className="text-[12px] tabular-nums text-stone-400">Next generation in {Math.max(0, Math.ceil(G.restartIn))}s</span>}
+            </div>
           </div>
         </div>
       )}
+
+      {showLineage && (
+        <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/60 p-4" onClick={() => setShowLineage(false)}>
+          <div className="max-h-full w-[min(620px,100%)] overflow-y-auto rounded-2xl border border-violet-300/30 bg-[#14161c] p-5" onClick={(e) => e.stopPropagation()}>
+            <div className="mb-1 flex items-center justify-between">
+              <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-violet-300"><GitBranch size={14} />Lineage</div>
+              <button aria-label="Close lineage" onClick={() => setShowLineage(false)} className="rounded p-1 text-stone-400 hover:bg-white/10 hover:text-white"><X size={14} /></button>
+            </div>
+            <h2 className="mb-1 text-xl font-semibold">Generation {G.gen}</h2>
+            <p className="mb-3 text-[12px] text-stone-400">Every fallen colony passes its lessons on. Each generation also tries one small experiment, which may turn out to be a mistake.</p>
+            <div className="mb-1 text-[10px] uppercase tracking-wider text-stone-400">Habits of this generation</div>
+            <ul className="mb-4 space-y-0.5 text-[12px] text-stone-200">
+              {describeGenome(G.genome).map((d, k) => <li key={k} className="flex gap-2"><span className="text-violet-300">·</span>{d}</li>)}
+            </ul>
+            <div className="mb-1 text-[10px] uppercase tracking-wider text-stone-400">Days survived per generation</div>
+            <LineageChart history={mem.history} current={G} />
+            <div className="mt-3 flex flex-col gap-2">
+              {[...mem.history].reverse().map((h) => (
+                <details key={h.gen} className="rounded-lg bg-black/25 px-3 py-2 text-[12px]">
+                  <summary className="cursor-pointer select-none">
+                    <span className="font-semibold">Gen {h.gen}</span>
+                    <span className="text-stone-400"> · {h.days.toFixed(1)} days · fell to {CAUSE_TEXT[h.cause]}{mem.best && mem.best.gen === h.gen ? ' · best so far' : ''}</span>
+                  </summary>
+                  <ul className="mt-1 list-disc space-y-0.5 pl-5 text-stone-300">
+                    {(h.lessons || []).map((l, k) => <li key={k}>{l}</li>)}
+                    {h.experiment && <li className="text-violet-200">{h.experiment}</li>}
+                  </ul>
+                </details>
+              ))}
+              {!mem.history.length && <div className="text-[12px] text-stone-500">No colony has fallen yet. This is the first generation.</div>}
+            </div>
+            <div className="mt-4 flex items-center gap-2">
+              {confirmForget
+                ? <>
+                    <span className="text-[12px] text-rose-200">Erase every lesson and start again from generation 1?</span>
+                    <button onClick={forgetLineage} className="rounded-md bg-rose-400 px-3 py-1 text-[12px] font-semibold text-stone-900 hover:bg-rose-300">Erase lineage</button>
+                    <button onClick={() => setConfirmForget(false)} className="rounded-md border border-white/15 px-3 py-1 text-[12px] text-stone-300 hover:bg-white/10">Keep it</button>
+                  </>
+                : <button onClick={() => setConfirmForget(true)} className="rounded-md border border-white/15 px-3 py-1 text-[12px] text-stone-300 hover:bg-white/10">Forget the lineage</button>}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function LineageChart({ history, current }) {
+  const bars = [...history.map((h) => ({ gen: h.gen, days: h.days, cause: h.cause, live: false })),
+    { gen: current.gen, days: current.time / DAY_LEN, cause: null, live: !current.over }].filter((b) => b.live || history.some((h) => h.gen === b.gen)).slice(-24);
+  const max = Math.max(5, ...bars.map((b) => b.days));
+  const color = { raid: '#f87171', bear: '#d6a35c', starvation: '#facc15', wounds: '#fb923c', unknown: '#9ca3af' };
+  const w = 560, h = 120, bw = Math.min(36, (w - 30) / bars.length - 4);
+  return (
+    <div className="overflow-x-auto">
+      <svg viewBox={`0 0 ${w} ${h + 22}`} className="w-full min-w-[320px]" role="img" aria-label="Days survived per generation">
+        {[0, 0.5, 1].map((f) => (
+          <g key={f}>
+            <line x1="26" x2={w} y1={h - f * (h - 10)} y2={h - f * (h - 10)} stroke="#ffffff14" />
+            <text x="22" y={h - f * (h - 10) + 3} textAnchor="end" fontSize="9" fill="#a8a29e">{(max * f).toFixed(0)}</text>
+          </g>
+        ))}
+        {bars.map((b, k) => {
+          const x = 32 + k * (bw + 4), bh = Math.max(2, (b.days / max) * (h - 10));
+          return (
+            <g key={b.gen}>
+              <rect x={x} y={h - bh} width={bw} height={bh} rx="2" fill={b.live ? '#c4b5fd' : color[b.cause] || '#9ca3af'} opacity={b.live ? 0.55 : 0.9} />
+              <text x={x + bw / 2} y={h + 12} textAnchor="middle" fontSize="9" fill="#d6d3d1">{b.gen}</text>
+            </g>
+          );
+        })}
+      </svg>
+      <div className="flex flex-wrap gap-3 text-[10px] text-stone-400">
+        <span><span className="mr-1 inline-block h-2 w-2 rounded-sm bg-[#f87171]" />Raiders</span>
+        <span><span className="mr-1 inline-block h-2 w-2 rounded-sm bg-[#d6a35c]" />Platypus-bear</span>
+        <span><span className="mr-1 inline-block h-2 w-2 rounded-sm bg-[#facc15]" />Starvation</span>
+        <span><span className="mr-1 inline-block h-2 w-2 rounded-sm bg-[#fb923c]" />Wounds</span>
+        <span><span className="mr-1 inline-block h-2 w-2 rounded-sm bg-[#c4b5fd]" />Living generation</span>
+      </div>
     </div>
   );
 }
@@ -2947,4 +3222,4 @@ function TileInspector({ G, x, y }) {
 }
 
 // Exposed for headless testing of the simulation.
-export const __sim = { createGame, update, applyTool, fireEvent, W, H };
+export const __sim = { createGame, update, applyTool, fireEvent, chronicle, learnFromFall, newMemory, describeGenome, W, H };

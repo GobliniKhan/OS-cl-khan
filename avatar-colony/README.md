@@ -16,8 +16,25 @@ The colonists have **free will** by default: they decide what the camp needs and
 | Materials | Mark the nearest trees and stone faces when wood or stone runs short |
 | Storage | Grow the stockpile when it fills up |
 | Harmony | Build a tea table once everyone has a bed, then plant jasmine for it |
-| Defence | After the first raid (or by day 3), raise a stone wall around camp a few sections at a time, with a gate on each side and spike traps outside the gates |
-| Crises | One colonist acts as medic (the Waterbender, or a backup) and breaks off from fighting to save a bleeding ally |
+| Defence | When their habits say so, raise a stone wall around camp a few sections at a time, with a gate on each side and spike traps outside the gates |
+| Crises | Once learned, one colonist acts as medic (the Waterbender, or a backup) and breaks off from fighting to save a bleeding ally |
+
+### Generations and learning
+
+Generation 1 is naive and makes real mistakes: it never walls the camp, fights until it drops, has no medic, hunts the platypus-bear on sight, farms too little, and never builds a tea table. When every colonist is dead, the colony's chronicle becomes lessons:
+
+| What went wrong | Lesson for the next generation |
+| --- | --- |
+| Raid deaths with the wall unfinished | Wall the camp after the first raid, or by an earlier day; keep more spike traps |
+| Colonists downed while fighting | Fall back at a higher health threshold |
+| Colonists bled out mid-battle | One colonist acts as medic |
+| Mauled by the platypus-bear | Only hunt it when hungry and healthy |
+| Hunger or starvation | Bigger farms, more meals cooked ahead |
+| Crops withered in a heatwave | Water first during heatwaves |
+| Repeated mental breaks | Build a tea table and grow jasmine |
+| Builders waiting on materials | Keep larger wood and stone reserves |
+
+Each generation also runs one small random experiment, which may itself be a mistake. A generation that does far worse than the best one so far starts again from the best one's habits before adding its own lessons. After the lessons report, the next generation starts automatically on a new valley. Raids grow every day without limit, so every generation eventually falls; the measure of progress is how many days each one lasts. The **Generation** button (top right) shows the current habits, a days-survived chart and every past colony's lessons. The lineage is saved in the browser's local storage and can be erased from that panel. Press 4 for 8x speed.
 
 Press **Give orders** to take command and unlock the build tools. Colonists still work on their own, but only you place orders. Press **Free will** to hand control back.
 
@@ -25,7 +42,7 @@ Press **Give orders** to take command and unlock the build tools. Colonists stil
 | --- | --- |
 | WASD / arrow keys, or drag with the Select tool | Pan |
 | Mouse wheel, or the zoom buttons | Zoom |
-| Space, 1, 2, 3 | Pause, 1x, 2x, 3x speed |
+| Space, 1, 2, 3, 4 | Pause, 1x, 2x, 3x, 8x speed |
 | Esc / right-click | Back to the Select tool |
 | Drag with a tool | Designate mining/chopping, place blueprints, paint zones |
 
@@ -49,4 +66,4 @@ In command mode, the bottom bar has **Orders** (Mine, Chop, Hunt, Clear), **Stru
 
 `index.html` is a bundle of `AvatarColony.jsx` built with esbuild (React 18.3.1, lucide-react 0.263.1) plus Tailwind 3.4 CSS compiled with `content` set to `AvatarColony.jsx`. Bundle an entry that renders `<AvatarColony />` into `#root` and inline the JS and CSS into the page.
 
-The simulation core is exported as `__sim` (`createGame`, `update`, `applyTool`, `fireEvent`) so you can test it headlessly in Node. Setting `globalThis.__COLONY_DEBUG__ = true` before the game mounts exposes the live game state as `globalThis.__colony`.
+The simulation core is exported as `__sim` (`createGame`, `update`, `applyTool`, `fireEvent`) plus `chronicle` and `learnFromFall`, so you can run whole lineages headlessly in Node. Setting `globalThis.__COLONY_DEBUG__ = true` before the game mounts exposes the live game state as `globalThis.__colony`.
