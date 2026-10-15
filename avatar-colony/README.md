@@ -12,12 +12,35 @@ The colonists have **free will** by default: they decide what the camp needs and
 | Need | What the colonists do |
 | --- | --- |
 | Shelter | Lay out a bed for every colonist, including newcomers |
-| Food | Keep a campfire, grow about 5 cabbage tiles per colonist (fertile soil first), hunt the platypus-bear when food runs low and the group is healthy |
+| Food | Keep a campfire, grow cabbages (fertile soil first), tame egg layers and milk animals, hunt grazers or the platypus-bear when their habits say so |
 | Materials | Mark the nearest trees and stone faces when wood or stone runs short |
-| Storage | Grow the stockpile when it fills up |
+| Storage | Grow the stockpile when it fills up; tame pack animals to haul |
+| Knowledge | Build a Scroll Desk and study the research tree |
+| Forest | Mark a grove outside the walls and replant saplings |
+| Herds | Tame one animal of each useful kind and drive off predators that stalk the herd |
 | Harmony | Build a tea table once everyone has a bed, then plant jasmine for it |
 | Defence | When their habits say so, raise a stone wall around camp a few sections at a time, with a gate on each side and spike traps outside the gates |
 | Crises | Once learned, one colonist acts as medic (the Waterbender, or a backup) and breaks off from fighting to save a bleeding ally |
+
+### Wildlife and the food chain
+
+The valley has a living food web. Wild grass regrows over time. Grazers (Turtle-Ducks, Possum-Chickens, Koala-Sheep, Hog-Monkeys, Ostrich-Horses and Buffalo-Yaks) eat it, and hungry Hog-Monkeys raid crops. Saber-Tooth Moose-Lions stalk grazers when hungry and turn on people when starving. The Platypus-Bear is an omnivore that grazes and takes small prey. Prey flee from predators, raiders and hunters. Well-fed adults breed; starving animals die. Herds migrate in when grazers run low, and predators follow the herds. Walls and doors keep wild animals out and tamed herds safe.
+
+Once **Animal Husbandry** is researched, colonists tame animals with food. Airbenders are best at it, then Waterbenders, and a failed attempt can end in a kick from a Buffalo-Yak. Tamed animals have a job:
+
+| Animal | Job once tamed |
+| --- | --- |
+| Ostrich-Horse, Buffalo-Yak | Haul loose items to the stockpile (50 and 90 per trip) |
+| Koala-Sheep (and Buffalo-Yak) | Plough: crops around them grow faster; sheep also give milk |
+| Possum-Chicken, Turtle-Duck | Lay eggs |
+| Hog-Monkey | Companion: nearby colonists get a Harmony boost |
+| Saber-Tooth Moose-Lion (rare) | Guards the camp against raiders |
+
+Trees grow from saplings, slowly seed nearby grass, and only mature trees can be chopped. With **Forestry**, colonists mark a grove outside the walls and replant it.
+
+### Research
+
+Colonists study at a **Scroll Desk**; Non-Benders learn fastest. There are 21 discoveries in five eras (Ancient, Classical, Medieval, Industrial, Modern), each with real effects: Pottery, Stonecraft, Irrigation, Bronze Weapons, Herbal Medicine, The Wheel, Crop Rotation, Masonry, Crossbows, Animal Plough, Steam Power, Metalbending, Lightning Generation, Fertilizer, Radio, Modern Medicine, Electricity, Satomobiles and the Pro-Bending Arena. With free will the colonists pick what to study; the lineage learns which branch (military, farming, medicine or comfort) to put first. In command mode you can pick the next discovery yourself. A long-lived colony reaches the Modern era after roughly 20–25 in-game days.
 
 ### Generations and learning
 
@@ -33,6 +56,8 @@ Generation 1 is naive and makes real mistakes: it never walls the camp, fights u
 | Crops withered in a heatwave | Water first during heatwaves |
 | Repeated mental breaks | Build a tea table and grow jasmine |
 | Builders waiting on materials | Keep larger wood and stone reserves |
+| Starvation or crops eaten by wildlife | Hunt wild grazers for meat |
+| Lost mainly to raiders, hunger, wounds or breaks | Research military, farming, medicine or comfort first |
 
 Each generation also runs one small random experiment, which may itself be a mistake. A generation that does far worse than the best one so far starts again from the best one's habits before adding its own lessons. After the lessons report, the next generation starts automatically on a new valley. Raids grow every day without limit, so every generation eventually falls; the measure of progress is how many days each one lasts. The **Generation** button (top right) shows the current habits, a days-survived chart and every past colony's lessons. The lineage is saved in the browser's local storage and can be erased from that panel. Press 4 for 8x speed.
 
@@ -46,7 +71,7 @@ Press **Give orders** to take command and unlock the build tools. Colonists stil
 | Esc / right-click | Back to the Select tool |
 | Drag with a tool | Designate mining/chopping, place blueprints, paint zones |
 
-In command mode, the bottom bar has **Orders** (Mine, Chop, Hunt, Clear), **Structures** (Stone Wall, Door, Bed, Campfire, Tea Table, Spike Trap) and **Zones** (Stockpile, Cabbage Patch, Jasmine Tea). Dragging a wall box draws its outline.
+In command mode, the bottom bar has **Orders** (Mine, Chop, Hunt, Tame, Clear), **Structures** (Stone Wall, Door, Bed, Campfire, Tea Table, Spike Trap, Scroll Desk) and **Zones** (Stockpile, Cabbage Patch, Tree Grove, Jasmine Tea). Dragging a wall box draws its outline.
 
 ## Systems
 

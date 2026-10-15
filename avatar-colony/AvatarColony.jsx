@@ -6,7 +6,7 @@ import {
   Pause, Play, ChevronsRight, FastForward, Sun, Moon, Gem, Axe, Trash2, Crosshair,
   Square, DoorOpen, Bed, Flame, Coffee, AlertTriangle, Package, Sprout, Leaf,
   MousePointer2, Mountain, Droplets, Wind, Hand, Heart, Utensils, Swords, Triangle,
-  X, RotateCcw, ZoomIn, ZoomOut, ScrollText, Hammer, Footprints, Skull, HelpCircle, Sparkles, Eye, Rocket, GitBranch,
+  X, RotateCcw, ZoomIn, ZoomOut, ScrollText, Hammer, Footprints, Skull, HelpCircle, Sparkles, Eye, Rocket, GitBranch, BookOpen, TreePine, FlaskConical,
 } from 'lucide-react';
 
 // ============================================================================
@@ -36,11 +36,11 @@ const ELEMENTS = {
 };
 
 const PRIORITIES = {
-  earth: ['build', 'mine', 'decon', 'haul', 'chop', 'harvest', 'plant', 'kindle', 'cook', 'water'],
-  water: ['water', 'harvest', 'plant', 'haul', 'build', 'decon', 'cook', 'kindle', 'chop', 'mine'],
-  fire: ['kindle', 'cook', 'build', 'decon', 'harvest', 'haul', 'mine', 'chop', 'plant', 'water'],
-  air: ['haul', 'harvest', 'plant', 'water', 'chop', 'build', 'decon', 'kindle', 'cook', 'mine'],
-  none: ['build', 'decon', 'chop', 'cook', 'harvest', 'plant', 'haul', 'kindle', 'mine', 'water'],
+  earth: ['build', 'mine', 'decon', 'haul', 'chop', 'plantTree', 'harvest', 'plant', 'kindle', 'cook', 'water', 'research', 'tame'],
+  water: ['water', 'harvest', 'plant', 'tame', 'haul', 'build', 'decon', 'cook', 'kindle', 'research', 'plantTree', 'chop', 'mine'],
+  fire: ['kindle', 'cook', 'build', 'decon', 'harvest', 'haul', 'research', 'mine', 'chop', 'plant', 'water', 'plantTree', 'tame'],
+  air: ['haul', 'tame', 'harvest', 'plant', 'water', 'chop', 'plantTree', 'build', 'decon', 'research', 'kindle', 'cook', 'mine'],
+  none: ['build', 'research', 'decon', 'chop', 'cook', 'tame', 'harvest', 'plant', 'haul', 'plantTree', 'kindle', 'mine', 'water'],
 };
 
 const STRUCTS = {
@@ -50,6 +50,7 @@ const STRUCTS = {
   campfire: { name: 'Campfire', mat: 'wood', cost: 4, work: 3, hp: 80, solid: true },
   teatable: { name: 'Tea Table', mat: 'wood', cost: 8, work: 5, hp: 100, solid: true },
   trap: { name: 'Spike Trap', mat: 'wood', cost: 4, work: 4, hp: 50, solid: false },
+  desk: { name: 'Scroll Desk', mat: 'wood', cost: 10, work: 5, hp: 90, solid: true },
 };
 
 const ITEMS = {
@@ -59,7 +60,89 @@ const ITEMS = {
   tea: { name: 'Jasmine Tea', color: '#efe2a8' },
   meal: { name: 'Hearty Meal', color: '#e8b04a', food: 55 },
   meat: { name: 'Raw Meat', color: '#c2504a', food: 20, raw: true },
+  egg: { name: 'Eggs', color: '#f4ead2', food: 14, raw: true },
+  milk: { name: 'Milk', color: '#eef3f7', food: 16 },
 };
+
+// ---------------------------------------------------------------- wildlife
+// diet: herb (grazes grass, may raid crops), carn (hunts prey), omni (both).
+// role: what the animal does once tamed.
+const SPECIES = {
+  duck: { name: 'Turtle-Duck', diet: 'herb', hp: 20, speed: 1.7, sense: 4, tame: 0.65, meat: 3, role: 'livestock', product: 'egg', every: 70, cap: 9, size: 0.45, swims: true },
+  chicken: { name: 'Possum-Chicken', diet: 'herb', hp: 18, speed: 1.8, sense: 4, tame: 0.7, meat: 3, role: 'livestock', product: 'egg', every: 55, cap: 9, size: 0.45 },
+  sheep: { name: 'Koala-Sheep', diet: 'herb', hp: 45, speed: 1.8, sense: 5, tame: 0.55, meat: 8, role: 'plough', product: 'milk', every: 90, cap: 7, size: 0.65 },
+  hog: { name: 'Hog-Monkey', diet: 'herb', hp: 35, speed: 2.6, sense: 5, tame: 0.35, meat: 6, role: 'companion', cap: 6, size: 0.55, cropRaider: true },
+  ostrich: { name: 'Ostrich-Horse', diet: 'herb', hp: 60, speed: 3.6, sense: 7, tame: 0.4, meat: 9, role: 'hauler', carry: 50, cap: 4, size: 0.7 },
+  yak: { name: 'Buffalo-Yak', diet: 'herb', hp: 110, speed: 2.0, sense: 5, tame: 0.3, meat: 16, role: 'hauler', carry: 90, plough: true, cap: 4, size: 0.95, fightsBack: true, dmg: 10 },
+  lion: { name: 'Saber-Tooth Moose-Lion', diet: 'carn', hp: 120, speed: 3.3, sense: 9, tame: 0.06, meat: 10, role: 'guard', cap: 3, size: 0.9, dmg: 14 },
+  bear: { name: 'Platypus-Bear', diet: 'omni', hp: 170, speed: 2.6, sense: 6, tame: 0, meat: 14, cap: 1, size: 1, dmg: 16 },
+};
+const ROLE_TEXT = {
+  hauler: 'carry loads to the stockpile', livestock: 'lay eggs', plough: 'plough the fields and give milk',
+  companion: 'keep everyone in good spirits', guard: 'guard the camp',
+};
+
+// ---------------------------------------------------------------- research
+const ERAS = ['Ancient', 'Classical', 'Medieval', 'Industrial', 'Modern'];
+const TECHS = {
+  husbandry: { name: 'Animal Husbandry', era: 0, cost: 40, req: [], cat: 'farming', desc: 'Colonists can tame wild animals for hauling, ploughing, eggs and milk.' },
+  forestry: { name: 'Forestry', era: 0, cost: 40, req: [], cat: 'farming', desc: 'Colonists plant tree groves and replant what they cut.' },
+  pottery: { name: 'Pottery', era: 0, cost: 50, req: [], cat: 'medicine', desc: 'Clay pots: every cooked batch yields 50% more meals.' },
+  stonecraft: { name: 'Stonecraft', era: 0, cost: 50, req: [], cat: 'military', desc: 'Walls are 50% tougher; earthbent walls cost 15 Chi instead of 25.' },
+  irrigation: { name: 'Irrigation', era: 1, cost: 90, req: ['forestry', 'pottery'], cat: 'farming', desc: 'Crops dry out half as fast.' },
+  bronze: { name: 'Bronze Weapons', era: 1, cost: 90, req: ['stonecraft'], cat: 'military', desc: 'All colonist attacks deal 25% more damage.' },
+  herbal: { name: 'Herbal Medicine', era: 1, cost: 90, req: ['pottery'], cat: 'medicine', desc: 'Wounds bleed 40% slower and tended wounds heal faster.' },
+  wheel: { name: 'The Wheel', era: 1, cost: 90, req: ['husbandry'], cat: 'comfort', desc: 'Colonists and pack animals carry 50% more.' },
+  rotation: { name: 'Crop Rotation', era: 2, cost: 150, req: ['irrigation'], cat: 'farming', desc: 'Crops grow 40% faster.' },
+  masonry: { name: 'Masonry', era: 2, cost: 150, req: ['stonecraft', 'wheel'], cat: 'military', desc: 'Walls and doors are twice as tough.' },
+  crossbow: { name: 'Crossbows', era: 2, cost: 150, req: ['bronze'], cat: 'military', desc: 'Non-benders shoot crossbow bolts from range instead of only fighting hand to hand.' },
+  plough: { name: 'Animal Plough', era: 2, cost: 150, req: ['husbandry', 'rotation'], cat: 'farming', desc: 'Ploughing animals double crop growth around them; taming succeeds more often.' },
+  steam: { name: 'Steam Power', era: 3, cost: 230, req: ['masonry'], cat: 'comfort', desc: 'Research goes 50% faster.' },
+  metalbending: { name: 'Metalbending', era: 3, cost: 230, req: ['masonry', 'bronze'], cat: 'military', desc: 'Earthbenders hit 50% harder and mine 50% faster.' },
+  lightning: { name: 'Lightning Generation', era: 3, cost: 230, req: ['steam', 'crossbow'], cat: 'military', desc: 'Firebenders throw lightning: 60% more damage and longer range.' },
+  fertilizer: { name: 'Fertilizer', era: 3, cost: 230, req: ['rotation', 'plough'], cat: 'farming', desc: 'Crops grow faster still and wild grass regrows twice as fast.' },
+  radio: { name: 'Radio', era: 4, cost: 320, req: ['steam'], cat: 'military', desc: 'Scouts radio ahead: raids are announced 25 seconds early and colonists gather inside camp.' },
+  medicine: { name: 'Modern Medicine', era: 4, cost: 320, req: ['herbal', 'steam'], cat: 'medicine', desc: 'Bleeding slows to a trickle and wounds heal twice as fast.' },
+  electricity: { name: 'Electricity', era: 4, cost: 320, req: ['lightning'], cat: 'comfort', desc: 'Electric lights push back the night and lift spirits.' },
+  satomobile: { name: 'Satomobiles', era: 4, cost: 320, req: ['steam', 'wheel'], cat: 'comfort', desc: 'Colonists move 30% faster.' },
+  probending: { name: 'Pro-Bending Arena', era: 4, cost: 400, req: ['electricity', 'metalbending'], cat: 'comfort', desc: 'Matches every evening lift everyone\'s Harmony. The colony has reached the modern era.' },
+};
+const hasTech = (G, k) => G.tech.has(k);
+const availableTechs = (G) => Object.keys(TECHS).filter((k) => !G.tech.has(k) && TECHS[k].req.every((r) => G.tech.has(r)));
+function eraOf(G) { let e = 0; for (const k of G.tech) e = Math.max(e, TECHS[k].era); return e; }
+function chooseResearch(G) {
+  const av = availableTechs(G);
+  if (!av.length) return null;
+  const f = G.genome.researchFocus;
+  const score = (k) => (TECHS[k].cat === f ? 2.2 : 1) / TECHS[k].cost;
+  av.sort((a, b) => score(b) - score(a));
+  return av[0];
+}
+const structMaxHp = (G, s) => {
+  const base = STRUCTS[s.type].hp;
+  if (s.type === 'wall') return base * (hasTech(G, 'masonry') ? 2 : hasTech(G, 'stonecraft') ? 1.5 : 1);
+  if (s.type === 'door') return base * (hasTech(G, 'masonry') ? 2 : 1);
+  return base;
+};
+const wallChi = (G) => (hasTech(G, 'stonecraft') ? 15 : 25);
+function addResearch(G, pts) {
+  const R = G.research;
+  if (!R.target || G.tech.has(R.target)) R.target = chooseResearch(G);
+  if (!R.target) return;
+  R.progress += pts;
+  const t = TECHS[R.target];
+  if (R.progress < t.cost) return;
+  const before = eraOf(G);
+  G.tech.add(R.target); R.progress = 0;
+  // Tougher walls apply to walls already standing.
+  for (const st of G.struct) if (st && st.built && (st.type === 'wall' || st.type === 'door')) st.hp = Math.max(st.hp, structMaxHp(G, st) * (st.hp / Math.max(1, st.maxHp || STRUCTS[st.type].hp)));
+  for (const st of G.struct) if (st && st.built) st.maxHp = structMaxHp(G, st);
+  const era = eraOf(G);
+  if (era > before) banner(G, `The ${ERAS[era]} era`, `Discovering ${t.name} carries the colony into the ${ERAS[era]} era.`, 'iroh');
+  else log(G, `Discovery: ${t.name}. ${t.desc}`, 'iroh');
+  for (const p of G.pawns) if (!p.dead) addThought(p, 'discovery', `We discovered ${t.name}`, 4, 150);
+  R.target = chooseResearch(G);
+}
 
 const RAIDERS = {
   scout: { name: 'Fire Nation Scout', hp: 55, range: 6, dmg: 10, cd: 1.8, proj: 'fire', inj: 'Burn', speed: 2.3, color: '#9c2a1e', bash: 9 },
@@ -172,7 +255,7 @@ function darkness(G) {
   else if (h >= 18 && h < 21) d = (h - 18) / 3;
   else if (h >= 4.5 && h < 6.5) d = 1 - (h - 4.5) / 2;
   else d = 1;
-  return d * (G.ev.fullmoon > 0 ? 0.42 : 0.62);
+  return d * (G.ev.fullmoon > 0 ? 0.42 : 0.62) * (G.tech && G.tech.has('electricity') ? 0.45 : 1);
 }
 
 
@@ -196,6 +279,8 @@ const NAIVE_GENOME = {
   teaTable: false,      // build a tea table and jasmine patch for Harmony
   woodReserve: 15,      // chop more trees when wood falls below this
   stoneReserve: 10,     // mine more stone when it falls below this
+  huntPrey: false,      // hunt wild grazers for meat when food runs low
+  researchFocus: 'balanced', // which branch of the research tree comes first
 };
 const GENE_LIMITS = {
   wallDay: [1.5, 99], traps: [0, 8], fightHealth: [15, 70], farmPerColonist: [2, 9],
@@ -212,11 +297,13 @@ function describeGenome(g) {
     g.waterFirst ? 'Drop everything to water crops in a heatwave' : 'Water crops when there is time',
     g.teaTable ? 'Build a tea table and grow jasmine' : 'No time for tea',
     `Restock below ${g.woodReserve} wood and ${g.stoneReserve} stone`,
+    g.huntPrey ? 'Hunt wild grazers for meat when food runs low' : 'Leave the wild grazers alone',
+    `Research focus: ${g.researchFocus}`,
   ];
 }
 function newStats() {
   return { downedInCombat: 0, bledOut: 0, breaks: 0, withered: 0, hungryTime: 0, matWait: 0, bearInjuries: 0,
-    deaths: { raid: 0, bear: 0, starvation: 0, wounds: 0 }, peak: 4 };
+    deaths: { raid: 0, bear: 0, starvation: 0, wounds: 0 }, peak: 4, tameFails: 0, livestockLost: 0, cropsEaten: 0 };
 }
 function ringCompletion(G) {
   let need = 0, done = 0;
@@ -232,9 +319,9 @@ function chronicle(G) {
   const st = G.stats, d = st.deaths;
   const fell = Object.entries(d).sort((a, b) => b[1] - a[1])[0];
   const cause = fell[1] === 0 ? 'unknown' : fell[0];
-  return { gen: G.gen, days: +(G.time / DAY_LEN).toFixed(2), cause, raids: G.raidsSeen, ring: +ringCompletion(G).toFixed(2), stats: JSON.parse(JSON.stringify(st)), genome: { ...G.genome } };
+  return { gen: G.gen, days: +(G.time / DAY_LEN).toFixed(2), cause, raids: G.raidsSeen, era: eraOf(G), techs: G.tech.size, ring: +ringCompletion(G).toFixed(2), stats: JSON.parse(JSON.stringify(st)), genome: { ...G.genome } };
 }
-const CAUSE_TEXT = { raid: 'raiders', bear: 'the platypus-bear', starvation: 'starvation', wounds: 'untreated wounds', unknown: 'misfortune' };
+const CAUSE_TEXT = { raid: 'raiders', bear: 'wild beasts', starvation: 'starvation', wounds: 'untreated wounds', unknown: 'misfortune' };
 function learnFromFall(mem, rec, rand) {
   mem.history.push(rec);
   if (!mem.best || rec.days > mem.best.days) mem.best = { days: rec.days, genome: { ...rec.genome }, gen: rec.gen };
@@ -264,6 +351,9 @@ function learnFromFall(mem, rec, rand) {
     g.woodReserve = Math.min(80, g.woodReserve + 15); g.stoneReserve = Math.min(90, g.stoneReserve + 15);
     lessons.push(`Builders stood idle waiting for materials. Restock below ${g.woodReserve} wood and ${g.stoneReserve} stone.`);
   }
+  const focus = { raid: 'military', starvation: 'farming', wounds: 'medicine', bear: 'military' }[rec.cause] || (st.breaks >= 3 ? 'comfort' : null);
+  if (focus && g.researchFocus !== focus) { g.researchFocus = focus; lessons.push(`Our scholars studied the wrong things. Research ${focus} first.`); }
+  if ((st.deaths.starvation > 0 || st.hungryTime > 60 || st.cropsEaten >= 6) && !g.huntPrey) { g.huntPrey = true; lessons.push(`${st.cropsEaten} crops were eaten by wild animals and food ran short. Hunt grazers for meat.`); }
   if (!lessons.length || (lessons.length === 1 && regress)) lessons.push('No clear mistake this time. The colony keeps its habits.');
   // One experiment: a small random change, which may well be a mistake.
   let experiment = null;
@@ -276,7 +366,7 @@ function learnFromFall(mem, rec, rand) {
     g[k] = clamp(+(g[k] + (rand() < 0.5 ? -step : step)).toFixed(1), lo, hi);
     if (g[k] !== before) experiment = `Experiment: ${k.replace(/([A-Z])/g, ' $1').toLowerCase()} ${before} → ${g[k]}.`;
   } else if (rand() < 0.25) {
-    const flips = ['huntEager', 'waterFirst', 'teaTable'];
+    const flips = ['huntEager', 'waterFirst', 'teaTable', 'huntPrey'];
     const k = flips[Math.floor(rand() * flips.length)];
     g[k] = !g[k];
     experiment = `Experiment: ${k.replace(/([A-Z])/g, ' $1').toLowerCase()} is now ${g[k] ? 'on' : 'off'}.`;
@@ -305,7 +395,7 @@ function createGame(seed, genome = NAIVE_GENOME, gen = 1, lastRec = null) {
   const N = W * H;
   const G = {
     seed, rand: r, time: 0, speed: 0, nextId: 1,
-    terrain: new Uint8Array(N), shade: new Float32Array(N), tree: new Uint8Array(N),
+    terrain: new Uint8Array(N), shade: new Float32Array(N), tree: new Float32Array(N), forage: new Float32Array(N),
     struct: new Array(N).fill(null), items: new Array(N).fill(null), plants: new Array(N).fill(null),
     zone: new Array(N).fill(null), desig: new Array(N).fill(null),
     res: new Map(), pawns: [], enemies: [], proj: [], parts: [], floats: [],
@@ -316,6 +406,7 @@ function createGame(seed, genome = NAIVE_GENOME, gen = 1, lastRec = null) {
     terrainDirty: true, over: false, witherLogT: 0,
     freeWill: true, dirT: 2, planLog: {}, raidsSeen: 0,
     genome: { ...NAIVE_GENOME, ...genome }, gen, stats: newStats(), learned: false, restartIn: 0, report: null,
+    tech: new Set(), research: { target: null, progress: 0 }, ecoT: 0, pendingRaid: 0,
   };
   const elev = fbm(r), moist = fbm(r);
   const cx = 20, cy = 20;
@@ -399,6 +490,14 @@ function createGame(seed, genome = NAIVE_GENOME, gen = 1, lastRec = null) {
   G.struct[idx(cx, cy + 2)] = { type: 'campfire', built: true, delivered: 4, progress: 0, hp: STRUCTS.campfire.hp, fuel: 70, decon: false };
   const crew = [['earth', 'Kanto'], ['water', 'Yuka'], ['fire', 'Ren'], ['air', 'Tashi']];
   crew.forEach(([el, name], k) => G.pawns.push(makeColonist(G, el, name, cx - 1 + (k % 2) * 2, cy - 1 + Math.floor(k / 2) * 2)));
+  for (let i = 0; i < N; i++) G.forage[i] = G.terrain[i] === T.GRASS ? 1 : G.terrain[i] === T.SOIL ? 0.6 : 0;
+  // Wildlife: a small food web of grazers and one predator.
+  for (const [sp, n] of [['duck', 5], ['chicken', 4], ['sheep', 4], ['hog', 3], ['ostrich', 2], ['yak', 2], ['lion', 1]]) {
+    for (let k = 0; k < n; k++) {
+      const spot = randomWildSpot(G, sp === 'lion' ? 13 : 9, sp === 'duck');
+      if (spot) G.enemies.push(makeAnimal(G, sp, spot[0], spot[1], false));
+    }
+  }
   G.cam.x = cx * TS; G.cam.y = cy * TS; // centred properly once the view size is known
   G.camCentered = false;
   if (gen === 1) log(G, 'Four benders have settled a quiet valley. They have no idea what is coming.', 'iroh');
@@ -463,7 +562,7 @@ function updateParticles(G, dt) {
 // ============================================================================
 function colPass(G, i) {
   const t = G.terrain[i];
-  if (t === T.WATER || t === T.STONE || G.tree[i]) return false;
+  if (t === T.WATER || t === T.STONE || G.tree[i] >= 0.5) return false;
   const s = G.struct[i];
   return !(s && s.built && STRUCTS[s.type].solid);
 }
@@ -471,7 +570,7 @@ const colCostFn = (G) => (x, y, i) => (colPass(G, i) ? (G.terrain[i] === T.SAND 
 function enemyBlocked(G, i) { const s = G.struct[i]; return !!(s && s.built && (STRUCTS[s.type].solid || s.type === 'door')); }
 const enemyCostFn = (G) => (x, y, i) => {
   const t = G.terrain[i];
-  if (t === T.WATER || t === T.STONE || G.tree[i]) return Infinity;
+  if (t === T.WATER || t === T.STONE || G.tree[i] >= 0.5) return Infinity;
   const s = G.struct[i];
   if (s && s.built) { if (s.type === 'wall') return 14; if (s.type === 'door') return 7; if (STRUCTS[s.type].solid) return 9; }
   return 1;
@@ -591,19 +690,31 @@ function damageEnemy(G, e, dmg, src) {
   e.hp -= dmg; e.hitFlash = 0.2;
   floatText(G, e.x, e.y - 0.6, `-${Math.round(dmg)}`, '#ffd166');
   if (e.faction === 'animal') {
-    if (!e.provoked) log(G, 'The platypus-bear roars and charges!', 'azula');
-    e.provoked = true; e.calm = 40; if (src) e.aggro = src;
+    const S = SPECIES[e.type];
+    if (S.diet === 'herb' && !S.fightsBack) { e.fleeT = 6; e.fleeFrom = src || null; }
+    else if (src && src.kind === 'colonist' && !e.tame) {
+      if (!e.provoked && (e.type === 'bear' || e.type === 'lion')) log(G, `The ${S.name} roars and charges!`, 'azula');
+      e.provoked = true; e.calm = 40; e.aggro = src;
+    }
   }
-  if (e.hp <= 0) killEnemy(G, e);
+  if (e.hp <= 0) killEnemy(G, e, src);
 }
-function killEnemy(G, e) {
+function killEnemy(G, e, src) {
   e.dead = true;
   const [x, y] = tileOf(e);
   emit(G, e.x, e.y, 12, 'dust');
   if (e.faction === 'animal') {
-    dropItem(G, x, y, 'meat', 14);
-    log(G, 'The platypus-bear has been brought down. It left 14 raw meat.', 'info');
-    for (const p of G.pawns) if (!p.dead) addThought(p, 'bear', 'Survived the platypus-bear', 5, 150);
+    const S = SPECIES[e.type];
+    releaseAll(G, e);
+    if (e.carrying) { dropItem(G, x, y, e.carrying.type, e.carrying.qty); e.carrying = null; }
+    if (e.tame) { G.stats.livestockLost++; log(G, `The tamed ${S.name} was killed${src && src.faction === 'animal' ? ` by a ${src.name}` : ''}.`, 'azula'); }
+    if (src && src.faction === 'animal') return; // eaten by the predator
+    const meat = Math.max(1, Math.round(S.meat * (e.age < 1 ? 0.5 : 1)));
+    dropItem(G, x, y, 'meat', meat);
+    if (e.type === 'bear' || e.type === 'lion') {
+      log(G, `The ${S.name} has been brought down. It left ${meat} raw meat.`, 'info');
+      for (const p of G.pawns) if (!p.dead) addThought(p, 'beast', `Survived the ${S.name}`, 5, 150);
+    }
   } else {
     if (G.rand() < 0.5) dropItem(G, x, y, G.rand() < 0.5 ? 'wood' : 'stone', 4 + Math.floor(G.rand() * 5));
   }
@@ -623,7 +734,7 @@ function damageStruct(G, i, dmg) {
 function completeStruct(G, i) {
   const s = G.struct[i];
   const def = STRUCTS[s.type];
-  s.built = true; s.hp = def.hp; s.progress = 0;
+  s.built = true; s.hp = structMaxHp(G, s); s.maxHp = s.hp; s.progress = 0;
   if (s.type === 'campfire') s.fuel = 60;
   const x = i % W, y = (i / W) | 0;
   G.plants[i] = null;
@@ -648,6 +759,7 @@ function completeStruct(G, i) {
 // ============================================================================
 function speedOf(G, p) {
   let s = 2.5;
+  if (hasTech(G, 'satomobile')) s *= 1.3;
   if (p.el === 'air') s *= 2.5;
   if (p.el === 'water' && G.ev.fullmoon > 0) s *= 1.5;
   if (p.health < 50) s *= 0.7;
@@ -657,6 +769,7 @@ function speedOf(G, p) {
 function workSpeed(G, p, kind, stype) {
   let m = 1;
   if (p.el === 'earth' && (kind === 'mine' || kind === 'build' || kind === 'decon')) m *= 2.2;
+  if (p.el === 'earth' && kind === 'mine' && hasTech(G, 'metalbending')) m *= 1.5;
   if (p.el === 'none' && (kind === 'build' || kind === 'chop' || kind === 'decon')) m *= stype === 'trap' ? 3 : 1.5;
   if (p.el === 'fire' && kind === 'cook') m *= 3;
   if (p.el === 'water' && (kind === 'tend' || kind === 'plant' || kind === 'harvest')) m *= 1.6;
@@ -665,7 +778,7 @@ function workSpeed(G, p, kind, stype) {
   if (p.harmony > 80) m *= 1.15;
   return m;
 }
-const carryCap = (p) => (p.el === 'air' ? 75 : 25);
+const carryCap = (G, p) => (p.el === 'air' ? 75 : 25) * (hasTech(G, 'wheel') ? 1.5 : 1);
 const hasChi = (G, p, n) => (p.el === 'water' && G.ev.fullmoon > 0) || p.chi >= n;
 const spendChi = (G, p, n) => { if (!(p.el === 'water' && G.ev.fullmoon > 0)) p.chi = Math.max(0, p.chi - n); };
 
@@ -712,7 +825,7 @@ function abortJob(G, p) {
 // ---------------------------------------------------------------- finders
 function jobEat(G, p) {
   const want = (types) => seek(G, p, (x, y, i) => { const it = G.items[i]; return it && types.includes(it.type) && !isRes(G, 'i' + i, p) ? { t: i } : null; });
-  const r = want(['meal']) || want(['cabbage', 'meat']);
+  const r = want(['meal', 'milk']) || want(['cabbage', 'egg', 'meat']);
   if (!r) return null;
   reserve(G, 'i' + r.goal.t, p);
   return { type: 'eat', t: r.goal.t, path: r.path, stage: 'go', label: 'Going to eat' };
@@ -828,7 +941,7 @@ const WORK = {
   },
   chop(G, p) {
     if (!G.desig.includes('chop')) return null;
-    const r = seek(G, p, adjGoal((n) => G.desig[n] === 'chop' && G.tree[n] && !isRes(G, 'w' + n, p)));
+    const r = seek(G, p, adjGoal((n) => G.desig[n] === 'chop' && G.tree[n] >= 1 && !isRes(G, 'w' + n, p)));
     if (!r) return null; reserve(G, 'w' + r.goal.t, p);
     return { type: 'chop', t: r.goal.t, path: r.path, stage: 'go', work: 0, need: 4, label: 'Chopping wood' };
   },
@@ -839,13 +952,13 @@ const WORK = {
       const s = G.struct[n];
       if (!s || s.built || isRes(G, 'b' + n, p)) return false;
       const def = STRUCTS[s.type];
-      return s.delivered >= def.cost || (p.el === 'earth' && s.type === 'wall' && p.chi >= 25) || avail[def.mat] > 0;
+      return s.delivered >= def.cost || (p.el === 'earth' && s.type === 'wall' && p.chi >= wallChi(G)) || avail[def.mat] > 0;
     };
     const r = seek(G, p, adjGoal(ok)); if (!r) return null;
     const t = r.goal.t, s = G.struct[t], def = STRUCTS[s.type];
     reserve(G, 'b' + t, p);
     if (s.delivered >= def.cost) return { type: 'build', t, s, path: r.path, stage: 'go', work: 0, label: `Building ${def.name}` };
-    if (p.el === 'earth' && s.type === 'wall' && p.chi >= 25) return { type: 'build', t, s, path: r.path, stage: 'go', work: 0, chi: true, label: 'Earthbending a wall' };
+    if (p.el === 'earth' && s.type === 'wall' && p.chi >= wallChi(G)) return { type: 'build', t, s, path: r.path, stage: 'go', work: 0, chi: true, label: 'Earthbending a wall' };
     const ir = seek(G, p, (x, y, i) => { const it = G.items[i]; return it && it.type === def.mat && !isRes(G, 'i' + i, p) ? { t: i } : null; }, 400);
     if (!ir) { releaseAll(G, p); return null; }
     reserve(G, 'i' + ir.goal.t, p);
@@ -933,7 +1046,13 @@ function chooseJob(G, p) {
   if ((j = jobTend(G, p))) return j;
   if ((j = jobRescue(G, p))) return j;
   if (G.genome.waterFirst && G.ev.heatwave > 0 && (j = WORK.water(G, p))) return j;
-  if (p.harmony < 45 && (j = jobTea(G, p))) return j;
+  if (p.harmony < 55 && (j = jobTea(G, p))) return j;
+  if (G.pendingRaid > 0 && homeDist(...tileOf(p)) > HOME.ring - 2) {
+    const [x, y] = tileOf(p);
+    const r = seek(G, p, (a, b) => (homeDist(a, b) <= HOME.ring - 3 ? {} : null), 200);
+    if (r) return { type: 'wander', path: r.path, stage: 'go', idle: 2, label: 'Heading home: radio warning' };
+    void x; void y;
+  }
   for (const w of PRIORITIES[p.el]) if ((j = WORK[w](G, p))) return j;
   if (p.harmony < 72 && (j = jobTea(G, p))) return j;
   return jobWander(G, p);
@@ -1026,7 +1145,7 @@ function runJob(G, p, dt) {
       return;
     }
     case 'mine': case 'chop': {
-      const valid = j.type === 'mine' ? G.terrain[j.t] === T.STONE && G.desig[j.t] === 'mine' : G.tree[j.t] && G.desig[j.t] === 'chop';
+      const valid = j.type === 'mine' ? G.terrain[j.t] === T.STONE && G.desig[j.t] === 'mine' : G.tree[j.t] >= 1 && G.desig[j.t] === 'chop';
       if (!valid) return done();
       if (j.stage === 'go') { if (!walk()) return; j.stage = 'work'; }
       const tx = (j.t % W) + 0.5, ty = ((j.t / W) | 0) + 0.5;
@@ -1051,7 +1170,7 @@ function runJob(G, p, dt) {
         if (!walk()) return;
         const it = G.items[j.item];
         if (!it || it.type !== def.mat) return done();
-        const qty = takeItem(G, j.item, Math.min(def.cost - s.delivered, carryCap(p)));
+        const qty = takeItem(G, j.item, Math.min(def.cost - s.delivered, carryCap(G, p)));
         p.carrying = { type: def.mat, qty };
         G.res.delete('i' + j.item);
         const r = seek(G, p, adjGoal((n) => n === j.t), 400);
@@ -1067,7 +1186,7 @@ function runJob(G, p, dt) {
           if (p.carrying.qty <= 0) p.carrying = null;
         }
         if (!j.chi && s.delivered < def.cost) return done();
-        if (j.chi && !hasChi(G, p, 25)) return done();
+        if (j.chi && !hasChi(G, p, wallChi(G))) return done();
         j.stage = 'work'; j.label = j.chi ? 'Earthbending a wall' : `Building ${def.name}`;
       }
       const tx = (j.t % W) + 0.5, ty = ((j.t / W) | 0) + 0.5;
@@ -1077,7 +1196,7 @@ function runJob(G, p, dt) {
       s.progress = j.work / need;
       if (G.rand() < dt * 4) emit(G, tx, ty, 1, 'dust');
       if (j.work >= need) {
-        if (j.chi) { spendChi(G, p, 25); emit(G, tx, ty, 26, 'dust'); floatText(G, tx, ty - 0.5, 'Earth wall!', '#9be29f'); }
+        if (j.chi) { spendChi(G, p, wallChi(G)); emit(G, tx, ty, 26, 'dust'); floatText(G, tx, ty - 0.5, 'Earth wall!', '#9be29f'); }
         completeStruct(G, j.t);
         done();
       }
@@ -1177,7 +1296,7 @@ function runJob(G, p, dt) {
       if (G.rand() < dt * (j.flash ? 14 : 4)) emit(G, fx, fy - 0.2, 1, 'ember');
       if (j.work >= 5) {
         const c = p.carrying;
-        const meals = c.type === 'cabbage' ? Math.ceil(c.qty / 2) : c.qty;
+        const meals = Math.ceil((c.type === 'cabbage' ? c.qty / 2 : c.qty) * (hasTech(G, 'pottery') ? 1.5 : 1));
         p.carrying = null;
         const [x, y] = tileOf(p); dropItem(G, x, y, 'meal', meals);
         emit(G, fx, fy, 6, 'steam');
@@ -1215,7 +1334,7 @@ function runJob(G, p, dt) {
         const it = G.items[j.item];
         if (!it) return done();
         const type = it.type;
-        const qty = takeItem(G, j.item, carryCap(p));
+        const qty = takeItem(G, j.item, Math.floor(carryCap(G, p)));
         p.carrying = { type, qty };
         G.res.delete('i' + j.item);
         const r = seek(G, p, (x, y, i) => (G.zone[i] === 'stock' && canHold(G, i, type) && !isRes(G, 'c' + i, p) ? { t: i } : null), 500);
@@ -1273,6 +1392,7 @@ function runJob(G, p, dt) {
       return;
     }
     case 'fight': return runFight(G, p, dt);
+    case 'research': case 'plantTree': case 'tame': return runEcoJob(G, p, dt, j, walk, done);
     default: done();
   }
 }
@@ -1283,27 +1403,34 @@ function runJob(G, p, dt) {
 function hostileToColony(G, e) {
   if (!e || e.dead || e.gone) return false;
   if (e.faction === 'raider') return true;
-  return e.provoked || e.hunted;
+  if (e.tame) return false;
+  return e.provoked || e.hunted || e.threat;
 }
 function findHostileFor(G, p) {
   let best = null, bd = Infinity;
   for (const e of G.enemies) {
     if (!hostileToColony(G, e)) continue;
     const d = dist(p, e);
-    const ok = e.faction === 'raider' ? d < 10 && !e.flee : (e.provoked && d < 10) || e.hunted;
+    const ok = e.faction === 'raider' ? d < 10 && !e.flee : ((e.provoked || e.threat) && d < 10) || e.hunted;
     if (ok && d < bd) { bd = d; best = e; }
   }
   return best;
 }
 function canBend(G, p) { return p.el !== 'none' && hasChi(G, p, 6); }
+function atkMul(G, p) {
+  let m = hasTech(G, 'bronze') ? 1.25 : 1;
+  if (p.el === 'earth' && hasTech(G, 'metalbending')) m *= 1.5;
+  if (p.el === 'fire' && hasTech(G, 'lightning')) m *= 1.6;
+  return m;
+}
 function runFight(G, p, dt) {
   const t = p.job.target;
   if (!hostileToColony(G, t) || !G.enemies.includes(t) || (t.flee && dist(p, t) > 7) || (!t.hunted && dist(p, t) > 14)) return abortJob(G, p);
   const el = ELEMENTS[p.el];
   const bend = canBend(G, p);
-  const range = bend ? el.range : 1.5;
+  const range = bend ? el.range + (p.el === 'fire' && hasTech(G, 'lightning') ? 1 : 0) : p.el === 'none' && hasTech(G, 'crossbow') ? 6 : 1.5;
   const d = dist(p, t);
-  p.job.label = `Fighting ${t.name}`;
+  p.job.label = t.faction === 'animal' && !t.provoked ? `Hunting a ${t.name}` : `Fighting ${t.name}`;
   if (d <= range) {
     p.path = null;
     p.facing = Math.atan2(t.y - p.y, t.x - p.x);
@@ -1322,16 +1449,24 @@ function runFight(G, p, dt) {
 function colonistAttack(G, p, t, bend) {
   const el = ELEMENTS[p.el];
   p.atkCd = el.cd;
+  const mul = atkMul(G, p);
+  if (!bend && p.el === 'none' && hasTech(G, 'crossbow') && dist(p, t) > 1.6) {
+    G.proj.push({ x: p.x, y: p.y, target: t, lx: t.x, ly: t.y, kind: 'bolt', dmg: 12 * mul, side: 'colony', shooter: p,
+      speed: 16, life: 2, knock: 0, start: idx(...tileOf(p)), rot: 0 });
+    p.atkCd = 1.1;
+    return;
+  }
   if (!bend) {
     if (p.el === 'none') {
-      damageEnemy(G, t, el.dmg, p); t.stun = 2.5;
+      damageEnemy(G, t, el.dmg * mul, p); t.stun = 2.5;
       emit(G, t.x, t.y, 8, 'chi'); floatText(G, t.x, t.y - 0.9, 'Chi-blocked!', '#ffb347');
     } else { damageEnemy(G, t, 5, p); emit(G, t.x, t.y, 3, 'dust'); }
     return;
   }
   spendChi(G, p, 6);
-  G.proj.push({ x: p.x, y: p.y, target: t, lx: t.x, ly: t.y, kind: el.proj, dmg: el.dmg, side: 'colony', shooter: p,
-    speed: el.proj === 'boulder' ? 9 : el.proj === 'air' ? 14 : 12, life: 3, knock: p.el === 'air' ? 2.5 : 0, start: idx(...tileOf(p)), rot: 0 });
+  const lightning = p.el === 'fire' && hasTech(G, 'lightning');
+  G.proj.push({ x: p.x, y: p.y, target: t, lx: t.x, ly: t.y, kind: lightning ? 'lightning' : el.proj, dmg: el.dmg * mul, side: 'colony', shooter: p,
+    speed: lightning ? 22 : el.proj === 'boulder' ? 9 : el.proj === 'air' ? 14 : 12, life: 3, knock: p.el === 'air' ? 2.5 : 0, start: idx(...tileOf(p)), rot: 0 });
   const k = { boulder: 'dust', water: 'splash', fire: 'ember', air: 'air' }[el.proj];
   emit(G, p.x, p.y, 6, k);
 }
@@ -1371,7 +1506,7 @@ function updateProjectiles(G, dt) {
     pr.life -= dt;
     if (d <= Math.max(0.3, step)) { hitProjectile(G, pr); pr.dead = true; continue; }
     pr.x += (dx / d) * step; pr.y += (dy / d) * step;
-    const trail = { fire: 'ember', water: 'splash', boulder: 'dust', air: 'air', sand: 'sand' }[pr.kind];
+    const trail = { fire: 'ember', water: 'splash', boulder: 'dust', air: 'air', sand: 'sand', lightning: 'chi', bolt: 'dust' }[pr.kind];
     if (G.rand() < dt * 25) emit(G, pr.x, pr.y, 1, trail);
     const ti = idx(clamp(Math.floor(pr.x), 0, W - 1), clamp(Math.floor(pr.y), 0, H - 1));
     const targetTile = t ? idx(...tileOf(t)) : pr.structI;
@@ -1385,7 +1520,7 @@ function updateProjectiles(G, dt) {
   G.proj = G.proj.filter((p) => !p.dead);
 }
 function impact(G, pr) {
-  const k = { fire: 'ember', water: 'splash', boulder: 'dust', air: 'air', sand: 'sand' }[pr.kind];
+  const k = { fire: 'ember', water: 'splash', boulder: 'dust', air: 'air', sand: 'sand', lightning: 'chi', bolt: 'dust' }[pr.kind];
   emit(G, pr.x, pr.y, 10, k);
 }
 function hitProjectile(G, pr) {
@@ -1439,6 +1574,9 @@ function updateHarmony(G, p, dt) {
   if (G.ev.fullmoon > 0 && p.el !== 'water') sit.push(['Beautiful full moon', 2]);
   if (G.ev.heatwave > 0) sit.push(p.el === 'fire' ? ['Basking in the heat', 6] : ['Sweltering heat', -5]);
   if (isNight(G) && nearLitCampfire(G, p, 4)) sit.push(['Warm campfire', 4]);
+  if (isNight(G) && hasTech(G, 'electricity')) sit.push(['Electric lights', 4]);
+  if (hasTech(G, 'probending')) sit.push(['Pro-bending season', 8]);
+  if (G.enemies.some((e) => e.tame && SPECIES[e.type].role === 'companion' && !e.dead && dist(e, p) < 3)) sit.push(['Playful hog-monkey', 3]);
   if (G.raid) sit.push(['Under attack', -4]);
   p.sit = sit;
   const target = clamp(52 + sit.reduce((s, x) => s + x[1], 0) + p.thoughts.reduce((s, t) => s + t.val, 0), 0, 100);
@@ -1500,11 +1638,12 @@ function updateColonist(G, p, dt) {
   if (p.inBed >= 0 && !bedOk) p.inBed = -1;
   let bleed = 0;
   for (const j of p.injuries) if (j.bleeding) bleed++;
-  const bleedRate = Math.min(0.3, bleed * 0.12) / Math.max(1, bleed);
+  const bleedRate = Math.min(0.3, bleed * 0.12) / Math.max(1, bleed) * (hasTech(G, 'medicine') ? 0.3 : hasTech(G, 'herbal') ? 0.6 : 1);
+  const healMul = hasTech(G, 'medicine') ? 2 : hasTech(G, 'herbal') ? 1.3 : 1;
   for (const j of p.injuries) {
     if (j.type === 'Malnutrition') { j.sev += p.hunger <= 0 ? dt * 0.15 : -dt * 0.1; continue; }
     if (j.bleeding) j.sev += dt * bleedRate;
-    else j.sev -= dt * (j.tended ? (bedOk || p.sleeping ? 0.4 : 0.12) : 0.035);
+    else j.sev -= dt * healMul * (j.tended ? (bedOk || p.sleeping ? 0.4 : 0.12) : 0.035);
   }
   if (p.hunger <= 0 && !p.injuries.some((j) => j.type === 'Malnutrition')) p.injuries.push({ type: 'Malnutrition', sev: 0.1, bleeding: false, tended: true });
   p.injuries = p.injuries.filter((j) => j.sev > 0.01);
@@ -1572,9 +1711,7 @@ function spawnRaid(G) {
 }
 function spawnBear(G) {
   const s = G.edgeSpawns[Math.floor(G.rand() * G.edgeSpawns.length)];
-  G.enemies.push({ id: G.nextId++, faction: 'animal', type: 'bear', name: 'Platypus-Bear', x: s[0] + 0.5, y: s[1] + 0.5, hp: 170, maxHp: 170,
-    range: 1.4, dmg: 16, atkCd: 1.5, cd: 0, melee: true, inj: 'Claw wound', speed: 2.6, bash: 14, path: null, repath: 0, re: 0, target: null,
-    provoked: false, hunted: false, calm: 0, life: 0, idle: 0, stun: 0, root: 0, hitFlash: 0, facing: 0 });
+  G.enemies.push(makeAnimal(G, 'bear', s[0], s[1], false));
   banner(G, 'Platypus-bear sighted', 'A huge platypus-bear wanders into the valley. It is harmless unless startled or hunted.', 'iroh');
 }
 function moveEnemy(G, e, dt, speedMul = 1) {
@@ -1657,7 +1794,7 @@ function updateEnemy(G, e, dt) {
   if (e.root > 0) { e.root -= dt; return; }
   const ti = idx(...tileOf(e));
   const s = G.struct[ti];
-  if (s && s.built && s.type === 'trap' && (e.faction === 'raider' || e.provoked || e.hunted)) {
+  if (s && s.built && s.type === 'trap' && (e.faction === 'raider' || ((e.provoked || e.hunted) && !e.tame))) {
     G.struct[ti] = null; e.root = 2.5;
     emit(G, e.x, e.y, 10, 'dust'); emit(G, e.x, e.y, 6, 'blood');
     floatText(G, e.x, e.y - 0.8, 'Trapped!', '#ffd166');
@@ -1665,43 +1802,473 @@ function updateEnemy(G, e, dt) {
     damageEnemy(G, e, 30, null);
     if (e.dead) return;
   }
-  if (e.faction === 'animal') {
-    e.life += dt;
-    if (e.provoked) {
-      e.calm -= dt;
-      if (e.calm <= 0 && !e.hunted) { e.provoked = false; e.aggro = null; e.path = null; log(G, 'The platypus-bear calms down.', 'iroh'); }
-    }
-    if (!e.provoked) {
-      for (const p of G.pawns) {
-        if (p.dead || p.downed) continue;
-        if (dist(p, e) < 1.6 && G.rand() < dt * 0.08) {
-          e.provoked = true; e.calm = 35; e.aggro = p;
-          log(G, `The platypus-bear was startled by ${p.name} and attacks!`, 'azula');
-          break;
-        }
-      }
-    }
-    if (!e.provoked) {
-      if (e.life > 260 && !e.hunted) return moveToEdge(G, e, dt);
-      if (!e.path || !e.path.length) {
-        e.idle -= dt; if (e.idle > 0) return;
-        e.idle = 2 + G.rand() * 3;
-        const [x, y] = tileOf(e);
-        const tx = clamp(x + Math.floor(G.rand() * 9) - 4, 0, W - 1), ty = clamp(y + Math.floor(G.rand() * 9) - 4, 0, H - 1);
-        const r = pathfind(G, x, y, (a, b) => (a === tx && b === ty ? {} : null), colCostFn(G), 14);
-        e.path = r ? r.path : null;
-      }
-      if (e.path && e.path.length && !colPass(G, idx(e.path[0].x, e.path[0].y))) { e.path = null; return; }
-      moveEnemy(G, e, dt, 0.45);
-      return;
-    }
-    if (!chaseAndAttack(G, e, dt)) { e.provoked = false; e.path = null; }
-    return;
-  }
+  if (e.faction === 'animal') return updateAnimal(G, e, dt);
   if (!e.flee && e.hp < e.maxHp * 0.3) { e.flee = true; e.path = null; log(G, `A ${e.name} is fleeing!`, 'iroh'); }
   if (G.raid && G.raid.t > 130 && !e.flee) { e.flee = true; e.path = null; }
   if (e.flee) return moveToEdge(G, e, dt);
   if (!chaseAndAttack(G, e, dt)) { e.flee = true; e.path = null; }
+}
+
+
+// ============================================================================
+// Ecology: wildlife, the food chain and taming
+// Grass regrows -> grazers eat it (and raid crops) -> predators hunt grazers.
+// Prey flee from predators and hunters; predators stalk when hungry; well-fed
+// animals breed, starving ones die. Tamed animals haul, plough, lay eggs,
+// give milk, guard or keep colonists company.
+// ============================================================================
+function makeAnimal(G, sp, x, y, baby) {
+  const S = SPECIES[sp];
+  return {
+    id: G.nextId++, faction: 'animal', type: sp, name: S.name, x: x + 0.5, y: y + 0.5, hp: S.hp * (baby ? 0.5 : 1), maxHp: S.hp,
+    range: 1.3, dmg: S.dmg || 4, atkCd: 1.4, cd: 0, melee: true, inj: sp === 'lion' || sp === 'bear' ? 'Claw wound' : 'Bruise',
+    speed: S.speed, bash: 12, path: null, repath: 0, re: 0, target: null, provoked: false, hunted: false, calm: 0, life: 0,
+    idle: G.rand() * 3, stun: 0, root: 0, hitFlash: 0, facing: G.rand() * 6.28,
+    hunger: 55 + G.rand() * 45, age: baby ? 0 : 1, breedT: 90 + G.rand() * 150, tame: false, tameDesig: false,
+    prodT: S.every || 0, state: 'wander', prey: null, carrying: null, haul: null, fleeT: 0, calmT: 0, threat: false,
+  };
+}
+function randomWildSpot(G, minHome, swim) {
+  for (let k = 0; k < 200; k++) {
+    const x = Math.floor(G.rand() * W), y = Math.floor(G.rand() * H), i = idx(x, y);
+    if (homeDist(x, y) < minHome) continue;
+    if (swim) { if (G.terrain[i] === T.WATER || DIRS4.some(([dx, dy]) => inB(x + dx, y + dy) && G.terrain[idx(x + dx, y + dy)] === T.WATER)) return [x, y]; continue; }
+    if (colPass(G, i)) return [x, y];
+  }
+  return null;
+}
+const countAnimals = (G, sp, tame) => G.enemies.filter((e) => e.faction === 'animal' && !e.dead && (!sp || e.type === sp) && (tame === undefined || e.tame === tame)).length;
+function animalCost(G, e) {
+  return (x, y, i) => {
+    const t = G.terrain[i];
+    if (t === T.STONE || G.tree[i] >= 0.5) return Infinity;
+    if (t === T.WATER) return SPECIES[e.type].swims ? 1.2 : Infinity;
+    const s = G.struct[i];
+    if (s && s.built && (STRUCTS[s.type].solid || (s.type === 'door' && !e.tame))) return Infinity;
+    return 1;
+  };
+}
+function animalGo(G, e, goal, max = 30) {
+  const [x, y] = tileOf(e);
+  const r = pathfind(G, x, y, goal, animalCost(G, e), max);
+  e.path = r ? r.path : null;
+  return r;
+}
+function animalStep(G, e, dt, mul) {
+  if (e.path && e.path.length) {
+    const n = e.path[0];
+    if (animalCost(G, e)(n.x, n.y, idx(n.x, n.y)) === Infinity) { e.path = null; return 'blocked'; }
+  }
+  return moveEnemy(G, e, dt, mul * (e.age < 1 ? 0.8 : 1));
+}
+const isPrey = (o) => o && !o.dead && o.faction === 'animal' && SPECIES[o.type].diet === 'herb';
+function threatFor(G, e, S) {
+  let best = null, bd = S.sense;
+  for (const o of G.enemies) {
+    if (o === e || o.dead || o.tame) continue;
+    const pred = o.faction === 'raider' || (o.type === 'lion' && o.hunger < 70) || (o.type === 'bear' && (o.provoked || o.hunger < 40) && S.size < 0.6);
+    if (!pred) continue;
+    const d = dist(o, e); if (d < bd) { bd = d; best = o; }
+  }
+  if (!e.tame) {
+    for (const p of G.pawns) {
+      if (p.dead || p.downed) continue;
+      const d = dist(p, e), r = e.hunted ? S.sense + 3 : 1.6;
+      if (d < r && d < bd) { bd = d; best = p; }
+    }
+  }
+  if (e.fleeT > 0 && e.fleeFrom && !e.fleeFrom.dead) return e.fleeFrom;
+  return best;
+}
+function fleeFrom(G, e, o, dt) {
+  e.state = 'flee';
+  e.repath -= dt;
+  if (!e.path || !e.path.length || e.repath <= 0) {
+    e.repath = 1.2;
+    const [x, y] = tileOf(e);
+    const a = Math.atan2(e.y - o.y, e.x - o.x);
+    let best = null, bs = -1;
+    for (let k = 0; k < 8; k++) {
+      const aa = a + (G.rand() - 0.5) * 1.6, r = 4 + G.rand() * 4;
+      const tx = clamp(Math.round(x + Math.cos(aa) * r), 0, W - 1), ty = clamp(Math.round(y + Math.sin(aa) * r), 0, H - 1);
+      if (animalCost(G, e)(tx, ty, idx(tx, ty)) === Infinity) continue;
+      const sc = Math.hypot(tx + 0.5 - o.x, ty + 0.5 - o.y);
+      if (sc > bs) { bs = sc; best = [tx, ty]; }
+    }
+    if (best) animalGo(G, e, (a2, b2) => (a2 === best[0] && b2 === best[1] ? {} : null), 24);
+  }
+  animalStep(G, e, dt, 1.25);
+}
+function eatHere(G, e, S, dt) {
+  e.state = 'graze';
+  e.eatT = (e.eatT || 0) + dt;
+  if (e.eatT < 2) return;
+  e.eatT = 0;
+  const i = idx(...tileOf(e));
+  const pl = G.plants[i];
+  if (pl && (S.cropRaider || e.hunger < 25) && !e.tame) {
+    G.plants[i] = null; e.hunger = Math.min(100, e.hunger + 40); G.stats.cropsEaten++;
+    emit(G, e.x, e.y, 5, 'leaf');
+    if (G.time - (G.cropLogT || -999) > 40) { G.cropLogT = G.time; log(G, `A wild ${S.name} is eating the crops!`, 'azula'); }
+    return;
+  }
+  if (G.forage[i] >= 0.25) { G.forage[i] = Math.max(0, G.forage[i] - 0.6); e.hunger = Math.min(100, e.hunger + 32); emit(G, e.x, e.y + 0.2, 2, 'leaf'); return; }
+  const it = G.items[i];
+  if (e.tame && it && it.type === 'cabbage' && foodSurplus(G)) { takeItem(G, i, 2); e.hunger = Math.min(100, e.hunger + 40); return; }
+  e.path = null; e.state = 'wander';
+}
+const foodSurplus = (G) => countItems(G, 'cabbage') + countItems(G, 'meal') > G.pawns.filter((p) => !p.dead).length * 5;
+function findGraze(G, e, S) {
+  const [x, y] = tileOf(e);
+  const crop = S.cropRaider && !e.tame;
+  const fodder = e.tame && e.hunger < 20 && foodSurplus(G);
+  const r = animalGo(G, e, (a, b, i) => {
+    if (crop && G.plants[i] && G.plants[i].growth > 0.3) return {};
+    if (G.forage[i] >= 0.4 && !(e.tame && G.plants[i])) return {};
+    if (fodder && G.items[i] && G.items[i].type === 'cabbage') return {};
+    return null;
+  }, 28);
+  void x; void y;
+  if (r) e.state = 'toGraze';
+  return !!r;
+}
+function wanderAnimal(G, e, dt, S) {
+  e.state = 'wander';
+  if (!e.path || !e.path.length) {
+    e.idle -= dt; if (e.idle > 0) return;
+    e.idle = 2 + G.rand() * 4;
+    const [x, y] = tileOf(e);
+    let cx = x, cy = y;
+    if (e.tame) {
+      const role = S.role;
+      if (role === 'plough' || S.plough) {
+        const field = []; for (let i = 0; i < G.zone.length; i++) if ((G.zone[i] === 'cabbage' || G.zone[i] === 'tea') && G.plants[i]) field.push(i);
+        if (field.length) { const f = field[Math.floor(G.rand() * field.length)]; cx = f % W; cy = (f / W) | 0; }
+      } else if (homeDist(x, y) > HOME.ring - 2) { cx = HOME.cx; cy = HOME.cy; }
+    } else {
+      const mate = G.enemies.find((o) => o !== e && o.type === e.type && !o.dead && !o.tame && dist(o, e) < 10 && dist(o, e) > 3);
+      if (mate) { cx = Math.floor(mate.x); cy = Math.floor(mate.y); }
+      if (homeDist(x, y) < HOME.ring && S.diet !== 'carn' && !(S.cropRaider && e.hunger < 70)) { cx = x + Math.sign(x - HOME.cx) * 4; cy = y + Math.sign(y - HOME.cy) * 4; }
+    }
+    const tx = clamp(cx + Math.floor(G.rand() * 7) - 3, 0, W - 1), ty = clamp(cy + Math.floor(G.rand() * 7) - 3, 0, H - 1);
+    animalGo(G, e, (a, b) => (a === tx && b === ty ? {} : null), 16);
+  }
+  animalStep(G, e, dt, 0.5);
+}
+function tryBreed(G, e, S, dt) {
+  e.breedT -= dt;
+  if (e.breedT > 0 || e.age < 1 || e.hunger < 70) return;
+  e.breedT = 160 + G.rand() * 160;
+  const total = G.enemies.filter((o) => o.faction === 'animal' && !o.dead).length;
+  if (total >= 46) return;
+  const cap = e.tame ? 4 : S.cap;
+  if (e.tame && countAnimals(G, null, true) >= G.pawns.filter((p) => !p.dead).length * 2) return;
+  if (countAnimals(G, e.type, e.tame) >= cap) return;
+  const mate = G.enemies.some((o) => o !== e && o.type === e.type && !o.dead && o.tame === e.tame && o.age >= 1 && dist(o, e) < 12);
+  if (!mate) return;
+  const [x, y] = tileOf(e);
+  const baby = makeAnimal(G, e.type, x, y, true);
+  baby.tame = e.tame;
+  G.enemies.push(baby);
+  e.hunger -= 25;
+  emit(G, e.x, e.y, 6, 'heal');
+  if (e.tame) log(G, `A baby ${S.name} was born in the herd.`, 'iroh');
+}
+function haulForColony(G, e, S, dt) {
+  const cap = Math.floor(S.carry * (hasTech(G, 'wheel') ? 1.5 : 1));
+  const h = e.haul;
+  if (!h) {
+    if (!G.zone.includes('stock')) return false;
+    e.haulT = (e.haulT || 0) - dt;
+    if (e.haulT > 0) return false;
+    e.haulT = 2;
+    const r = animalGo(G, e, (x, y, i) => {
+      const it = G.items[i];
+      return it && G.zone[i] !== 'stock' && !isRes(G, 'i' + i, e) ? { t: i } : null;
+    }, 70);
+    if (!r) return false;
+    reserve(G, 'i' + r.goal.t, e);
+    e.haul = { stage: 'go', item: r.goal.t };
+    e.state = 'haul';
+    return true;
+  }
+  e.state = 'haul';
+  const m = animalStep(G, e, dt, 1);
+  if (m === 'blocked') { releaseAll(G, e); if (e.carrying) { dropItem(G, ...tileOf(e), e.carrying.type, e.carrying.qty); e.carrying = null; } e.haul = null; return true; }
+  if (m !== 'arrived') return true;
+  if (h.stage === 'go') {
+    const it = G.items[h.item];
+    G.res.delete('i' + h.item);
+    if (!it) { e.haul = null; return true; }
+    const type = it.type, qty = takeItem(G, h.item, cap);
+    e.carrying = { type, qty };
+    const r = animalGo(G, e, (x, y, i) => (G.zone[i] === 'stock' && canHold(G, i, type) && !isRes(G, 'c' + i, e) ? { t: i } : null), 90);
+    if (!r) { dropItem(G, ...tileOf(e), type, qty); e.carrying = null; e.haul = null; return true; }
+    reserve(G, 'c' + r.goal.t, e);
+    h.stage = 'carry'; h.dest = r.goal.t;
+    return true;
+  }
+  if (e.carrying) {
+    const left = G.zone[h.dest] === 'stock' && canHold(G, h.dest, e.carrying.type) ? addItem(G, h.dest, e.carrying.type, e.carrying.qty) : e.carrying.qty;
+    if (left > 0) dropItem(G, ...tileOf(e), e.carrying.type, left);
+    e.carrying = null;
+  }
+  releaseAll(G, e); e.haul = null;
+  return true;
+}
+function huntPrey(G, e, S, dt) {
+  // A predator stalks the nearest prey it can reach; walls keep tamed herds safe.
+  e.re -= dt;
+  if (!isPrey(e.prey) || e.re <= 0) {
+    e.re = 2;
+    let best = null, bd = e.hunger < 30 ? 16 : 11;
+    for (const o of G.enemies) {
+      if (!isPrey(o) || (e.type === 'bear' && SPECIES[o.type].size >= 0.6)) continue;
+      const d = dist(o, e); if (d < bd) { bd = d; best = o; }
+    }
+    e.prey = best; e.path = null;
+  }
+  const o = e.prey;
+  if (!o) return false;
+  e.state = 'hunt';
+  e.threat = o.tame;
+  const d = dist(o, e);
+  if (d <= 1.3) {
+    e.facing = Math.atan2(o.y - e.y, o.x - e.x);
+    if (e.cd <= 0) {
+      e.cd = 1.2;
+      emit(G, o.x, o.y, 4, 'blood');
+      damageEnemy(G, o, S.dmg, e);
+      if (o.dead) {
+        e.hunger = 100; e.prey = null; e.threat = false; e.eatT = -4; e.state = 'eat'; G.stats.predation = (G.stats.predation || 0) + 1;
+        if (o.tame) log(G, `A ${S.name} took one of the colony's animals.`, 'azula');
+      }
+    }
+    return true;
+  }
+  e.repath -= dt;
+  if (!e.path || !e.path.length || e.repath <= 0) {
+    e.repath = 1;
+    const [ox, oy] = tileOf(o);
+    if (!animalGo(G, e, (x, y) => (Math.max(Math.abs(x - ox), Math.abs(y - oy)) <= 1 ? {} : null), 40)) { e.prey = null; return false; }
+  }
+  animalStep(G, e, dt, d < 5 ? 1.15 : 0.8);
+  return true;
+}
+function updateAnimal(G, e, dt) {
+  const S = SPECIES[e.type];
+  e.life += dt;
+  if (e.age < 1) e.age = Math.min(1, e.age + dt / 150);
+  e.hunger = Math.max(0, e.hunger - dt * (S.diet === 'carn' ? 0.3 : S.diet === 'omni' ? 0.25 : 0.2));
+  if (e.hunger <= 0) { e.hp -= dt * 0.8; if (e.hp <= 0) { if (e.tame) log(G, `The tamed ${S.name} starved.`, 'azula'); killEnemy(G, e, { faction: 'animal', name: 'hunger' }); return; } }
+  else if (e.hp < e.maxHp) e.hp = Math.min(e.maxHp, e.hp + dt * 0.2);
+  if (e.fleeT > 0) e.fleeT -= dt;
+  if (e.calmT > 0) { e.calmT -= dt; e.state = 'calm'; return; } // being tamed: holds still
+  if (e.eatT < 0) { e.eatT += dt; return; } // eating a kill
+
+  // Enraged animals fight whoever provoked them.
+  if (e.provoked) {
+    e.calm -= dt;
+    if (e.calm <= 0 && !e.hunted) { e.provoked = false; e.aggro = null; e.path = null; if (S.size >= 0.9) log(G, `The ${S.name} calms down.`, 'iroh'); }
+    else { e.state = 'angry'; if (!chaseAndAttack(G, e, dt)) { e.provoked = false; e.path = null; } return; }
+  }
+  // Big wild animals startle when a colonist blunders too close.
+  if (!e.tame && (S.dmg || 0) >= 10 && S.diet !== 'herb') {
+    for (const p of G.pawns) {
+      if (p.dead || p.downed) continue;
+      if (dist(p, e) < 1.6 && G.rand() < dt * 0.08) {
+        e.provoked = true; e.calm = 35; e.aggro = p;
+        log(G, `The ${S.name} was startled by ${p.name} and attacks!`, 'azula');
+        return;
+      }
+    }
+  }
+
+  if (S.diet === 'herb' || (S.diet === 'omni' && e.hunger >= 40)) {
+    const th = threatFor(G, e, S);
+    if (th) { if (e.haul) { releaseAll(G, e); e.haul = null; if (e.carrying) { dropItem(G, ...tileOf(e), e.carrying.type, e.carrying.qty); e.carrying = null; } } fleeFrom(G, e, th, dt); return; }
+  }
+  // Predators: stalk prey when hungry; a starving one turns on people.
+  if (S.diet === 'carn' || (S.diet === 'omni' && e.hunger < 40)) {
+    if (e.tame) {
+      const raider = G.enemies.find((o) => o.faction === 'raider' && !o.dead && dist(o, e) < 8);
+      if (raider) { e.aggro = null; e.target = raider; e.state = 'guard'; if (dist(raider, e) <= 1.4) { if (e.cd <= 0) { e.cd = 1.2; damageEnemy(G, raider, S.dmg, e); } } else { e.repath -= dt; if (!e.path || !e.path.length || e.repath <= 0) { e.repath = 1; const [rx, ry] = tileOf(raider); animalGo(G, e, (x, y) => (Math.max(Math.abs(x - rx), Math.abs(y - ry)) <= 1 ? {} : null), 30); } animalStep(G, e, dt, 1); } return; }
+    }
+    if (e.hunger < 55 && !e.tame && huntPrey(G, e, S, dt)) return;
+    if (e.hunger < 55 && e.tame && e.hunger < 30) {
+      const [x, y] = tileOf(e); const meat = G.items.findIndex((it) => it && it.type === 'meat');
+      if (meat >= 0) { if (idx(x, y) === meat) { takeItem(G, meat, 3); e.hunger = 100; } else if (!e.path || !e.path.length) animalGo(G, e, (a, b, i) => (i === meat ? {} : null), 60); animalStep(G, e, dt, 1); return; }
+    }
+    e.threat = false;
+    if (!e.tame && e.hunger < 15 && G.rand() < dt * 0.05) {
+      const p = G.pawns.filter((q) => !q.dead && !q.downed).sort((a, b) => dist(a, e) - dist(b, e))[0];
+      if (p && dist(p, e) < 14) { e.provoked = true; e.calm = 40; e.aggro = p; log(G, `A starving ${S.name} is stalking ${p.name}!`, 'azula'); return; }
+    }
+  }
+  if (S.diet !== 'carn') {
+    if (e.state === 'toGraze' || e.state === 'graze') {
+      const m = animalStep(G, e, dt, 0.7);
+      if (m === 'arrived') eatHere(G, e, S, dt);
+      else if (m === 'blocked') e.state = 'wander';
+      return;
+    }
+    if (e.hunger < 60 && findGraze(G, e, S)) return;
+  }
+  // Tamed work
+  if (e.tame && e.hunger > 30) {
+    if (S.role === 'hauler' && haulForColony(G, e, S, dt)) return;
+    if (S.product) {
+      e.prodT -= dt;
+      if (e.prodT <= 0) { e.prodT = S.every; dropItem(G, ...tileOf(e), S.product, S.product === 'egg' ? 2 : 3); }
+    }
+  }
+  tryBreed(G, e, S, dt);
+  // Wandering wild migrants (the bear) eventually leave the valley.
+  if (!e.tame && e.type === 'bear' && e.life > 300 && !e.hunted) { moveToEdge(G, e, dt); return; }
+  wanderAnimal(G, e, dt, S);
+}
+function updateEcology(G, dt) {
+  G.ecoT += dt;
+  if (G.ecoT < 1) return;
+  G.ecoT -= 1;
+  const regrow = hasTech(G, 'fertilizer') ? 2 : 1;
+  let trees = 0;
+  for (let i = 0; i < G.forage.length; i++) {
+    const t = G.terrain[i];
+    if (t === T.GRASS && G.forage[i] < 1) G.forage[i] = Math.min(1, G.forage[i] + regrow / 160);
+    else if (t === T.SOIL && G.forage[i] < 0.6) G.forage[i] = Math.min(0.6, G.forage[i] + regrow / 260);
+    if (G.tree[i]) trees++;
+  }
+  // Trees grow from saplings and slowly seed the land around them.
+  for (let i = 0; i < G.tree.length; i++) {
+    const v = G.tree[i];
+    if (!v) continue;
+    if (v < 1) { G.tree[i] = Math.min(1, v + 1 / 220); continue; }
+    if (trees < 230 && G.rand() < 0.0005) {
+      const x = (i % W) + Math.floor(G.rand() * 5) - 2, y = ((i / W) | 0) + Math.floor(G.rand() * 5) - 2;
+      if (!inB(x, y)) continue;
+      const n = idx(x, y);
+      if (G.terrain[n] === T.GRASS && !G.tree[n] && !G.struct[n] && !G.zone[n] && !G.plants[n] && !G.items[n] && homeDist(x, y) > HOME.ring) { G.tree[n] = 0.05; trees++; }
+    }
+  }
+  // Ploughing animals speed up crops around them.
+  const boost = hasTech(G, 'plough') ? 1 : 0.5;
+  for (const e of G.enemies) {
+    if (!e.tame || e.dead || !(SPECIES[e.type].role === 'plough' || SPECIES[e.type].plough)) continue;
+    const [x, y] = tileOf(e);
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+      if (!inB(x + dx, y + dy)) continue;
+      const pl = G.plants[idx(x + dx, y + dy)];
+      if (pl && pl.growth < 1 && pl.water > 0) pl.growth = Math.min(1, pl.growth + boost / 140);
+    }
+  }
+}
+
+// ---------------------------------------------------------------- colonist jobs for the new systems
+WORK.research = (G, p) => {
+  if (!G.research.target) G.research.target = chooseResearch(G);
+  if (!G.research.target) return null;
+  const desks = [];
+  for (let i = 0; i < G.struct.length; i++) { const s = G.struct[i]; if (s && s.built && s.type === 'desk' && !isRes(G, 'rd' + i, p)) desks.push(i); }
+  if (!desks.length) return null;
+  const r = seek(G, p, adjGoal((n) => desks.includes(n)));
+  if (!r) return null;
+  reserve(G, 'rd' + r.goal.t, p);
+  return { type: 'research', t: r.goal.t, path: r.path, stage: 'go', work: 0, label: `Researching ${TECHS[G.research.target].name}` };
+};
+WORK.plantTree = (G, p) => {
+  if (!hasTech(G, 'forestry') || !G.zone.includes('grove')) return null;
+  const r = seek(G, p, (x, y, i) => (G.zone[i] === 'grove' && !G.tree[i] && !G.struct[i] && !G.items[i] && !G.plants[i] && fertile(G, i) && !isRes(G, 'pt' + i, p) ? { t: i } : null));
+  if (!r) return null;
+  reserve(G, 'pt' + r.goal.t, p);
+  return { type: 'plantTree', t: r.goal.t, path: r.path, stage: 'go', work: 0, need: 1.5, label: 'Planting a sapling' };
+};
+WORK.tame = (G, p) => {
+  if (!hasTech(G, 'husbandry')) return null;
+  const targets = G.enemies.filter((e) => e.faction === 'animal' && e.tameDesig && !e.tame && !e.dead && !isRes(G, 'tm' + e.id, p));
+  if (!targets.length) return null;
+  const e = targets.sort((a, b) => dist(a, p) - dist(b, p))[0];
+  const food = SPECIES[e.type].diet === 'carn' ? ['meat'] : ['cabbage', 'meat'];
+  const ir = seek(G, p, (x, y, i) => { const it = G.items[i]; return it && food.includes(it.type) && !isRes(G, 'i' + i, p) ? { t: i } : null; }, 300);
+  if (!ir) return null;
+  reserve(G, 'tm' + e.id, p); reserve(G, 'i' + ir.goal.t, p);
+  return { type: 'tame', animal: e, item: ir.goal.t, path: ir.path, stage: 'fetch', work: 0, re: 0, label: `Fetching food to tame a ${e.name}` };
+};
+function runEcoJob(G, p, dt, j, walk, done) {
+  if (j.type === 'research') {
+    const s = G.struct[j.t];
+    if (!s || !s.built || s.type !== 'desk') return done();
+    if (j.stage === 'go') { if (!walk()) return; j.stage = 'work'; }
+    const mul = { none: 1.5, air: 1.2, fire: 1.1, water: 1, earth: 0.85 }[p.el] * (hasTech(G, 'steam') ? 1.5 : 1) * (p.harmony > 70 ? 1.1 : 1);
+    addResearch(G, dt * 0.9 * mul);
+    const tx = (j.t % W) + 0.5, ty = ((j.t / W) | 0) + 0.5;
+    p.facing = Math.atan2(ty - p.y, tx - p.x);
+    if (G.rand() < dt * 2) emit(G, tx, ty - 0.3, 1, 'chi');
+    j.label = G.research.target ? `Researching ${TECHS[G.research.target].name}` : 'Studying scrolls';
+    j.work += dt;
+    if (j.work >= 14) done();
+    return;
+  }
+  if (j.type === 'plantTree') {
+    if (G.zone[j.t] !== 'grove' || G.tree[j.t] || G.struct[j.t]) return done();
+    if (j.stage === 'go') { if (!walk()) return; j.stage = 'work'; }
+    j.work += dt;
+    if (G.rand() < dt * 3) emit(G, p.x, p.y + 0.3, 1, 'leaf');
+    if (j.work >= j.need) { G.tree[j.t] = 0.05; done(); }
+    return;
+  }
+  if (j.type === 'tame') {
+    const e = j.animal;
+    if (!e || e.dead || e.tame || !G.enemies.includes(e) || !e.tameDesig) return done();
+    if (j.stage === 'fetch') {
+      if (!walk()) return;
+      const it = G.items[j.item];
+      if (!it || !(it.type === 'cabbage' || it.type === 'meat')) return done();
+      p.carrying = { type: it.type, qty: takeItem(G, j.item, 1) };
+      G.res.delete('i' + j.item);
+      j.stage = 'approach'; j.label = `Approaching the ${e.name}`;
+      p.path = null;
+      return;
+    }
+    if (j.stage === 'approach') {
+      if (dist(p, e) <= 1.6) { j.stage = 'calm'; j.work = 0; e.calmT = 1; e.path = null; return; }
+      j.re -= dt;
+      if (!p.path || !p.path.length || j.re <= 0) {
+        j.re = 1;
+        const [ex, ey] = tileOf(e);
+        const r = seek(G, p, nearGoal(ex, ey, 1), 160);
+        if (!r) return done();
+        p.path = r.path;
+      }
+      if (move(G, p, dt) === 'blocked') p.path = null;
+      return;
+    }
+    e.calmT = 1;
+    p.facing = Math.atan2(e.y - p.y, e.x - p.x);
+    j.work += dt;
+    if (G.rand() < dt * 3) emit(G, e.x, e.y - 0.3, 1, 'heal');
+    j.label = `Taming the ${e.name}`;
+    if (j.work < 3) return;
+    const S = SPECIES[e.type];
+    const chance = S.tame * (p.el === 'air' ? 1.6 : p.el === 'water' ? 1.3 : 1) + (hasTech(G, 'plough') ? 0.15 : 0);
+    p.carrying = null;
+    e.calmT = 0;
+    if (G.rand() < chance) {
+      e.tame = true; e.tameDesig = false; e.hunted = false; e.provoked = false; e.threat = false; e.path = null;
+      log(G, `${p.name} tamed a ${S.name}! It will ${ROLE_TEXT[S.role] || 'stay with the colony'}.`, 'plan', ELEMENTS[p.el].color);
+      addThought(p, 'tamed', 'Made an animal friend', 6, 180);
+      emit(G, e.x, e.y, 12, 'heal');
+      floatText(G, e.x, e.y - 0.8, 'Tamed!', '#5eead4');
+    } else {
+      G.stats.tameFails++;
+      floatText(G, e.x, e.y - 0.8, 'Refused', '#fca5a5');
+      if ((S.fightsBack || S.diet !== 'herb') && G.rand() < 0.4) {
+        e.provoked = true; e.calm = 15; e.aggro = p;
+        log(G, `The ${S.name} lashed out at ${p.name} during taming!`, 'azula');
+      } else { e.fleeT = 4; e.fleeFrom = p; }
+    }
+    done();
+  }
 }
 
 // ============================================================================
@@ -1712,7 +2279,10 @@ function fireEvent(G, forced) {
   if (G.time > 260 && !G.raid && G.time - G.lastRaid > 220) pool.push(['raid', 2.2 + dayOf(G) * 0.3]);
   if (G.ev.fullmoon <= 0 && G.time - G.lastMoon > 320) pool.push(['fullmoon', 1.1]);
   if (G.ev.heatwave <= 0) pool.push(['heatwave', 1.4]);
-  if (!G.enemies.some((e) => e.type === 'bear')) pool.push(['bear', 1.2]);
+  if (!G.enemies.some((e) => e.type === 'bear')) pool.push(['bear', 1.0]);
+  const wildGrazers = G.enemies.filter((e) => isPrey(e) && !e.tame).length;
+  if (wildGrazers < 8) pool.push(['herd', 1.6]);
+  if (!countAnimals(G, 'lion', false) && wildGrazers >= 10) pool.push(['predator', 1.0]);
   pool.push(['caravan', 1.1]);
   let pick = forced;
   if (!pick) {
@@ -1723,7 +2293,10 @@ function fireEvent(G, forced) {
   }
   G.eventCount++;
   switch (pick) {
-    case 'raid': spawnRaid(G); break;
+    case 'raid':
+      if (hasTech(G, 'radio')) { G.pendingRaid = 25; banner(G, 'Radio warning', 'Scouts report raiders 25 seconds out. Everyone back inside camp!', 'iroh'); }
+      else spawnRaid(G);
+      break;
     case 'fullmoon':
       G.ev.fullmoon = 110; G.lastMoon = G.time;
       banner(G, 'Full Moon', 'The moon spirit shines. Waterbenders have limitless Chi and move 50% faster.', 'iroh');
@@ -1733,6 +2306,20 @@ function fireEvent(G, forced) {
       banner(G, 'Heatwave', 'A scorching drought settles in. Crops dry out fast unless watered. "Fire is life, but also destruction."', 'azula');
       break;
     case 'bear': spawnBear(G); break;
+    case 'herd': {
+      const sp = ['sheep', 'hog', 'ostrich', 'yak', 'chicken'][Math.floor(G.rand() * 5)];
+      const s = G.edgeSpawns[Math.floor(G.rand() * G.edgeSpawns.length)];
+      const n = sp === 'yak' || sp === 'ostrich' ? 2 : 3;
+      for (let k = 0; k < n; k++) G.enemies.push(makeAnimal(G, sp, s[0], s[1], false));
+      banner(G, 'A herd arrives', `${n} wild ${SPECIES[sp].name}s wander into the valley to graze.`, 'iroh');
+      break;
+    }
+    case 'predator': {
+      const s = G.edgeSpawns[Math.floor(G.rand() * G.edgeSpawns.length)];
+      G.enemies.push(makeAnimal(G, 'lion', s[0], s[1], false));
+      banner(G, 'A predator follows the herds', 'A Saber-Tooth Moose-Lion has come for the grazers. Keep the animals inside the walls.', 'azula');
+      break;
+    }
     case 'wanderer': {
       G.wandererJoined = true;
       const s = G.edgeSpawns[Math.floor(G.rand() * G.edgeSpawns.length)];
@@ -1856,7 +2443,7 @@ const PLANS = [
     let pending = 0; for (const d of G.desig) if (d === 'chop') pending++;
     if (pending >= 4) return false;
     const trees = [];
-    for (let i = 0; i < G.tree.length; i++) if (G.tree[i] && !G.desig[i]) trees.push(i);
+    for (let i = 0; i < G.tree.length; i++) if (G.tree[i] >= 1 && !G.desig[i]) trees.push(i);
     trees.sort((a, b) => homeDist(a % W, (a / W) | 0) - homeDist(b % W, (b / W) | 0));
     trees.slice(0, 5 - pending).forEach((i) => { G.desig[i] = 'chop'; });
     if (!trees.length) return false;
@@ -1878,6 +2465,73 @@ const PLANS = [
     faces.slice(0, 4 - pending).forEach((i) => { G.desig[i] = 'mine'; });
     if (!faces.length) return false;
     say('mine', 'earth', 'The earth will give us stone. I picked a good seam.', 120);
+    return true;
+  },
+  // A desk for study once the basics are in place.
+  (G, say) => {
+    if (countStruct(G, 'desk') || countStruct(G, 'bed', true) < Math.min(2, G.pawns.filter((p) => !p.dead).length) || !countStruct(G, 'campfire', true)) return false;
+    const t = spiral(HOME.cx - 3, HOME.cy - 3, 6, (x, y, i) => interior(x, y) && freeSpot(G, i) && !G.items[i] && roomy(G, x, y));
+    if (!t) return false;
+    placeStruct(G, 'desk', t);
+    say('desk', 'none', 'I have ideas. Lots of ideas. I need a desk and some scrolls.', 200);
+    return true;
+  },
+  // Tame useful animals once the colony knows how.
+  (G, say) => {
+    if (!hasTech(G, 'husbandry') || G.enemies.some((e) => e.tameDesig && !e.dead && !e.tame)) return false;
+    const alive = G.pawns.filter((p) => !p.dead).length;
+    const tamed = G.enemies.filter((e) => e.faction === 'animal' && e.tame && !e.dead);
+    if (tamed.length >= 2 + alive) return false;
+    if (countItems(G, 'cabbage') + countItems(G, 'meat') < alive * 2) return false;
+    const roles = new Set(tamed.map((e) => SPECIES[e.type].role));
+    const want = ['hauler', 'livestock', 'plough', 'companion'].find((r) => !roles.has(r));
+    const cands = G.enemies.filter((e) => e.faction === 'animal' && !e.tame && !e.dead && !e.hunted && !e.provoked && e.age >= 1
+      && SPECIES[e.type].tame >= 0.2 && homeDist(...tileOf(e)) <= 18);
+    if (!cands.length) return false;
+    cands.sort((a, b) => ((SPECIES[a.type].role === want ? 0 : 20) + homeDist(...tileOf(a))) - ((SPECIES[b.type].role === want ? 0 : 20) + homeDist(...tileOf(b))));
+    const c = cands[0];
+    c.tameDesig = true;
+    say('tame', 'air', `That ${c.name} could ${ROLE_TEXT[SPECIES[c.type].role]}. I will try to tame it.`, 60);
+    return true;
+  },
+  // Replant the forest the colony is cutting down.
+  (G, say) => {
+    if (!hasTech(G, 'forestry')) return false;
+    let grove = 0; for (const z of G.zone) if (z === 'grove') grove++;
+    let near = 0; for (let i = 0; i < G.tree.length; i++) if (G.tree[i] >= 1 && homeDist(i % W, (i / W) | 0) <= 15) near++;
+    if (grove >= 12 || (grove > 0 && near >= 16)) return false;
+    let added = 0;
+    for (const [ax, ay] of [[HOME.cx + HOME.ring + 3, HOME.cy], [HOME.cx - HOME.ring - 3, HOME.cy], [HOME.cx, HOME.cy + HOME.ring + 3], [HOME.cx, HOME.cy - HOME.ring - 3]]) {
+      while (added < 6) {
+        const t = spiral(clamp(ax, 0, W - 1), clamp(ay, 0, H - 1), 4, (x, y, i) => homeDist(x, y) >= HOME.ring + 2 && freeSpot(G, i) && !G.items[i] && fertile(G, i));
+        if (!t) break;
+        G.zone[idx(...t)] = 'grove'; added++;
+      }
+      if (added) break;
+    }
+    if (!added) return false;
+    say('grove', 'earth', 'We cut faster than the forest grows. I marked out a grove to replant.', 200);
+    return true;
+  },
+  // Hunt wild grazers for meat when the habit has been learned.
+  (G, say) => {
+    if (!G.genome.huntPrey || G.enemies.some((e) => e.hunted && !e.dead && isPrey(e))) return false;
+    const alive = G.pawns.filter((p) => !p.dead).length;
+    const food = countItems(G, 'meal') + countItems(G, 'cabbage') + countItems(G, 'meat') + countItems(G, 'egg') + countItems(G, 'milk');
+    if (food >= alive * 5) return false;
+    const prey = G.enemies.filter((e) => isPrey(e) && !e.tame && !e.tameDesig && e.age >= 1 && countAnimals(G, e.type, false) > 2)
+      .sort((a, b) => homeDist(...tileOf(a)) - homeDist(...tileOf(b)))[0];
+    if (!prey) return false;
+    prey.hunted = true;
+    say('huntprey', 'fire', `Food is short. That ${prey.name} will feed us.`, 120);
+    return true;
+  },
+  // Protect the herd from predators.
+  (G, say) => {
+    const pred = G.enemies.find((e) => e.threat && !e.hunted && !e.dead && homeDist(...tileOf(e)) <= 16);
+    if (!pred) return false;
+    pred.hunted = true;
+    say('guard', 'earth', `A ${pred.name} is after our animals. Drive it off!`, 90);
     return true;
   },
   // Somewhere to share tea, once everyone has a bed.
@@ -1914,7 +2568,9 @@ const PLANS = [
       if (added >= 6) break;
       const i = idx(x, y);
       if (G.struct[i] || G.terrain[i] === T.WATER || G.terrain[i] === T.STONE) continue;
-      if (G.tree[i]) { if (!G.desig[i]) G.desig[i] = 'chop'; continue; }
+      if (G.tree[i] >= 1) { if (!G.desig[i]) G.desig[i] = 'chop'; continue; }
+      if (G.tree[i]) G.tree[i] = 0;
+      if (G.zone[i] === 'grove') G.zone[i] = null;
       if (G.plants[i]) { G.plants[i] = null; }
       if (G.zone[i]) G.zone[i] = null;
       placeStruct(G, DOORS.some(([dx, dy]) => dx === x && dy === y) ? 'door' : 'wall', [x, y]);
@@ -1943,7 +2599,7 @@ const PLANS = [
   },
   // Hunt the platypus-bear only when food is short and the group is healthy.
   (G, say) => {
-    const bear = G.enemies.find((e) => e.type === 'bear' && !e.hunted);
+    const bear = G.enemies.find((e) => e.type === 'bear' && !e.hunted && !e.tame);
     if (!bear) return false;
     const fit = G.pawns.filter((p) => !p.dead && !p.downed && p.health > 70).length;
     const food = countItems(G, 'meal') + countItems(G, 'cabbage') + countItems(G, 'meat');
@@ -1977,6 +2633,7 @@ function director(G, dt) {
     log(G, `${p.name}: "${text}"`, 'plan', ELEMENTS[p.el].color);
     floatText(G, p.x, p.y - 0.8, 'Idea!', ELEMENTS[p.el].color);
   };
+  if (!G.research.target) G.research.target = chooseResearch(G);
   for (const plan of PLANS) if (plan(G, say)) return;
 }
 
@@ -1990,15 +2647,18 @@ function update(G, dt) {
     const s = G.struct[i]; s.fuel = Math.max(0, s.fuel - dt * 0.37);
     if (G.rand() < dt * 3) emit(G, (i % W) + 0.5, ((i / W) | 0) + 0.4, 1, 'ember');
   }
+  updateEcology(G, dt);
+  if (G.pendingRaid > 0) { G.pendingRaid -= dt; if (G.pendingRaid <= 0) spawnRaid(G); }
   // Plants
   const night = isNight(G);
   let withered = 0;
   for (let i = 0; i < G.plants.length; i++) {
     const pl = G.plants[i]; if (!pl) continue;
-    pl.water = Math.max(0, pl.water - dt * (G.ev.heatwave > 0 ? 1 / 26 : 1 / 240));
+    pl.water = Math.max(0, pl.water - dt * (G.ev.heatwave > 0 ? 1 / 26 : 1 / 240) * (hasTech(G, 'irrigation') ? 0.5 : 1));
     if (pl.water <= 0) { pl.dry += dt; if (pl.dry > 45) { G.plants[i] = null; withered++; continue; } }
     else if (pl.growth < 1) {
-      const rate = (pl.kind === 'cabbage' ? 1 / 140 : 1 / 190) * (G.terrain[i] === T.SOIL ? 1 : 0.6) * (night ? 0.5 : 1);
+      const rate = (pl.kind === 'cabbage' ? 1 / 140 : 1 / 190) * (G.terrain[i] === T.SOIL ? 1 : 0.6) * (night ? 0.5 : 1)
+        * (hasTech(G, 'rotation') ? 1.4 : 1) * (hasTech(G, 'fertilizer') ? 1.4 : 1);
       pl.growth = Math.min(1, pl.growth + rate * dt);
     }
   }
@@ -2022,8 +2682,9 @@ function update(G, dt) {
   for (const e of G.enemies) updateEnemy(G, e, dt);
   // Soft separation so raiders don't stack on one tile.
   for (const a of G.enemies) for (const c of G.enemies) {
-    if (a === c || a.dead || c.dead) continue;
-    const dx = a.x - c.x, dy = a.y - c.y, d = Math.hypot(dx, dy), min = a.type === 'bear' || c.type === 'bear' ? 0.9 : 0.55;
+    if (a === c || a.dead || c.dead || a.faction !== c.faction) continue;
+    if (Math.abs(a.x - c.x) > 1 || Math.abs(a.y - c.y) > 1) continue;
+    const dx = a.x - c.x, dy = a.y - c.y, d = Math.hypot(dx, dy), min = a.faction === 'animal' ? 0.35 : 0.55;
     if (d < min && d > 0.001) {
       const nx = a.x + (dx / d) * (min - d) * 0.5, ny = a.y + (dy / d) * (min - d) * 0.5;
       if (inB(Math.floor(nx), Math.floor(ny)) && enemyCostFn(G)(0, 0, idx(Math.floor(nx), Math.floor(ny))) <= 3) { a.x = nx; a.y = ny; }
@@ -2052,6 +2713,7 @@ const TOOLS = {
   mine: { label: 'Mine', icon: Gem, cat: 'orders', hint: 'Drag across grey stone deposits to mine them for stone.' },
   chop: { label: 'Chop', icon: Axe, cat: 'orders', hint: 'Drag across trees to chop them for wood.' },
   hunt: { label: 'Hunt', icon: Crosshair, cat: 'orders', hint: 'Click a wild animal to mark it for hunting. Colonists will attack it.' },
+  tameTool: { label: 'Tame', icon: Heart, cat: 'orders', hint: 'Click a wild animal to mark it for taming (needs Animal Husbandry).' },
   clear: { label: 'Clear', icon: Trash2, cat: 'orders', hint: 'Drag to cancel orders, blueprints and zones. Finished buildings get deconstructed for half their materials.' },
   wall: { label: 'Stone Wall', icon: Square, cat: 'build', struct: 'wall', hint: 'Drag to draw walls (a box draws its outline). 5 stone each, free for Earthbenders with Chi.' },
   door: { label: 'Door', icon: DoorOpen, cat: 'build', struct: 'door', hint: 'Colonists walk through doors; raiders must break them. 4 wood.' },
@@ -2061,6 +2723,8 @@ const TOOLS = {
   trap: { label: 'Spike Trap', icon: Triangle, cat: 'build', struct: 'trap', hint: 'Single-use trap: 30 damage and roots the enemy. Non-benders build it 3x faster. 4 wood.' },
   stock: { label: 'Stockpile', icon: Package, cat: 'zones', zone: 'stock', hint: 'Drag to mark a stockpile. Colonists haul loose items here.' },
   cabbage: { label: 'Cabbage Patch', icon: Sprout, cat: 'zones', zone: 'cabbage', hint: 'Drag over grass or soil. Cabbages feed the colony. Fertile soil grows faster.' },
+  desk: { label: 'Scroll Desk', icon: BookOpen, cat: 'build', struct: 'desk', hint: 'Colonists study here to advance the research tree. 10 wood.' },
+  grove: { label: 'Tree Grove', icon: TreePine, cat: 'zones', zone: 'grove', hint: 'Drag over grass. Once Forestry is researched, colonists plant saplings here.' },
   tea: { label: 'Jasmine Tea', icon: Leaf, cat: 'zones', zone: 'tea', hint: 'Drag over grass or soil. Jasmine leaves are brewed at a tea table for Harmony.' },
 };
 const CATS = [['orders', 'Orders'], ['build', 'Structures'], ['zones', 'Zones']];
@@ -2079,10 +2743,11 @@ function toolCells(G, tool, x0, y0, x1, y1) {
 function toolValid(G, tool, i) {
   const def = TOOLS[tool]; const t = G.terrain[i];
   if (tool === 'mine') return t === T.STONE;
-  if (tool === 'chop') return !!G.tree[i];
+  if (tool === 'chop') return G.tree[i] >= 1;
   if (tool === 'clear') return !!(G.desig[i] || G.struct[i] || G.zone[i]);
   if (def.struct) return t !== T.WATER && t !== T.STONE && !G.tree[i] && !G.struct[i] && !G.plants[i];
   if (tool === 'stock') return t !== T.WATER && t !== T.STONE && !G.tree[i] && !(G.struct[i] && STRUCTS[G.struct[i].type].solid);
+  if (tool === 'grove') return G.terrain[i] === T.GRASS && !G.struct[i] && !G.plants[i];
   if (def.zone) return fertile(G, i) && !G.tree[i] && !G.struct[i];
   return false;
 }
@@ -2183,6 +2848,13 @@ function drawItem(ctx, it, px, py, zoom) {
       ctx.fillStyle = '#7a4e2a'; ctx.beginPath(); ctx.ellipse(0, 2, 10, 6, 0, 0, 7); ctx.fill();
       ctx.fillStyle = c; ctx.beginPath(); ctx.ellipse(0, 0, 8, 4, 0, 0, 7); ctx.fill();
       ctx.fillStyle = '#6fb34a'; ctx.beginPath(); ctx.arc(-3, -1, 1.6, 0, 7); ctx.arc(3, 0, 1.4, 0, 7); ctx.fill(); break;
+    case 'egg':
+      for (const [dx, dy] of [[-4, 2], [3, 3], [0, -3]]) { ctx.fillStyle = '#d9cdb0'; ctx.beginPath(); ctx.ellipse(dx + 0.6, dy + 0.6, 3.4, 4.4, 0.2, 0, 7); ctx.fill(); ctx.fillStyle = c; ctx.beginPath(); ctx.ellipse(dx, dy, 3.2, 4.2, 0.2, 0, 7); ctx.fill(); }
+      break;
+    case 'milk':
+      ctx.fillStyle = '#8a6a48'; roundRect(ctx, -6, -8, 12, 16, 3); ctx.fill();
+      ctx.fillStyle = c; roundRect(ctx, -4.5, -6, 9, 7, 2); ctx.fill();
+      ctx.fillStyle = '#5b3b1f'; ctx.fillRect(-2, -10, 4, 3); break;
     case 'meat':
       ctx.fillStyle = c; ctx.beginPath(); ctx.ellipse(-1, 0, 8, 6, 0.4, 0, 7); ctx.fill();
       ctx.fillStyle = '#f2e6d8'; ctx.beginPath(); ctx.arc(7, -5, 2.4, 0, 7); ctx.fill(); break;
@@ -2212,7 +2884,7 @@ function drawStruct(ctx, G, s, i, px, py, t) {
         ctx.moveTo(px, py + 15); ctx.lineTo(px + TS, py + 15); ctx.moveTo(px + 16, py + 6); ctx.lineTo(px + 16, py + 15);
         ctx.moveTo(px + 8, py + 15); ctx.lineTo(px + 8, py + TS - 4); ctx.moveTo(px + 24, py + 15); ctx.lineTo(px + 24, py + TS - 4);
         ctx.stroke();
-        if (s.hp < STRUCTS.wall.hp * 0.5) { ctx.strokeStyle = 'rgba(20,20,20,0.7)'; ctx.beginPath(); ctx.moveTo(px + 6, py + 4); ctx.lineTo(px + 14, py + 18); ctx.lineTo(px + 10, py + 28); ctx.stroke(); }
+        if (s.hp < structMaxHp(G, s) * 0.5) { ctx.strokeStyle = 'rgba(20,20,20,0.7)'; ctx.beginPath(); ctx.moveTo(px + 6, py + 4); ctx.lineTo(px + 14, py + 18); ctx.lineTo(px + 10, py + 28); ctx.stroke(); }
       }
       break;
     }
@@ -2258,6 +2930,17 @@ function drawStruct(ctx, G, s, i, px, py, t) {
       }
       break;
     }
+    case 'desk': {
+      ctx.fillStyle = '#4a2f18'; roundRect(ctx, px + 2, py + 6, TS - 4, TS - 10, 3); ctx.fill();
+      ctx.fillStyle = bp ? '#7fb4ff' : '#7a5230'; roundRect(ctx, px + 3, py + 4, TS - 6, TS - 12, 3); ctx.fill();
+      if (!bp) {
+        ctx.fillStyle = '#efe2b8'; ctx.fillRect(px + 7, py + 8, 12, 7);
+        ctx.strokeStyle = '#7a5230'; ctx.lineWidth = 0.8; for (let k = 0; k < 3; k++) { ctx.beginPath(); ctx.moveTo(px + 9, py + 10 + k * 2); ctx.lineTo(px + 17, py + 10 + k * 2); ctx.stroke(); }
+        ctx.fillStyle = '#d9c38a'; ctx.beginPath(); ctx.arc(px + 23, py + 10, 2.5, 0, 7); ctx.arc(px + 23, py + 15, 2.5, 0, 7); ctx.fill();
+        if (hasTech(G, 'electricity')) { ctx.fillStyle = '#fff3b0'; ctx.beginPath(); ctx.arc(px + 9, py + 20, 2.2, 0, 7); ctx.fill(); }
+      }
+      break;
+    }
     case 'trap': {
       ctx.fillStyle = bp ? '#7fb4ff' : '#4b4e55';
       for (let k = 0; k < 4; k++) {
@@ -2276,9 +2959,9 @@ function drawStruct(ctx, G, s, i, px, py, t) {
     const pr = s.progress > 0 ? s.progress : s.delivered / def.cost * 0.999;
     ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(px + 3, py + TS - 6, TS - 6, 3);
     ctx.fillStyle = s.progress > 0 ? '#9be29f' : '#7fb4ff'; ctx.fillRect(px + 3, py + TS - 6, (TS - 6) * clamp(pr, 0, 1), 3);
-  } else if (s.hp < STRUCTS[s.type].hp) {
+  } else if (s.hp < structMaxHp(G, s)) {
     ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(px + 3, py - 4, TS - 6, 3);
-    ctx.fillStyle = '#e8553f'; ctx.fillRect(px + 3, py - 4, (TS - 6) * (s.hp / STRUCTS[s.type].hp), 3);
+    ctx.fillStyle = '#e8553f'; ctx.fillRect(px + 3, py - 4, (TS - 6) * (s.hp / structMaxHp(G, s)), 3);
   }
   if (s.decon) {
     ctx.strokeStyle = '#ff5d5d'; ctx.lineWidth = 2.5;
@@ -2310,8 +2993,13 @@ function drawPlant(ctx, pl, px, py, t) {
   if (g >= 1) { ctx.strokeStyle = 'rgba(255,240,150,0.85)'; ctx.lineWidth = 1; ctx.strokeRect(px + 2.5, py + 2.5, TS - 5, TS - 5); }
 }
 
-function drawTree(ctx, i, px, py, t) {
-  const cx = px + TS / 2, cy = py + TS / 2, s = 0.85 + hash(i, 11) * 0.3;
+function drawTree(ctx, i, px, py, t, growth = 1) {
+  const cx = px + TS / 2, cy = py + TS / 2, s = (0.85 + hash(i, 11) * 0.3) * (0.3 + 0.7 * Math.min(1, growth));
+  if (growth < 0.35) {
+    ctx.strokeStyle = '#5b3b1f'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(cx, cy + 6); ctx.lineTo(cx, cy - 2); ctx.stroke();
+    ctx.fillStyle = '#6fb34a'; ctx.beginPath(); ctx.ellipse(cx - 3, cy - 2, 3, 1.6, -0.5, 0, 7); ctx.ellipse(cx + 3, cy - 3, 3, 1.6, 0.5, 0, 7); ctx.fill();
+    return;
+  }
   ctx.fillStyle = 'rgba(0,0,0,0.22)'; ctx.beginPath(); ctx.ellipse(cx + 3, cy + 8, 12 * s, 6 * s, 0, 0, 7); ctx.fill();
   ctx.fillStyle = '#5b3b1f'; ctx.fillRect(cx - 2.5, cy, 5, 10);
   const sway = Math.sin(t * 1.3 + i) * 0.8;
@@ -2380,14 +3068,9 @@ function drawColonist(ctx, G, p, t, zoom) {
 function drawEnemy(ctx, G, e, t, zoom) {
   const x = e.x * TS, y = e.y * TS;
   ctx.save(); ctx.translate(x, y);
-  if (e.type === 'bear') {
-    ctx.fillStyle = 'rgba(0,0,0,0.28)'; ctx.beginPath(); ctx.ellipse(0, 12, 18, 7, 0, 0, 7); ctx.fill();
-    ctx.rotate(e.facing);
-    ctx.fillStyle = e.provoked ? '#6b3a22' : '#7a5232'; ctx.beginPath(); ctx.ellipse(-2, 0, 18, 13, 0, 0, 7); ctx.fill();
-    ctx.fillStyle = '#5d3d22'; ctx.beginPath(); ctx.ellipse(-12, 0, 6, 9, 0, 0, 7); ctx.fill();
-    ctx.fillStyle = '#86603d'; ctx.beginPath(); ctx.arc(12, 0, 8.5, 0, 7); ctx.fill();
-    ctx.fillStyle = '#e8b64a'; ctx.beginPath(); ctx.ellipse(21, 0, 7, 4.5, 0, 0, 7); ctx.fill();
-    ctx.fillStyle = e.provoked ? '#ff3b2f' : '#111'; ctx.beginPath(); ctx.arc(14, -4, 1.6, 0, 7); ctx.arc(14, 4, 1.6, 0, 7); ctx.fill();
+  const animal = e.faction === 'animal';
+  if (animal) {
+    drawAnimalBody(ctx, G, e);
   } else {
     const def = RAIDERS[e.type];
     ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.beginPath(); ctx.ellipse(0, 9, 10, 4, 0, 0, 7); ctx.fill();
@@ -2403,29 +3086,77 @@ function drawEnemy(ctx, G, e, t, zoom) {
       ctx.fillStyle = '#e7c39a'; ctx.fillRect(hx - 3.5, hy - 2, 7, 2.5);
     }
   }
-  if (e.hitFlash > 0) { ctx.fillStyle = 'rgba(255,255,255,0.55)'; ctx.beginPath(); ctx.arc(0, 0, e.type === 'bear' ? 18 : 11, 0, 7); ctx.fill(); }
+  const R0 = animal ? SPECIES[e.type].size * 18 * (e.age < 1 ? 0.6 + 0.4 * e.age : 1) : 11;
+  if (e.hitFlash > 0) { ctx.fillStyle = 'rgba(255,255,255,0.55)'; ctx.beginPath(); ctx.arc(0, 0, R0, 0, 7); ctx.fill(); }
   ctx.restore();
-  if (e.stun > 0 && e.type !== 'bear') {
+  if (animal && e.tame) {
+    ctx.strokeStyle = 'rgba(94,234,212,0.85)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.ellipse(x, y + R0 * 0.6, R0 * 0.9, R0 * 0.35, 0, 0, 7); ctx.stroke();
+    if (e.carrying) { ctx.fillStyle = ITEMS[e.carrying.type].color; ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.lineWidth = 1; roundRect(ctx, x - 4, y - R0 - 4, 8, 8, 2); ctx.fill(); ctx.stroke(); }
+  }
+  if (animal && e.tameDesig && !e.tame) { ctx.fillStyle = '#5eead4'; ctx.font = 'bold 11px ui-sans-serif, system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.fillText('♥', x, y - R0 - 4); }
+  if (e.stun > 0 && !animal) {
     ctx.strokeStyle = '#ffb347'; ctx.lineWidth = 1.5;
     for (let k = 0; k < 3; k++) { const a = t * 5 + k * 2.1; ctx.beginPath(); ctx.arc(x + Math.cos(a) * 9, y - 14 + Math.sin(a) * 3, 1.8, 0, 7); ctx.stroke(); }
   }
   if (e.root > 0) { ctx.strokeStyle = 'rgba(200,200,200,0.8)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y + 6, 12, 0, Math.PI); ctx.stroke(); }
   const hostile = hostileToColony(G, e);
-  const r = e.type === 'bear' ? 22 : 15;
+  const r = animal ? Math.max(10, R0 + 4) : 15;
   if (e.hunted) {
     ctx.strokeStyle = '#ff5d5d'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(x, y, r, 0, 7);
     ctx.moveTo(x - r - 4, y); ctx.lineTo(x - r + 4, y); ctx.moveTo(x + r - 4, y); ctx.lineTo(x + r + 4, y); ctx.stroke();
   }
-  if (e.hp < e.maxHp || hostile) {
+  if (e.hp < e.maxHp - 0.5 || hostile) {
     ctx.fillStyle = 'rgba(0,0,0,0.55)'; ctx.fillRect(x - 12, y - r - 6, 24, 4);
     ctx.fillStyle = hostile ? '#e8553f' : '#d9c27a'; ctx.fillRect(x - 11, y - r - 5, 22 * clamp(e.hp / e.maxHp, 0, 1), 2);
   }
   const sel = G.selected && G.selected.kind === 'enemy' && G.selected.id === e.id;
   if (sel) { ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.setLineDash([4, 3]); ctx.beginPath(); ctx.arc(x, y, r + 2, 0, 7); ctx.stroke(); ctx.setLineDash([]); }
-  if (zoom >= 0.8) {
+  if (zoom >= 0.8 && (!animal || e.tame || hostile || sel || zoom >= 1.3 || (SPECIES[e.type].size >= 0.9))) {
     ctx.font = '600 9px ui-sans-serif, system-ui, sans-serif'; ctx.textAlign = 'center';
-    ctx.fillStyle = hostile ? '#ff9c8f' : '#e9dcae';
+    ctx.fillStyle = hostile ? '#ff9c8f' : animal && e.tame ? '#99f6e4' : '#e9dcae';
     ctx.fillText(e.flee ? `${e.name} (fleeing)` : e.name, x, y + r + 10);
+  }
+}
+
+function drawAnimalBody(ctx, G, e) {
+  const S = SPECIES[e.type];
+  const sc = e.age < 1 ? 0.6 + 0.4 * e.age : 1;
+  ctx.scale(sc, sc);
+  ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.beginPath(); ctx.ellipse(0, S.size * 11, S.size * 16, S.size * 6, 0, 0, 7); ctx.fill();
+  ctx.rotate(e.facing);
+  const ell = (x, y, rx, ry, c) => { ctx.fillStyle = c; ctx.beginPath(); ctx.ellipse(x, y, rx, ry, 0, 0, 7); ctx.fill(); };
+  const dot = (x, y, r, c) => { ctx.fillStyle = c; ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill(); };
+  switch (e.type) {
+    case 'bear':
+      ell(-2, 0, 18, 13, e.provoked ? '#6b3a22' : '#7a5232'); ell(-12, 0, 6, 9, '#5d3d22'); dot(12, 0, 8.5, '#86603d');
+      ell(21, 0, 7, 4.5, '#e8b64a'); dot(14, -4, 1.6, e.provoked ? '#ff3b2f' : '#111'); dot(14, 4, 1.6, e.provoked ? '#ff3b2f' : '#111'); break;
+    case 'duck':
+      ell(-1, 0, 7.5, 6.5, '#46703a'); ell(-1, 0, 4.5, 3.8, '#6f9a4e'); dot(7, 0, 3.6, '#c9a64a'); ell(10.5, 0, 2.6, 1.6, '#e8902a'); dot(7.5, -1.5, 0.8, '#111'); break;
+    case 'chicken':
+      ell(-6, 0, 3, 1.6, '#4b4744'); ell(0, 0, 7, 5.6, '#8a8580'); dot(7, 0, 3.6, '#efe3cf'); ell(7, -3.4, 1.6, 1.2, '#d9443a'); dot(8.5, -1, 0.7, '#111'); ell(10.5, 0, 1.6, 1, '#e8b04a'); break;
+    case 'sheep':
+      for (const [x, y] of [[-5, -3], [-5, 3], [1, -3.5], [1, 3.5], [-2, 0]]) dot(x, y, 5, '#f1eee6');
+      dot(8, -4.8, 2.8, '#5f6168'); dot(8, 4.8, 2.8, '#5f6168'); dot(8.5, 0, 4.4, '#80838a'); ell(12, 0, 1.6, 2, '#2b2b2e'); break;
+    case 'hog':
+      ctx.strokeStyle = '#6b4a2b'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(-11, 0, 3, 0, 5); ctx.stroke();
+      ell(0, 0, 9, 6.5, '#d99a8c'); dot(9, 0, 4.6, '#b9775f'); ell(12.5, 0, 2.2, 2.6, '#f0b8aa'); dot(9.5, -2, 0.8, '#111'); dot(9.5, 2, 0.8, '#111'); break;
+    case 'ostrich':
+      ell(-3, 0, 9, 7, '#c99a5b'); ell(-6, 0, 4, 6, '#8a6234');
+      if (e.tame) { ctx.fillStyle = '#7a3e1e'; ctx.fillRect(-7, -6.5, 7, 13); }
+      ctx.strokeStyle = '#b88a4c'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(4, 0); ctx.lineTo(12, 0); ctx.stroke();
+      dot(14, 0, 3.2, '#a9793e'); ell(17.5, 0, 2.2, 1.2, '#e8b04a'); ell(13, -3, 1.4, 2.6, '#6b4a2b'); break;
+    case 'yak':
+      ell(-2, 0, 15, 11, '#6b4b33'); ell(-1, 0, 9, 8, '#e8e2d6');
+      if (e.tame) { ctx.fillStyle = '#7a3e1e'; ctx.fillRect(-9, -11, 8, 22); }
+      dot(13, 0, 6, '#4d3423');
+      ctx.strokeStyle = '#d9cfbd'; ctx.lineWidth = 2.2; ctx.beginPath(); ctx.arc(14, -7, 4, 3.6, 5.6); ctx.stroke(); ctx.beginPath(); ctx.arc(14, 7, 4, 0.7, 2.7); ctx.stroke(); break;
+    case 'lion':
+      ell(-3, 0, 14, 8, e.provoked || e.state === 'hunt' ? '#b8742e' : '#c98a3a'); dot(9, 0, 7.5, '#7a4a1f'); dot(12, 0, 4.6, '#d99a4a');
+      ctx.strokeStyle = '#e8dcc0'; ctx.lineWidth = 1.6;
+      for (const sgn of [-1, 1]) { ctx.beginPath(); ctx.moveTo(11, 3 * sgn); ctx.lineTo(8, 10 * sgn); ctx.lineTo(4, 12 * sgn); ctx.moveTo(8, 10 * sgn); ctx.lineTo(10, 14 * sgn); ctx.stroke(); }
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(15, -1.5); ctx.lineTo(18, -1.2); ctx.moveTo(15, 1.5); ctx.lineTo(18, 1.2); ctx.stroke();
+      dot(14, -2, 0.9, e.provoked ? '#ff3b2f' : '#111'); dot(14, 2, 0.9, e.provoked ? '#ff3b2f' : '#111'); break;
+    default: dot(0, 0, 6, '#999');
   }
 }
 
@@ -2449,6 +3180,17 @@ function drawProjectile(ctx, pr) {
     case 'air':
       ctx.rotate(pr.rot); ctx.strokeStyle = 'rgba(240,248,255,0.9)'; ctx.lineWidth = 2;
       ctx.beginPath(); ctx.arc(0, 0, 7, 0, Math.PI * 1.3); ctx.stroke(); ctx.beginPath(); ctx.arc(0, 0, 3.5, Math.PI, Math.PI * 2.4); ctx.stroke(); break;
+    case 'lightning': {
+      const a = Math.atan2(pr.ly - pr.y, pr.lx - pr.x); ctx.rotate(a);
+      ctx.strokeStyle = 'rgba(200,230,255,0.95)'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(-14, 0); for (let k = 1; k <= 5; k++) ctx.lineTo(-14 + k * 4, (k % 2 ? -3 : 3) * Math.sin(pr.rot * 3 + k)); ctx.stroke();
+      ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(6, 0, 3, 0, 7); ctx.fill(); break;
+    }
+    case 'bolt': {
+      const a = Math.atan2(pr.ly - pr.y, pr.lx - pr.x); ctx.rotate(a);
+      ctx.strokeStyle = '#d9c38a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-7, 0); ctx.lineTo(5, 0); ctx.stroke();
+      ctx.fillStyle = '#9aa0a8'; ctx.beginPath(); ctx.moveTo(8, 0); ctx.lineTo(4, -2.5); ctx.lineTo(4, 2.5); ctx.closePath(); ctx.fill(); break;
+    }
     case 'sand':
       ctx.fillStyle = 'rgba(224,196,138,0.9)'; ctx.beginPath(); ctx.arc(0, 0, 5, 0, 7); ctx.fill();
       ctx.fillStyle = 'rgba(194,160,102,0.7)'; ctx.beginPath(); ctx.arc(-4, 2, 3, 0, 7); ctx.fill(); break;
@@ -2476,11 +3218,12 @@ function render(G, ctx, canvas, t) {
       const o = (Math.sin(t + x + y * 2) + 1) * 4;
       ctx.beginPath(); ctx.moveTo(px + 4 + o, py + 10); ctx.lineTo(px + 14 + o, py + 10); ctx.moveTo(px + 10 - o / 2, py + 22); ctx.lineTo(px + 20 - o / 2, py + 22); ctx.stroke();
     }
+    if (G.terrain[i] === T.GRASS && G.forage[i] < 0.5) { ctx.fillStyle = `rgba(190,165,80,${(0.5 - G.forage[i]) * 0.7})`; ctx.fillRect(px, py, TS, TS); }
     const zn = G.zone[i];
     if (zn) {
-      ctx.fillStyle = zn === 'stock' ? 'rgba(232,196,120,0.16)' : zn === 'cabbage' ? 'rgba(140,220,90,0.14)' : 'rgba(255,220,240,0.14)';
+      ctx.fillStyle = zn === 'stock' ? 'rgba(232,196,120,0.16)' : zn === 'cabbage' ? 'rgba(140,220,90,0.14)' : zn === 'grove' ? 'rgba(60,140,80,0.16)' : 'rgba(255,220,240,0.14)';
       ctx.fillRect(px, py, TS, TS);
-      ctx.strokeStyle = zn === 'stock' ? 'rgba(232,196,120,0.55)' : zn === 'cabbage' ? 'rgba(140,220,90,0.5)' : 'rgba(255,200,230,0.55)';
+      ctx.strokeStyle = zn === 'stock' ? 'rgba(232,196,120,0.55)' : zn === 'cabbage' ? 'rgba(140,220,90,0.5)' : zn === 'grove' ? 'rgba(90,190,110,0.6)' : 'rgba(255,200,230,0.55)';
       ctx.lineWidth = 1;
       for (const [dx, dy] of DIRS4) {
         const nx = x + dx, ny = y + dy;
@@ -2502,7 +3245,7 @@ function render(G, ctx, canvas, t) {
   }
   for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
     const i = idx(x, y), px = x * TS, py = y * TS;
-    if (G.tree[i]) drawTree(ctx, i, px, py, t);
+    if (G.tree[i]) drawTree(ctx, i, px, py, t, G.tree[i]);
     const d = G.desig[i];
     if (d) {
       ctx.save(); ctx.translate(px + TS / 2, py + TS / 2);
@@ -2575,7 +3318,7 @@ function render(G, ctx, canvas, t) {
     }
   }
   if (G.hover && inB(G.hover.x, G.hover.y)) {
-    const ok = G.tool === 'select' || G.tool === 'hunt' || toolValid(G, G.tool, idx(G.hover.x, G.hover.y));
+    const ok = G.tool === 'select' || G.tool === 'hunt' || G.tool === 'tameTool' || toolValid(G, G.tool, idx(G.hover.x, G.hover.y));
     ctx.strokeStyle = ok ? 'rgba(255,255,255,0.7)' : 'rgba(255,100,100,0.7)'; ctx.lineWidth = 1.5;
     ctx.strokeRect(G.hover.x * TS + 1, G.hover.y * TS + 1, TS - 2, TS - 2);
   }
@@ -2659,6 +3402,7 @@ export default function AvatarColony() {
     return g;
   }, [seed]);
   const [showLineage, setShowLineage] = useState(false);
+  const [showResearch, setShowResearch] = useState(false);
   const [confirmForget, setConfirmForget] = useState(false);
   const nextRef = useRef(null);
   const gRef = useRef(G); gRef.current = G;
@@ -2721,7 +3465,7 @@ export default function AvatarColony() {
       const [sx, sy] = screen(e);
       const [wx, wy] = toWorld(sx, sy);
       const st = { sx, sy, btn: e.button, moved: false, camX: G.cam.x, camY: G.cam.y };
-      st.mode = e.button !== 0 || G.tool === 'select' || G.tool === 'hunt' ? 'pan' : 'drag';
+      st.mode = e.button !== 0 || G.tool === 'select' || G.tool === 'hunt' || G.tool === 'tameTool' ? 'pan' : 'drag';
       if (st.mode === 'drag') { const tx = Math.floor(wx), ty = Math.floor(wy); G.drag = { x0: tx, y0: ty, x1: tx, y1: ty }; }
       G.ptr = st;
     };
@@ -2744,9 +3488,10 @@ export default function AvatarColony() {
       if (st.btn === 2) { toolRef.current('select'); return; }
       if (st.btn !== 0) return;
       const near = (list, r) => { let best = null, bd = r; for (const en of list) { const d = Math.hypot(en.x - wx, en.y - wy); if (d < bd) { bd = d; best = en; } } return best; };
-      if (G.tool === 'hunt') {
-        const a = near(G.enemies.filter((en) => en.faction === 'animal'), 1.2);
-        if (a) { a.hunted = true; log(G, 'The platypus-bear has been marked for hunting.', 'info'); }
+      if (G.tool === 'hunt' || G.tool === 'tameTool') {
+        const a = near(G.enemies.filter((en) => en.faction === 'animal' && !en.tame), 1.2);
+        if (a && G.tool === 'hunt') { a.hunted = true; a.tameDesig = false; log(G, `The ${a.name} has been marked for hunting.`, 'info'); }
+        if (a && G.tool === 'tameTool') { a.tameDesig = true; a.hunted = false; log(G, hasTech(G, 'husbandry') ? `The ${a.name} has been marked for taming.` : `The ${a.name} is marked for taming, but nobody knows how yet. Research Animal Husbandry.`, 'info'); }
         return;
       }
       const p = near(G.pawns.filter((q) => !q.dead), 0.7);
@@ -2823,7 +3568,7 @@ export default function AvatarColony() {
   };
 
   // Derived HUD data
-  const res = { stone: 0, wood: 0, cabbage: 0, meal: 0, tea: 0, meat: 0 };
+  const res = Object.fromEntries(Object.keys(ITEMS).map((k) => [k, 0]));
   for (const it of G.items) if (it) res[it.type] += it.qty;
   const alive = G.pawns.filter((p) => !p.dead);
   let beds = 0; for (const s of G.struct) if (s && s.built && s.type === 'bed') beds++;
@@ -2900,6 +3645,14 @@ export default function AvatarColony() {
                 <span className="text-stone-400">{ITEMS[k].name}</span><span className="font-semibold">{v}</span>
               </span>
             ))}
+          </div>
+          <button onClick={() => setShowResearch(true)} className="flex items-center gap-1.5 rounded-xl border border-sky-300/30 bg-[#11181b]/85 px-2.5 py-1 text-[11px] text-sky-200 backdrop-blur hover:bg-sky-400/10">
+            <FlaskConical size={12} />{ERAS[eraOf(G)]} era
+            <span className="text-stone-400">{G.research.target ? `· ${TECHS[G.research.target].name} ${Math.floor((G.research.progress / TECHS[G.research.target].cost) * 100)}%` : G.tech.size === Object.keys(TECHS).length ? '· every discovery made' : countStruct(G, 'desk', true) ? '· choosing a study' : '· no scroll desk yet'}</span>
+          </button>
+          <div className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-[#11181b]/85 px-2.5 py-1 text-[11px] text-stone-300 backdrop-blur">
+            <TreePine size={12} className="text-emerald-300" />
+            {(() => { const a = G.enemies.filter((e) => e.faction === 'animal' && !e.dead); return `${a.filter((e) => !e.tame && SPECIES[e.type].diet === 'herb').length} grazers · ${a.filter((e) => !e.tame && SPECIES[e.type].diet !== 'herb').length} predators · ${a.filter((e) => e.tame).length} tamed`; })()}
           </div>
           <button onClick={() => setShowLineage(true)} className="flex items-center gap-1.5 rounded-xl border border-violet-300/30 bg-[#11181b]/85 px-2.5 py-1 text-[11px] text-violet-200 backdrop-blur hover:bg-violet-400/10">
             <GitBranch size={12} />Generation {G.gen}
@@ -3024,6 +3777,8 @@ export default function AvatarColony() {
               <li>Click a colonist portrait or anyone on the map to see their needs, thoughts and wounds.</li>
               <li>Colonists announce their plans in the Storyteller log in their own colours.</li>
               <li>When a colony falls, its mistakes become lessons and the next generation starts on its own. Open Generation (top right) to follow the lineage.</li>
+              <li>The valley is alive: grass feeds grazers, and moose-lions hunt grazers. Colonists hunt for meat and tame animals to haul, plough, lay eggs and give milk. They replant the forest they cut.</li>
+              <li>Colonists research at a Scroll Desk, from the Ancient era to the Modern era. Open the era button (top right) to see the tree.</li>
               <li>Press 4 for 8x speed to watch generations go by. Give orders (bottom) lets you direct them yourself.</li>
             </ul>
             <button onClick={() => { setShowHelp(false); setSpeed(G.lastSpeed || 1); }} className="w-full rounded-lg bg-amber-400 py-2 text-[14px] font-semibold text-stone-900 hover:bg-amber-300">Watch the colony</button>
@@ -3036,7 +3791,7 @@ export default function AvatarColony() {
           <div className="max-h-full w-[min(520px,100%)] overflow-y-auto rounded-2xl border border-violet-300/30 bg-[#16131c] p-5">
             <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-rose-300"><Skull size={14} />Generation {G.report.gen} has fallen</div>
             <h2 className="mb-1 mt-1 text-xl font-semibold">Lost to {CAUSE_TEXT[G.report.cause]} on day {Math.floor(G.report.days) + 1}</h2>
-            <p className="mb-3 text-[12px] text-stone-400">They survived {G.report.days.toFixed(1)} days and {G.report.raids} raid{G.report.raids === 1 ? '' : 's'}. Their mistakes become the next generation's memory.</p>
+            <p className="mb-3 text-[12px] text-stone-400">They survived {G.report.days.toFixed(1)} days and {G.report.raids} raid{G.report.raids === 1 ? '' : 's'}, reaching the {ERAS[G.report.era || 0]} era with {G.report.techs || 0} discoveries. Their mistakes become the next generation's memory.</p>
             <div className="mb-1 text-[10px] uppercase tracking-wider text-violet-300">Lessons carried forward</div>
             <ul className="mb-3 list-disc space-y-1 pl-5 text-[12px] text-stone-200">
               {G.report.lessons.map((l, k) => <li key={k}>{l}</li>)}
@@ -3048,6 +3803,45 @@ export default function AvatarColony() {
                 ? <button onClick={() => { G.hold = false; G.restartIn = 6; force((v) => v + 1); }} className="rounded-lg border border-white/15 px-3 py-2 text-[12px] text-stone-300 hover:bg-white/10">Resume countdown</button>
                 : <button onClick={() => { G.hold = true; force((v) => v + 1); }} className="rounded-lg border border-white/15 px-3 py-2 text-[12px] text-stone-300 hover:bg-white/10">Stay on this report</button>}
               {!G.hold && <span className="text-[12px] tabular-nums text-stone-400">Next generation in {Math.max(0, Math.ceil(G.restartIn))}s</span>}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showResearch && (
+        <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/60 p-4" onClick={() => setShowResearch(false)}>
+          <div className="max-h-full w-[min(980px,100%)] overflow-y-auto rounded-2xl border border-sky-300/30 bg-[#12171c] p-5" onClick={(e) => e.stopPropagation()}>
+            <div className="mb-1 flex items-center justify-between">
+              <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-sky-300"><FlaskConical size={14} />Research</div>
+              <button aria-label="Close research" onClick={() => setShowResearch(false)} className="rounded p-1 text-stone-400 hover:bg-white/10 hover:text-white"><X size={14} /></button>
+            </div>
+            <h2 className="mb-1 text-xl font-semibold">{ERAS[eraOf(G)]} era · {G.tech.size} of {Object.keys(TECHS).length} discoveries</h2>
+            <p className="mb-3 text-[12px] text-stone-400">
+              Colonists study at the Scroll Desk; Non-Benders learn fastest. {freeWill
+                ? `With free will, they choose what to study themselves. This generation favours ${G.genome.researchFocus} research.`
+                : 'You are giving orders: click any available discovery to study it next.'}
+            </p>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
+              {ERAS.map((era, ei) => (
+                <div key={era} className="flex min-w-0 flex-col gap-2">
+                  <div className={`text-[11px] font-semibold uppercase tracking-wider ${ei <= eraOf(G) ? 'text-sky-200' : 'text-stone-500'}`}>{era}</div>
+                  {Object.entries(TECHS).filter(([, t]) => t.era === ei).map(([k, t]) => {
+                    const done = G.tech.has(k), cur = G.research.target === k, avail = !done && t.req.every((r) => G.tech.has(r));
+                    const cls = done ? 'border-sky-300/40 bg-sky-400/15' : cur ? 'border-amber-300/70 bg-amber-300/10' : avail ? 'border-white/20 bg-black/25' : 'border-white/5 bg-black/20 opacity-50';
+                    return (
+                      <button key={k} disabled={freeWill || !avail} onClick={() => { G.research.target = k; G.research.progress = 0; force((v) => v + 1); }}
+                        className={`rounded-lg border p-2 text-left ${cls} ${!freeWill && avail ? 'hover:border-amber-300/70' : ''}`}>
+                        <div className="flex items-center justify-between gap-1 text-[12px] font-semibold">
+                          <span>{t.name}</span><span className="text-[10px] font-normal tabular-nums text-stone-400">{done ? 'Known' : `${t.cost} pts`}</span>
+                        </div>
+                        <div className="text-[10.5px] leading-snug text-stone-400">{t.desc}</div>
+                        {t.req.length > 0 && !done && <div className="mt-0.5 text-[10px] text-stone-500">Needs {t.req.map((r) => TECHS[r].name).join(', ')}</div>}
+                        {cur && <div className="mt-1 h-1.5 overflow-hidden rounded bg-stone-800"><div className="h-full bg-amber-300" style={{ width: `${(G.research.progress / t.cost) * 100}%` }} /></div>}
+                      </button>
+                    );
+                  })}
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -3073,7 +3867,7 @@ export default function AvatarColony() {
                 <details key={h.gen} className="rounded-lg bg-black/25 px-3 py-2 text-[12px]">
                   <summary className="cursor-pointer select-none">
                     <span className="font-semibold">Gen {h.gen}</span>
-                    <span className="text-stone-400"> · {h.days.toFixed(1)} days · fell to {CAUSE_TEXT[h.cause]}{mem.best && mem.best.gen === h.gen ? ' · best so far' : ''}</span>
+                    <span className="text-stone-400"> · {h.days.toFixed(1)} days · {ERAS[h.era || 0]} era · fell to {CAUSE_TEXT[h.cause]}{mem.best && mem.best.gen === h.gen ? ' · best so far' : ''}</span>
                   </summary>
                   <ul className="mt-1 list-disc space-y-0.5 pl-5 text-stone-300">
                     {(h.lessons || []).map((l, k) => <li key={k}>{l}</li>)}
@@ -3182,7 +3976,33 @@ function PawnInspector({ G, p }) {
   );
 }
 
+function AnimalInspector({ G, e }) {
+  const S = SPECIES[e.type];
+  const hostile = hostileToColony(G, e);
+  const stateText = { flee: 'Fleeing', graze: 'Grazing', toGraze: 'Looking for food', hunt: e.prey ? `Stalking a ${e.prey.name}` : 'Hunting', eat: 'Eating its kill',
+    calm: 'Being tamed', angry: 'Enraged', haul: e.carrying ? `Hauling ${e.carrying.qty} ${ITEMS[e.carrying.type].name}` : 'Fetching a load', guard: 'Guarding the camp', wander: 'Wandering' }[e.state] || e.state;
+  const diet = { herb: 'Grazer: eats grass, sometimes crops. Prey for predators.', carn: 'Predator: hunts grazers when hungry; turns on people if starving.', omni: 'Omnivore: grazes and hunts small prey.' }[S.diet];
+  return (
+    <div className="flex flex-col gap-2 pr-6">
+      <div className={`text-[15px] font-semibold ${hostile ? 'text-rose-300' : e.tame ? 'text-teal-200' : 'text-amber-200'}`}>{e.name}{e.age < 1 ? ' (young)' : ''}</div>
+      <div className="text-[11px] text-stone-400">{diet}</div>
+      <div className="text-[11px]">{e.tame ? <span className="text-teal-200">Tamed: {ROLE_TEXT[S.role] || 'stays with the colony'}.</span> : S.tame > 0 ? <span className="text-stone-300">Wild. Tameable ({Math.round(S.tame * 100)}% base chance): would {ROLE_TEXT[S.role]}.</span> : <span className="text-stone-300">Wild. Cannot be tamed.</span>}</div>
+      <Bar label="Health" icon={Heart} value={(e.hp / e.maxHp) * 100} color={hostile ? '#e8553f' : '#d9c27a'} />
+      <Bar label="Fed" icon={Utensils} value={e.hunger} color="#f2b84b" />
+      <div className="text-[11px]"><span className="text-stone-400">Doing: </span>{stateText}{e.hunted ? ' · marked for hunting' : ''}{e.tameDesig ? ' · marked for taming' : ''}</div>
+      {S.product && e.tame && <div className="text-[11px] text-stone-400">Next {ITEMS[S.product].name.toLowerCase()} in {Math.max(0, Math.ceil(e.prodT))}s</div>}
+      {!e.tame && (
+        <div className="flex gap-1">
+          {!e.hunted && <button onClick={() => { e.hunted = true; e.tameDesig = false; log(G, `The ${e.name} has been marked for hunting.`, 'info'); }} className="flex flex-1 items-center justify-center gap-1 rounded-md bg-rose-500/80 py-1 text-[12px] font-semibold hover:bg-rose-500"><Crosshair size={13} />Hunt</button>}
+          {S.tame > 0 && !e.tameDesig && <button onClick={() => { e.tameDesig = true; e.hunted = false; log(G, `The ${e.name} has been marked for taming.`, 'info'); }} className="flex flex-1 items-center justify-center gap-1 rounded-md bg-teal-500/70 py-1 text-[12px] font-semibold hover:bg-teal-500"><Heart size={13} />Tame</button>}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function EnemyInspector({ G, e }) {
+  if (e.faction === 'animal') return <AnimalInspector G={G} e={e} />;
   const hostile = hostileToColony(G, e);
   const status = e.flee ? 'Fleeing' : e.root > 0 ? 'Rooted' : e.stun > 0 ? 'Chi-blocked (cannot bend)' : e.faction === 'animal' ? (e.provoked ? 'Enraged' : 'Grazing peacefully') : 'Attacking';
   return (
@@ -3203,9 +4023,10 @@ function TileInspector({ G, x, y }) {
   const s = G.struct[i], pl = G.plants[i], it = G.items[i], z = G.zone[i], d = G.desig[i];
   return (
     <div className="flex flex-col gap-1 pr-6 text-[12px]">
-      <div className="text-[15px] font-semibold">{TERRAIN_NAME[G.terrain[i]]}{G.tree[i] ? ' · Tree' : ''}</div>
+      <div className="text-[15px] font-semibold">{TERRAIN_NAME[G.terrain[i]]}{G.tree[i] >= 1 ? ' · Tree' : G.tree[i] ? ` · Sapling (${Math.round(G.tree[i] * 100)}% grown)` : ''}</div>
+      {G.terrain[i] === T.GRASS && <Bar label="Forage" icon={Leaf} value={G.forage[i] * 100} color="#a3c95a" />}
       <div className="text-[11px] tabular-nums text-stone-400">Tile ({x}, {y})</div>
-      {s && <div><span className="text-stone-400">Structure: </span>{STRUCTS[s.type].name}{s.built ? ` · ${Math.ceil(s.hp)}/${STRUCTS[s.type].hp} HP` : ` · blueprint (${s.delivered}/${STRUCTS[s.type].cost} ${STRUCTS[s.type].mat})`}{s.decon ? ' · to deconstruct' : ''}</div>}
+      {s && <div><span className="text-stone-400">Structure: </span>{STRUCTS[s.type].name}{s.built ? ` · ${Math.ceil(s.hp)}/${Math.round(structMaxHp(G, s))} HP` : ` · blueprint (${s.delivered}/${STRUCTS[s.type].cost} ${STRUCTS[s.type].mat})`}{s.decon ? ' · to deconstruct' : ''}</div>}
       {s && s.type === 'campfire' && s.built && <Bar label="Fuel" icon={Flame} value={s.fuel} color="#ff8a2a" />}
       {s && s.type === 'bed' && s.built && <div><span className="text-stone-400">Owner: </span>{(s.owner && (pawnById(G, s.owner) || {}).name) || 'Unclaimed'}</div>}
       {pl && <>
@@ -3214,7 +4035,7 @@ function TileInspector({ G, x, y }) {
         <Bar label="Water" icon={Droplets} value={pl.water * 100} color="#4aa3e8" />
       </>}
       {it && <div><span className="text-stone-400">Item: </span>{it.qty} {ITEMS[it.type].name}</div>}
-      {z && <div><span className="text-stone-400">Zone: </span>{z === 'stock' ? 'Stockpile' : z === 'cabbage' ? 'Cabbage patch' : 'Jasmine tea patch'}</div>}
+      {z && <div><span className="text-stone-400">Zone: </span>{z === 'stock' ? 'Stockpile' : z === 'cabbage' ? 'Cabbage patch' : z === 'grove' ? 'Tree grove' : 'Jasmine tea patch'}</div>}
       {d && <div><span className="text-stone-400">Order: </span>{d === 'mine' ? 'Mine' : 'Chop'}</div>}
       {G.terrain[i] === T.SOIL && !pl && <div className="text-[11px] text-stone-400">Fertile soil: crops grow 65% faster than on grass.</div>}
     </div>
@@ -3222,4 +4043,4 @@ function TileInspector({ G, x, y }) {
 }
 
 // Exposed for headless testing of the simulation.
-export const __sim = { createGame, update, applyTool, fireEvent, chronicle, learnFromFall, newMemory, describeGenome, W, H };
+export const __sim = { createGame, update, applyTool, fireEvent, chronicle, learnFromFall, newMemory, describeGenome, TECHS, SPECIES, W, H };
