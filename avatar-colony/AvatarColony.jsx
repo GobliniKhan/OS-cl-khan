@@ -6,7 +6,7 @@ import {
   Pause, Play, ChevronsRight, FastForward, Sun, Moon, Gem, Axe, Trash2, Crosshair,
   Square, DoorOpen, Bed, Flame, Coffee, AlertTriangle, Package, Sprout, Leaf,
   MousePointer2, Mountain, Droplets, Wind, Hand, Heart, Utensils, Swords, Triangle,
-  X, RotateCcw, ZoomIn, ZoomOut, ScrollText, Hammer, Footprints, Skull, HelpCircle,
+  X, RotateCcw, ZoomIn, ZoomOut, ScrollText, Hammer, Footprints, Skull, HelpCircle, Sparkles, Eye,
 } from 'lucide-react';
 
 // ============================================================================
@@ -192,6 +192,7 @@ function createGame(seed) {
     cam: { x: 0, y: 0, zoom: 1.2 }, view: { w: 800, h: 600, dpr: 1 },
     tool: 'select', selected: null, hover: null, drag: null, ptr: null,
     terrainDirty: true, over: false, witherLogT: 0,
+    freeWill: true, dirT: 2, planLog: {}, raidsSeen: 0,
   };
   const elev = fbm(r), moist = fbm(r);
   const cx = 20, cy = 20;
@@ -277,7 +278,7 @@ function createGame(seed) {
   crew.forEach(([el, name], k) => G.pawns.push(makeColonist(G, el, name, cx - 1 + (k % 2) * 2, cy - 1 + Math.floor(k / 2) * 2)));
   G.cam.x = cx * TS; G.cam.y = cy * TS; // centred properly once the view size is known
   G.camCentered = false;
-  log(G, 'Four benders have settled a quiet valley. Build beds before nightfall.', 'iroh');
+  log(G, 'Four benders have settled a quiet valley. They talk over their plans around the fire.', 'iroh');
   return G;
 }
 
@@ -295,8 +296,8 @@ function makeColonist(G, el, name, x, y) {
 // ============================================================================
 // Log, banner, particles, floating text
 // ============================================================================
-function log(G, text, who = 'info') {
-  G.log.unshift({ day: dayOf(G), clock: clockStr(G), text, who, id: Math.random() });
+function log(G, text, who = 'info', color) {
+  G.log.unshift({ day: dayOf(G), clock: clockStr(G), text, who, color, id: Math.random() });
   if (G.log.length > 40) G.log.length = 40;
 }
 function banner(G, title, text, who) { G.banner = { title, text, who, t: 7 }; log(G, `${title}: ${text}`, who); }
@@ -1392,7 +1393,7 @@ function updateColonist(G, p, dt) {
     } else { doMental(G, p, dt); return; }
   }
   // Self-defence and hunting
-  const medic = p.el === 'water' && G.pawns.some((q) => q !== p && q.downed && !q.dead && q.injuries.some((j) => j.bleeding));
+  const medic = p.id === G._medic && G.pawns.some((q) => q !== p && q.downed && !q.dead && q.injuries.some((j) => j.bleeding));
   if (medic && p.job && p.job.type === 'fight') abortJob(G, p);
   if (!medic && p.health >= 40 && !(p.job && (p.job.type === 'fight' || p.job.type === 'rescue' || p.job.type === 'tend'))) {
     const h = findHostileFor(G, p);
@@ -1426,7 +1427,7 @@ function spawnRaid(G) {
       range: def.range, dmg: def.dmg, atkCd: def.cd, cd: 1 + G.rand(), proj: def.proj, inj: def.inj, speed: def.speed, bash: def.bash,
       path: null, repath: 0, re: 0, target: null, flee: false, stun: 0, root: 0, hitFlash: 0, facing: 0 });
   }
-  G.raid = { t: 0, kind, n }; G.lastRaid = G.time;
+  G.raid = { t: 0, kind, n }; G.lastRaid = G.time; G.raidsSeen++;
   const side = origin[0] === 0 ? 'west' : origin[0] === W - 1 ? 'east' : origin[1] === 0 ? 'north' : 'south';
   banner(G, kind === 'scout' ? 'Fire Nation raid' : 'Sandbender raid',
     `${n} ${def.name}s approach from the ${side}. "Let's see how your little village handles some pressure."`, 'azula');
@@ -1436,7 +1437,7 @@ function spawnBear(G) {
   G.enemies.push({ id: G.nextId++, faction: 'animal', type: 'bear', name: 'Platypus-Bear', x: s[0] + 0.5, y: s[1] + 0.5, hp: 170, maxHp: 170,
     range: 1.4, dmg: 16, atkCd: 1.5, cd: 0, melee: true, inj: 'Claw wound', speed: 2.6, bash: 14, path: null, repath: 0, re: 0, target: null,
     provoked: false, hunted: false, calm: 0, life: 0, idle: 0, stun: 0, root: 0, hitFlash: 0, facing: 0 });
-  banner(G, 'Platypus-bear sighted', 'A huge platypus-bear wanders into the valley. Leave it alone, or mark it for hunting.', 'iroh');
+  banner(G, 'Platypus-bear sighted', 'A huge platypus-bear wanders into the valley. It is harmless unless startled or hunted.', 'iroh');
 }
 function moveEnemy(G, e, dt, speedMul = 1) {
   if (!e.path || !e.path.length) return 'arrived';
@@ -1518,7 +1519,7 @@ function updateEnemy(G, e, dt) {
   if (e.root > 0) { e.root -= dt; return; }
   const ti = idx(...tileOf(e));
   const s = G.struct[ti];
-  if (s && s.built && s.type === 'trap') {
+  if (s && s.built && s.type === 'trap' && (e.faction === 'raider' || e.provoked || e.hunted)) {
     G.struct[ti] = null; e.root = 2.5;
     emit(G, e.x, e.y, 10, 'dust'); emit(G, e.x, e.y, 6, 'blood');
     floatText(G, e.x, e.y - 0.8, 'Trapped!', '#ffd166');
@@ -1612,6 +1613,224 @@ function fireEvent(G, forced) {
   }
 }
 
+
+// ============================================================================
+// Free will: the colony director
+// The colonists decide for themselves what the camp needs (beds, fire, farms,
+// storage, materials, defences, hunting) and place the orders a player would.
+// ============================================================================
+const HOME = { cx: 20, cy: 20, ring: 9 };
+const homeDist = (x, y) => Math.max(Math.abs(x - HOME.cx), Math.abs(y - HOME.cy));
+const interior = (x, y) => homeDist(x, y) <= HOME.ring - 2;
+const DOORS = [[HOME.cx, HOME.cy - HOME.ring], [HOME.cx, HOME.cy + HOME.ring], [HOME.cx - HOME.ring, HOME.cy], [HOME.cx + HOME.ring, HOME.cy]];
+function ringTiles() {
+  const out = [], r = HOME.ring, { cx, cy } = HOME;
+  for (let x = cx - r; x <= cx + r; x++) out.push([x, cy - r]);
+  for (let y = cy - r + 1; y <= cy + r; y++) out.push([cx + r, y]);
+  for (let x = cx + r - 1; x >= cx - r; x--) out.push([x, cy + r]);
+  for (let y = cy + r - 1; y > cy - r; y--) out.push([cx - r, y]);
+  return out.filter(([x, y]) => inB(x, y));
+}
+function spiral(ax, ay, maxR, pred) {
+  for (let r = 0; r <= maxR; r++) {
+    for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {
+      if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
+      const x = ax + dx, y = ay + dy;
+      if (inB(x, y) && pred(x, y, idx(x, y))) return [x, y];
+    }
+  }
+  return null;
+}
+function countStruct(G, type, builtOnly) {
+  let n = 0;
+  for (const s of G.struct) if (s && s.type === type && (s.built || !builtOnly) && !s.decon) n++;
+  return n;
+}
+// A solid building must not block a walkway: every neighbour stays walkable.
+function roomy(G, x, y) {
+  for (const [dx, dy] of DIRS8) {
+    const nx = x + dx, ny = y + dy;
+    if (!inB(nx, ny)) return false;
+    const n = idx(nx, ny);
+    if (!colPass(G, n) || (G.struct[n] && STRUCTS[G.struct[n].type].solid)) return false;
+  }
+  return !DOORS.some(([dx, dy]) => Math.max(Math.abs(dx - x), Math.abs(dy - y)) <= 2);
+}
+const placeStruct = (G, type, [x, y]) => { G.struct[idx(x, y)] = { type, built: false, delivered: 0, progress: 0, hp: 1, decon: false }; };
+const freeSpot = (G, i) => !G.zone[i] && !G.struct[i] && !G.plants[i] && !G.tree[i] && G.terrain[i] !== T.WATER && G.terrain[i] !== T.STONE;
+const ringActive = (G) => G.raidsSeen > 0 || G.time > 420;
+
+const PLANS = [
+  // Somewhere to sleep for everyone.
+  (G, say) => {
+    const need = G.pawns.filter((p) => !p.dead).length, have = countStruct(G, 'bed');
+    if (have >= need) return false;
+    const t = spiral(HOME.cx - 1, HOME.cy - 4, 6, (x, y, i) => interior(x, y) && freeSpot(G, i) && !G.items[i]);
+    if (!t) return false;
+    placeStruct(G, 'bed', t);
+    say('bed', 'earth', have === 0 ? 'We need beds before nightfall. I will lay one out.' : 'Someone still sleeps on the ground. Another bed, then.', 25);
+    return true;
+  },
+  // A fire to cook on.
+  (G, say) => {
+    if (countStruct(G, 'campfire')) return false;
+    const t = spiral(HOME.cx, HOME.cy + 2, 6, (x, y, i) => interior(x, y) && freeSpot(G, i) && roomy(G, x, y));
+    if (!t) return false;
+    placeStruct(G, 'campfire', t);
+    say('fire', 'fire', 'No fire, no hot meals. I will build a campfire.', 60);
+    return true;
+  },
+  // Enough cabbages to feed everyone.
+  (G, say) => {
+    const alive = G.pawns.filter((p) => !p.dead).length;
+    let cells = 0; for (const z of G.zone) if (z === 'cabbage') cells++;
+    if (cells >= alive * 5) return false;
+    let added = 0;
+    for (const soilOnly of [true, false]) {
+      while (added < 4) {
+        const t = spiral(HOME.cx + 4, HOME.cy + 4, 7, (x, y, i) => interior(x, y) && freeSpot(G, i) && !G.items[i] && (soilOnly ? G.terrain[i] === T.SOIL : fertile(G, i)));
+        if (!t) break;
+        G.zone[idx(...t)] = 'cabbage'; added++;
+      }
+    }
+    if (!added) return false;
+    say('farm', 'water', 'More mouths to feed. I am widening the cabbage patch.', 120);
+    return true;
+  },
+  // Room in the stockpile.
+  (G, say) => {
+    let free = 0;
+    for (let i = 0; i < G.zone.length; i++) if (G.zone[i] === 'stock' && colPass(G, i) && (!G.items[i] || G.items[i].qty < MAXSTACK * 0.8)) free++;
+    if (free >= 3) return false;
+    let added = 0;
+    while (added < 4) {
+      const t = spiral(HOME.cx - 5, HOME.cy, 7, (x, y, i) => interior(x, y) && freeSpot(G, i) && DIRS4.some(([dx, dy]) => inB(x + dx, y + dy) && G.zone[idx(x + dx, y + dy)] === 'stock'));
+      if (!t) break;
+      G.zone[idx(...t)] = 'stock'; added++;
+    }
+    if (!added) return false;
+    say('stock', 'air', 'The stockpile is overflowing. I marked out more space.', 120);
+    return true;
+  },
+  // Timber.
+  (G, say) => {
+    if (countItems(G, 'wood') >= 40) return false;
+    let pending = 0; for (const d of G.desig) if (d === 'chop') pending++;
+    if (pending >= 4) return false;
+    const trees = [];
+    for (let i = 0; i < G.tree.length; i++) if (G.tree[i] && !G.desig[i]) trees.push(i);
+    trees.sort((a, b) => homeDist(a % W, (a / W) | 0) - homeDist(b % W, (b / W) | 0));
+    trees.slice(0, 5 - pending).forEach((i) => { G.desig[i] = 'chop'; });
+    if (!trees.length) return false;
+    say('chop', 'none', 'We are short on timber. I marked the nearest trees.', 120);
+    return true;
+  },
+  // Stone, more of it once the wall goes up.
+  (G, say) => {
+    if (countItems(G, 'stone') >= (ringActive(G) ? 40 : 20)) return false;
+    let pending = 0; for (const d of G.desig) if (d === 'mine') pending++;
+    if (pending >= 3) return false;
+    const faces = [];
+    for (let i = 0; i < G.terrain.length; i++) {
+      if (G.terrain[i] !== T.STONE || G.desig[i]) continue;
+      const x = i % W, y = (i / W) | 0;
+      if (DIRS4.some(([dx, dy]) => inB(x + dx, y + dy) && colPass(G, idx(x + dx, y + dy)))) faces.push(i);
+    }
+    faces.sort((a, b) => homeDist(a % W, (a / W) | 0) - homeDist(b % W, (b / W) | 0));
+    faces.slice(0, 4 - pending).forEach((i) => { G.desig[i] = 'mine'; });
+    if (!faces.length) return false;
+    say('mine', 'earth', 'The earth will give us stone. I picked a good seam.', 120);
+    return true;
+  },
+  // Somewhere to share tea, once everyone has a bed.
+  (G, say) => {
+    if (countStruct(G, 'teatable') || countStruct(G, 'bed', true) < G.pawns.filter((p) => !p.dead).length) return false;
+    const t = spiral(HOME.cx + 3, HOME.cy - 3, 6, (x, y, i) => interior(x, y) && freeSpot(G, i) && !G.items[i] && roomy(G, x, y));
+    if (!t) return false;
+    placeStruct(G, 'teatable', t);
+    say('teatable', 'fire', 'A camp needs a place for tea and talk. I will build a tea table.', 120);
+    return true;
+  },
+  (G, say) => {
+    if (!countStruct(G, 'teatable')) return false;
+    let cells = 0; for (const z of G.zone) if (z === 'tea') cells++;
+    if (cells >= 6) return false;
+    let added = 0;
+    while (added < 3) {
+      const t = spiral(HOME.cx + 5, HOME.cy - 4, 6, (x, y, i) => interior(x, y) && freeSpot(G, i) && !G.items[i] && fertile(G, i));
+      if (!t) break;
+      G.zone[idx(...t)] = 'tea'; added++;
+    }
+    if (!added) return false;
+    say('tea', 'air', 'Let us grow our own jasmine for the tea table.', 150);
+    return true;
+  },
+  // A wall around camp once raids are a real threat; built a few sections at a time.
+  (G, say) => {
+    if (!ringActive(G)) return false;
+    let pending = 0;
+    for (const s of G.struct) if (s && !s.built && (s.type === 'wall' || s.type === 'door')) pending++;
+    if (pending >= 8) return false;
+    let added = 0;
+    for (const [x, y] of ringTiles()) {
+      if (added >= 6) break;
+      const i = idx(x, y);
+      if (G.struct[i] || G.terrain[i] === T.WATER || G.terrain[i] === T.STONE) continue;
+      if (G.tree[i]) { if (!G.desig[i]) G.desig[i] = 'chop'; continue; }
+      if (G.plants[i]) { G.plants[i] = null; }
+      if (G.zone[i]) G.zone[i] = null;
+      placeStruct(G, DOORS.some(([dx, dy]) => dx === x && dy === y) ? 'door' : 'wall', [x, y]);
+      added++;
+    }
+    if (!added) return false;
+    say('ring', 'earth', G.raidsSeen ? 'They will come back. We raise a wall around the camp.' : 'Raiders roam these lands. Better to wall the camp now.', 240);
+    return true;
+  },
+  // Spike traps outside the gates after the first raid.
+  (G, say) => {
+    if (!G.raidsSeen || countStruct(G, 'trap') >= 4) return false;
+    let added = 0;
+    for (const [dx, dy] of DOORS) {
+      const ox = dx + Math.sign(dx - HOME.cx) * 2, oy = dy + Math.sign(dy - HOME.cy) * 2;
+      if (!inB(ox, oy)) continue;
+      const i = idx(ox, oy);
+      if (!freeSpot(G, i)) continue;
+      placeStruct(G, 'trap', [ox, oy]); added++;
+    }
+    if (!added) return false;
+    say('trap', 'none', 'I know a trick or two. Spike traps outside every gate.', 400);
+    return true;
+  },
+  // Hunt the platypus-bear only when food is short and the group is healthy.
+  (G, say) => {
+    const bear = G.enemies.find((e) => e.type === 'bear' && !e.hunted);
+    if (!bear) return false;
+    const fit = G.pawns.filter((p) => !p.dead && !p.downed && p.health > 70).length;
+    const food = countItems(G, 'meal') + countItems(G, 'cabbage') + countItems(G, 'meat');
+    if (fit < 3 || food >= G.pawns.filter((p) => !p.dead).length * 6) return false;
+    bear.hunted = true;
+    say('hunt', 'none', 'Food is running low. Together we can take that platypus-bear.', 200);
+    return true;
+  },
+];
+
+function director(G, dt) {
+  if (!G.freeWill) return;
+  G.dirT -= dt;
+  if (G.dirT > 0) return;
+  G.dirT = 3;
+  const able = G.pawns.filter((p) => !p.dead && !p.downed);
+  if (!able.length) return;
+  const say = (key, el, text, cool) => {
+    if (G.time - (G.planLog[key] ?? -1e9) < cool) return;
+    G.planLog[key] = G.time;
+    const p = able.find((q) => q.el === el) || able[Math.floor(G.rand() * able.length)];
+    log(G, `${p.name}: "${text}"`, 'plan', ELEMENTS[p.el].color);
+    floatText(G, p.x, p.y - 0.8, 'Idea!', ELEMENTS[p.el].color);
+  };
+  for (const plan of PLANS) if (plan(G, say)) return;
+}
+
 // ============================================================================
 // Main simulation step
 // ============================================================================
@@ -1638,11 +1857,16 @@ function update(G, dt) {
   // Events
   if (G.ev.fullmoon > 0) { G.ev.fullmoon -= dt; if (G.ev.fullmoon <= 0) log(G, 'The full moon wanes.', 'info'); }
   if (G.ev.heatwave > 0) { G.ev.heatwave -= dt; if (G.ev.heatwave <= 0) log(G, 'The heatwave breaks. Cool winds return.', 'iroh'); }
+  director(G, dt);
   G.nextEvent -= dt;
   if (G.nextEvent <= 0) {
     G.nextEvent = 70 + G.rand() * 55;
     fireEvent(G, G.eventCount === 0 ? 'wanderer' : G.eventCount === 2 && !G.raid ? 'raid' : null);
   }
+  // One colonist acts as medic in a crisis: the waterbender if able, otherwise a backup.
+  const able = G.pawns.filter((p) => !p.dead && !p.downed && !p.mental);
+  const medic = ['water', 'none', 'air', 'earth', 'fire'].map((el) => able.find((p) => p.el === el)).find(Boolean);
+  G._medic = medic ? medic.id : -1;
   for (const p of G.pawns) updateColonist(G, p, dt);
   for (const e of G.enemies) updateEnemy(G, e, dt);
   // Soft separation so raiders don't stack on one tile.
@@ -2266,6 +2490,7 @@ const WHO = {
   iroh: { name: 'Uncle Iroh', cls: 'text-amber-300' },
   azula: { name: 'Azula', cls: 'text-rose-400' },
   info: { name: 'Colony', cls: 'text-stone-400' },
+  plan: { name: 'Colonist', cls: 'text-stone-200' },
 };
 
 export default function AvatarColony() {
@@ -2278,6 +2503,7 @@ export default function AvatarColony() {
   const [tool, setToolState] = useState('select');
   const [cat, setCat] = useState('orders');
   const [showHelp, setShowHelp] = useState(true);
+  const [freeWill, setFreeWillState] = useState(true);
   const [showLog, setShowLog] = useState(() => typeof window === 'undefined' || window.innerWidth > 640);
   const toolRef = useRef(setToolState);
 
@@ -2409,7 +2635,12 @@ export default function AvatarColony() {
     G.cam.x = p.x * TS - G.view.w / 2 / G.cam.zoom; G.cam.y = p.y * TS - G.view.h / 2 / G.cam.zoom; clampCam(G);
     force((v) => v + 1);
   };
-  const restart = () => { setSeed((Math.random() * 1e9) | 0); setShowHelp(false); setToolState('select'); };
+  const restart = () => { setSeed((Math.random() * 1e9) | 0); setShowHelp(false); setToolState('select'); setFreeWillState(true); };
+  const setFreeWill = (on) => {
+    G.freeWill = on; setFreeWillState(on);
+    if (on) { setTool('select'); log(G, 'The colonists take charge of their own plans again.', 'iroh'); }
+    else log(G, 'You take command. Colonists still work on their own, but only you place orders.', 'info');
+  };
 
   // Derived HUD data
   const res = { stone: 0, wood: 0, cabbage: 0, meal: 0, tea: 0, meat: 0 };
@@ -2524,7 +2755,7 @@ export default function AvatarColony() {
             {G.log.slice(0, 14).map((l) => (
               <div key={l.id} className="border-b border-white/5 py-1 last:border-0">
                 <span className="mr-1 tabular-nums text-stone-500">D{l.day} {l.clock}</span>
-                <span className={WHO[l.who].cls}>{l.text}</span>
+                <span className={WHO[l.who].cls} style={l.color ? { color: l.color } : undefined}>{l.text}</span>
               </div>
             ))}
           </div>
@@ -2541,7 +2772,23 @@ export default function AvatarColony() {
         </div>
       )}
 
-      {/* Bottom action bar */}
+      {/* Free will bar: the colony runs itself, the player watches */}
+      {freeWill && (
+        <div className="absolute bottom-2 left-1/2 flex w-[min(860px,calc(100%-16px))] -translate-x-1/2 flex-wrap items-center gap-2 rounded-xl border border-white/10 bg-[#11181b]/90 px-3 py-2 backdrop-blur">
+          <span className="flex items-center gap-1.5 rounded-full border border-emerald-300/40 bg-emerald-400/15 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-emerald-200"><Sparkles size={12} />Free will</span>
+          <span className="min-w-0 flex-1 text-[12px] text-stone-300"><Eye size={12} className="mr-1 inline align-[-2px] text-stone-400" />The colonists plan, build, farm and defend on their own. Watch, click anyone to inspect them, and set the speed.</span>
+          <div className="ml-auto flex items-center gap-1">
+            <button title="Zoom out" aria-label="Zoom out" onClick={() => zoomBy(1 / 1.2)} className="rounded-md p-1.5 text-stone-300 hover:bg-white/10"><ZoomOut size={14} /></button>
+            <button title="Zoom in" aria-label="Zoom in" onClick={() => zoomBy(1.2)} className="rounded-md p-1.5 text-stone-300 hover:bg-white/10"><ZoomIn size={14} /></button>
+            <button title="How to play" aria-label="How to play" onClick={() => { setShowHelp(true); setSpeed(0); }} className="rounded-md p-1.5 text-stone-300 hover:bg-white/10"><HelpCircle size={14} /></button>
+            <button title="New map" aria-label="New map" onClick={restart} className="rounded-md p-1.5 text-stone-300 hover:bg-white/10"><RotateCcw size={14} /></button>
+            <button onClick={() => setFreeWill(false)} className="flex items-center gap-1 rounded-md border border-white/10 px-2 py-1 text-[11px] text-stone-300 hover:bg-white/10"><Hammer size={12} />Give orders</button>
+          </div>
+        </div>
+      )}
+
+      {/* Bottom action bar (only when the player has taken command) */}
+      {!freeWill && (
       <div className="absolute bottom-2 left-1/2 w-[min(860px,calc(100%-16px))] -translate-x-1/2 rounded-xl border border-white/10 bg-[#11181b]/90 p-1.5 backdrop-blur">
         <div className="mb-1 flex items-center gap-1">
           {CATS.map(([k, l]) => (
@@ -2552,6 +2799,7 @@ export default function AvatarColony() {
             <button title="Zoom in" aria-label="Zoom in" onClick={() => zoomBy(1.2)} className="rounded-md p-1.5 text-stone-300 hover:bg-white/10"><ZoomIn size={14} /></button>
             <button title="How to play" aria-label="How to play" onClick={() => { setShowHelp(true); setSpeed(0); }} className="rounded-md p-1.5 text-stone-300 hover:bg-white/10"><HelpCircle size={14} /></button>
             <button title="New map" aria-label="New map" onClick={restart} className="rounded-md p-1.5 text-stone-300 hover:bg-white/10"><RotateCcw size={14} /></button>
+            <button onClick={() => setFreeWill(true)} className="flex items-center gap-1 rounded-md border border-emerald-300/40 bg-emerald-400/10 px-2 py-1 text-[11px] text-emerald-200 hover:bg-emerald-400/20"><Sparkles size={12} />Free will</button>
           </div>
         </div>
         <div className="flex gap-1 overflow-x-auto">
@@ -2569,6 +2817,7 @@ export default function AvatarColony() {
         </div>
         <div className="mt-1 truncate px-1 text-[11px] text-stone-400">{tdef.hint}</div>
       </div>
+      )}
 
       {/* Help */}
       {showHelp && (
@@ -2576,7 +2825,7 @@ export default function AvatarColony() {
           <div className="max-h-full w-[min(560px,100%)] overflow-y-auto rounded-2xl border border-amber-200/20 bg-[#141c1f] p-5 shadow-2xl">
             <div className="text-[11px] uppercase tracking-[0.2em] text-amber-300">A colony of the four nations</div>
             <h1 className="mb-2 text-2xl font-semibold text-stone-50">Four Nations Colony</h1>
-            <p className="mb-3 text-[13px] text-stone-300">Kanto, Yuka, Ren and Tashi have settled a quiet valley. They work on their own: they eat, sleep, haul, farm, build and defend. You give orders and keep their Harmony up.</p>
+            <p className="mb-3 text-[13px] text-stone-300">Kanto, Yuka, Ren and Tashi have settled a quiet valley. They have free will: they decide what to build, where to farm, what to mine and when to wall in the camp, then do the work themselves. You watch their story unfold and set the pace.</p>
             <div className="mb-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
               {Object.entries(ELEMENTS).map(([k, el]) => { const EI = el.icon; return (
                 <div key={k} className="flex gap-2 rounded-lg bg-black/25 p-2">
@@ -2586,13 +2835,13 @@ export default function AvatarColony() {
               ); })}
             </div>
             <ul className="mb-4 list-disc space-y-1 pl-5 text-[12px] text-stone-300">
-              <li>Pan with WASD, arrow keys, or drag the map. Scroll to zoom.</li>
-              <li>Space pauses; 1, 2, 3 set the speed. Esc or right-click returns to Select.</li>
-              <li>Build beds first, then a tea table. Mark stone for mining and trees for chopping.</li>
-              <li>Raids arrive from the map edge. Walls give cover; doors and traps slow raiders down.</li>
-              <li>Downed colonists bleed. Waterbenders tend and heal them; others carry them to beds.</li>
+              <li>Space pauses; 1, 2, 3 set the speed. The buttons at the top right do the same.</li>
+              <li>Pan with WASD, arrow keys, or by dragging the map. Scroll to zoom.</li>
+              <li>Click a colonist portrait or anyone on the map to see their needs, thoughts and wounds.</li>
+              <li>Colonists announce their plans in the Storyteller log in their own colours.</li>
+              <li>Want to direct them yourself? Press Give orders at the bottom to unlock the build tools.</li>
             </ul>
-            <button onClick={() => { setShowHelp(false); setSpeed(G.lastSpeed || 1); }} className="w-full rounded-lg bg-amber-400 py-2 text-[14px] font-semibold text-stone-900 hover:bg-amber-300">Begin</button>
+            <button onClick={() => { setShowHelp(false); setSpeed(G.lastSpeed || 1); }} className="w-full rounded-lg bg-amber-400 py-2 text-[14px] font-semibold text-stone-900 hover:bg-amber-300">Watch the colony</button>
           </div>
         </div>
       )}

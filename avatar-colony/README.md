@@ -7,6 +7,20 @@ A playable 2D top-down colony simulation prototype inspired by *Avatar: The Last
 
 ## Playing
 
+The colonists have **free will** by default: they decide what the camp needs and place their own orders. All you do is watch, click anyone to inspect them, and set the speed. Each plan appears in the Storyteller log, voiced by the colonist who had the idea.
+
+| Need | What the colonists do |
+| --- | --- |
+| Shelter | Lay out a bed for every colonist, including newcomers |
+| Food | Keep a campfire, grow about 5 cabbage tiles per colonist (fertile soil first), hunt the platypus-bear when food runs low and the group is healthy |
+| Materials | Mark the nearest trees and stone faces when wood or stone runs short |
+| Storage | Grow the stockpile when it fills up |
+| Harmony | Build a tea table once everyone has a bed, then plant jasmine for it |
+| Defence | After the first raid (or by day 3), raise a stone wall around camp a few sections at a time, with a gate on each side and spike traps outside the gates |
+| Crises | One colonist acts as medic (the Waterbender, or a backup) and breaks off from fighting to save a bleeding ally |
+
+Press **Give orders** to take command and unlock the build tools. Colonists still work on their own, but only you place orders. Press **Free will** to hand control back.
+
 | Input | Action |
 | --- | --- |
 | WASD / arrow keys, or drag with the Select tool | Pan |
@@ -15,7 +29,7 @@ A playable 2D top-down colony simulation prototype inspired by *Avatar: The Last
 | Esc / right-click | Back to the Select tool |
 | Drag with a tool | Designate mining/chopping, place blueprints, paint zones |
 
-Bottom bar: **Orders** (Mine, Chop, Hunt, Clear), **Structures** (Stone Wall, Door, Bed, Campfire, Tea Table, Spike Trap) and **Zones** (Stockpile, Cabbage Patch, Jasmine Tea). Dragging a wall box draws its outline.
+In command mode, the bottom bar has **Orders** (Mine, Chop, Hunt, Clear), **Structures** (Stone Wall, Door, Bed, Campfire, Tea Table, Spike Trap) and **Zones** (Stockpile, Cabbage Patch, Jasmine Tea). Dragging a wall box draws its outline.
 
 ## Systems
 
