@@ -109,3 +109,48 @@ test('toJSON / fromJSON round-trips', () => {
   assert.deepEqual(copy.analyze().patterns, lex.analyze().patterns);
   assert.throws(() => Lexicon.fromJSON({}), /Not a WordWeave file/);
 });
+
+test('synonym and antonym links, with inference and contradiction checks', () => {
+  const lex = new Lexicon();
+  lex.learn('It was hot. It was warm. It was cold. It was chilly. It was big.');
+  assert.deepEqual(lex.link('Hot', 'warm', 'synonym'), { ok: true });
+  assert.ok(lex.link('cold', 'chilly', 'synonym').ok);
+  assert.ok(lex.link('hot', 'cold', 'antonym').ok);
+  assert.deepEqual(lex.synonymGroup('warm').sort(), ['hot', 'warm']);
+  const ant = lex.antonymsOf('warm');
+  assert.deepEqual(ant.direct, []);
+  assert.deepEqual(ant.inferred.map((x) => x.word), ['chilly', 'cold']);
+  assert.deepEqual(ant.inferred.find((x) => x.word === 'cold').via, ['hot', 'cold']);
+  assert.ok(lex.areAntonyms('chilly', 'warm'));
+  // contradictions and bad input are refused
+  assert.match(lex.link('warm', 'chilly', 'synonym').error, /opposites/);
+  assert.match(lex.link('hot', 'warm', 'antonym').error, /synonyms/);
+  assert.match(lex.link('hot', 'hot', 'synonym').error, /itself/);
+  assert.match(lex.link('hot', 'freezing', 'antonym').error, /freezing.*learned yet/);
+  assert.match(lex.link('warm', 'hot', 'synonym').error, /already linked/);
+  lex.learn('The sun was big and the bonfire was big.');
+  assert.ok(lex.link('big', 'cold', 'synonym').ok); // fine on its own...
+  assert.match(lex.link('big', 'hot', 'synonym').error, /opposites/); // ...but now big is cold's synonym, so hot's opposite
+  assert.deepEqual(lex.linkGroups(), [['big', 'chilly', 'cold'], ['hot', 'warm']]);
+  // unlink and forget
+  assert.ok(lex.unlink('cold', 'big', 'synonym'));
+  assert.ok(!lex.unlink('cold', 'big', 'synonym'));
+  lex.forget('hot');
+  assert.deepEqual(lex.synonymGroup('warm'), ['warm']);
+  assert.deepEqual(lex.antonymsOf('cold').direct, []);
+});
+
+test('links survive toJSON / fromJSON', () => {
+  const lex = new Lexicon();
+  lex.learn('Happy and glad and sad.');
+  lex.link('happy', 'glad', 'synonym');
+  lex.link('happy', 'sad', 'antonym');
+  const copy = Lexicon.fromJSON(JSON.parse(JSON.stringify(lex.toJSON())));
+  assert.deepEqual(copy.linkPairs('synonym'), [['glad', 'happy']]);
+  assert.deepEqual(copy.linkPairs('antonym'), [['happy', 'sad']]);
+  assert.ok(copy.areAntonyms('glad', 'sad'));
+  // files saved before links existed still load
+  const old = lex.toJSON();
+  delete old.links;
+  assert.equal(Lexicon.fromJSON(old).linkPairs('synonym').length, 0);
+});

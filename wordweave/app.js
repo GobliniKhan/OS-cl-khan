@@ -65,6 +65,26 @@
       (note !== undefined && note !== '' ? '<small>' + esc(note) + '</small>' : '') + '</span>';
   }
 
+  /** A word chip for a hand-made link. With `removable`, it gets a × that removes the link to `from`. */
+  function linkChip(word, from, type, opts) {
+    opts = opts || {};
+    var html = chip(word, opts.note).replace('class="chip"', 'class="chip ' + (type === 'synonym' ? 'syn' : 'ant') +
+      (opts.inferred ? ' inferred' : '') + '"' + (opts.title ? ' title="' + esc(opts.title) + '"' : ''));
+    if (!opts.removable) return html;
+    return html.replace(/<\/span>$/, '<button class="unlink" data-unlink="' + esc(from + '|' + word + '|' + type) +
+      '" title="Remove this link" aria-label="Remove link between ' + esc(from) + ' and ' + esc(word) + '">\u00d7</button></span>');
+  }
+
+  function linkWords(a, b, type) {
+    var res = lex.link(a, b, type);
+    if (!res.ok) { toast(res.error); return false; }
+    save();
+    renderAll(false);
+    toast('Linked \u201c' + WW.normalize(a.trim()) + '\u201d and \u201c' + WW.normalize(b.trim()) + '\u201d as ' +
+      (type === 'synonym' ? 'synonyms' : 'opposites'));
+    return true;
+  }
+
   function tagLabel(tag, a) {
     if (tag === '^') return 'sentence start';
     if (tag === '$') return 'sentence end';
@@ -87,6 +107,10 @@
     el.className = 'toast';
     el.textContent = msg;
     $('toasts').appendChild(el);
+    // Keep at most three messages on screen: drop the oldest ones that aren't progress messages.
+    var shown = $('toasts').querySelectorAll('.toast:not(.sticky)');
+    for (var i = 0; i < shown.length - 3; i++) shown[i].remove();
+    if (sticky) el.classList.add('sticky');
     if (!sticky) setTimeout(function () { el.remove(); }, 3200);
     return el;
   }
@@ -340,7 +364,8 @@
       ['used', lex.totalTokens],
       ['sentences', lex.totalSentences],
       ['classes', a.classes.length],
-      ['patterns', a.patterns.filter(function (p) { return p.count > 1; }).length]
+      ['patterns', a.patterns.filter(function (p) { return p.count > 1; }).length],
+      ['links', lex.linkPairs('synonym').length + lex.linkPairs('antonym').length]
     ];
     $('stats').innerHTML = items.map(function (it) {
       return '<div><dt>' + it[0] + '</dt><dd>' + esc(it[1]) + '</dd></div>';
@@ -477,15 +502,71 @@
       '<h4 class="caption">Word families</h4><div class="card">' + fams + '</div>';
   }
 
+  function renderLinks() {
+    var groups = lex.linkGroups();
+    var ants = lex.linkPairs('antonym');
+    if (!groups.length && !ants.length) {
+      $('links-list').innerHTML = '<p class="empty-state">No links yet. Link two words above, or open any word and link it from there. ' +
+        'Tip: words in the same class or listed under \u201cUsed like\u201d are good candidates, though opposites ' +
+        '(hot / cold) often show up in the same places too, which is why this is done by hand.</p>';
+      return;
+    }
+    var html = '';
+    if (groups.length) {
+      html += '<h4 class="caption">Synonym groups</h4>' + groups.map(function (g) {
+        var pairs = lex.linkPairs('synonym').filter(function (p) { return g.indexOf(p[0]) >= 0; });
+        return '<div class="card"><div class="members">' + g.map(function (w) { return chip(w); }).join('') + '</div>' +
+          '<div class="rel">Linked: ' + pairs.map(function (p) {
+            return esc(p[0]) + ' = ' + esc(p[1]) + ' <button class="unlink" data-unlink="' + esc(p[0] + '|' + p[1] + '|synonym') +
+              '" title="Remove this link" aria-label="Remove link between ' + esc(p[0]) + ' and ' + esc(p[1]) + '">\u00d7</button>';
+          }).join(' \u00b7 ') + '</div></div>';
+      }).join('');
+    }
+    if (ants.length) {
+      var implied = [], seen = new Set(ants.map(function (p) { return p.join('|'); }));
+      ants.forEach(function (p) {
+        lex.synonymGroup(p[0]).forEach(function (x) {
+          lex.synonymGroup(p[1]).forEach(function (y) {
+            var key = x < y ? x + '|' + y : y + '|' + x;
+            if (!seen.has(key)) { seen.add(key); implied.push([x, y, p]); }
+          });
+        });
+      });
+      html += '<h4 class="caption">Opposites</h4><div class="card pairs">' + ants.map(function (p) {
+        return '<div class="pair">' + chip(p[0]) + '<span class="vs">\u2194</span>' + linkChip(p[1], p[0], 'antonym', { removable: true }) + '</div>';
+      }).join('') + '</div>';
+      if (implied.length) {
+        html += '<h4 class="caption">Opposites implied by your synonyms</h4><div class="card pairs">' + implied.slice(0, 60).map(function (t) {
+          return '<div class="pair" title="Because ' + esc(t[2][0]) + ' \u2194 ' + esc(t[2][1]) + '">' + chip(t[0]) +
+            '<span class="vs">\u2194</span>' + chip(t[1]) + '<small class="rel">via ' + esc(t[2][0]) + ' \u2194 ' + esc(t[2][1]) + '</small></div>';
+        }).join('') + '</div>';
+      }
+    }
+    $('links-list').innerHTML = html;
+  }
+
+  var vocabKey = '';
+  function renderVocabList() {
+    var key = lex.size() + ':' + lex.totalTokens;
+    if (key === vocabKey) return;
+    vocabKey = key;
+    $('vocab').innerHTML = Array.from(lex.words.entries())
+      .sort(function (x, y) { return y[1].count - x[1].count; })
+      .slice(0, 3000)
+      .map(function (e) { return '<option value="' + esc(e[0]) + '">'; }).join('');
+  }
+
   function renderTab() {
     if (currentTab === 'words') renderWords();
     else if (currentTab === 'classes') renderClasses();
     else if (currentTab === 'patterns') renderPatterns();
     else if (currentTab === 'forms') renderForms();
+    else if (currentTab === 'links') renderLinks();
     else if (currentTab === 'map') { resizeGraph(); rebuildGraph(); }
   }
 
   function renderAll(scroll) {
+    renderVocabList();
     renderTranscript(scroll);
     renderStats();
     renderTab();
@@ -507,6 +588,14 @@
     renderTab();
   });
   $('word-filter').addEventListener('input', renderWords);
+  $('links-form').addEventListener('submit', function (e) {
+    e.preventDefault();
+    if (linkWords($('links-a').value, $('links-b').value, $('links-type').value)) {
+      $('links-a').value = '';
+      $('links-b').value = '';
+      $('links-a').focus();
+    }
+  });
   $('word-sort').addEventListener('change', renderWords);
 
   // ---- word drawer ----------------------------------------------------------------------------
@@ -538,8 +627,14 @@
       section('Often comes after', d.predecessors, function (e) { return chip(e[0], e[1]); }) +
       section('Used like', d.similar, function (e) { return chip(e[0], Math.round(e[1] * 100) + '%'); }) +
       section('Word family', (d.family || []).filter(function (w) { return w !== d.word; }), function (w) { return chip(w); }) +
+      linkSections(d.word) +
       '<button class="forget danger" id="forget">Forget “' + esc(d.word) + '”</button>';
     $('drawer').hidden = false;
+    $('drawer-link').onsubmit = function (e) {
+      e.preventDefault();
+      var type = (e.submitter && e.submitter.value) || 'synonym';
+      if (linkWords(d.word, $('drawer-link-word').value, type)) $('drawer-link-word').value = '';
+    };
     $('forget').onclick = function () {
       lex.forget(d.word);
       save();
@@ -550,12 +645,43 @@
     };
   }
 
+  function linkSections(word) {
+    var direct = lex.links.synonym.get(word) || new Set();
+    var group = lex.synonymGroup(word).filter(function (w) { return w !== word; }).sort();
+    var ant = lex.antonymsOf(word);
+    var html = '<h4>Synonyms</h4><div class="row">' + (group.length ? group.map(function (w) {
+      return direct.has(w)
+        ? linkChip(w, word, 'synonym', { removable: true })
+        : linkChip(w, word, 'synonym', { inferred: true, note: 'via group', title: 'Linked through other synonyms' });
+    }).join('') : '<span class="empty-state">none yet</span>') + '</div>';
+    html += '<h4>Opposites</h4><div class="row">' + (ant.direct.length || ant.inferred.length
+      ? ant.direct.map(function (w) { return linkChip(w, word, 'antonym', { removable: true }); }).join('') +
+        ant.inferred.map(function (x) {
+          return linkChip(x.word, word, 'antonym', { inferred: true, note: 'implied',
+            title: 'Implied by ' + x.via[0] + ' \u2194 ' + x.via[1] });
+        }).join('')
+      : '<span class="empty-state">none yet</span>') + '</div>';
+    html += '<form class="link-form" id="drawer-link" autocomplete="off" style="margin-top:10px">' +
+      '<input id="drawer-link-word" list="vocab" placeholder="Link \u201c' + esc(word) + '\u201d to\u2026" aria-label="Word to link" required>' +
+      '<button type="submit" value="synonym">Synonym</button><button type="submit" value="antonym">Opposite</button></form>';
+    return html;
+  }
+
   function closeDrawer() {
     openWord = null;
     $('drawer').hidden = true;
   }
 
   document.addEventListener('click', function (e) {
+    var u = e.target.closest('[data-unlink]');
+    if (u) {
+      var parts = u.dataset.unlink.split('|');
+      lex.unlink(parts[0], parts[1], parts[2]);
+      save();
+      renderAll(false);
+      toast('Unlinked \u201c' + parts[0] + '\u201d and \u201c' + parts[1] + '\u201d');
+      return;
+    }
     var w = e.target.closest('[data-word]');
     if (w && !e.target.closest('#graph')) openDrawer(w.dataset.word);
   });
@@ -756,6 +882,18 @@
       p.vx += dx * f; p.vy += dy * f;
       q.vx -= dx * f; q.vy -= dy * f;
     });
+    // Synonyms pull together gently; opposites push apart a little.
+    ['synonym', 'antonym'].forEach(function (type) {
+      lex.linkPairs(type).forEach(function (pr) {
+        var p = graph.nodes.get(pr[0]), q = graph.nodes.get(pr[1]);
+        if (!p || !q) return;
+        var dx = q.x - p.x, dy = q.y - p.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
+        var f = (d - (type === 'synonym' ? 60 : 160)) * 0.02 * alpha;
+        dx /= d; dy /= d;
+        p.vx += dx * f; p.vy += dy * f;
+        q.vx -= dx * f; q.vy -= dy * f;
+      });
+    });
     nodes.forEach(function (n) {
       if (n === graph.drag) { n.vx = n.vy = 0; return; }
       n.vx *= 0.8; n.vy *= 0.8;
@@ -804,6 +942,22 @@
       ctx.closePath();
       ctx.fillStyle = ctx.strokeStyle;
       ctx.fill();
+    });
+    // Hand-made links between words on the map.
+    ['synonym', 'antonym'].forEach(function (type) {
+      ctx.strokeStyle = css.getPropertyValue(type === 'synonym' ? '--syn' : '--danger').trim();
+      ctx.lineWidth = 2;
+      ctx.setLineDash([5, 4]);
+      lex.linkPairs(type).forEach(function (pr) {
+        var p = graph.nodes.get(pr[0]), q = graph.nodes.get(pr[1]);
+        if (!p || !q) return;
+        ctx.globalAlpha = hover && hover !== p && hover !== q ? 0.15 : 0.9;
+        ctx.beginPath();
+        ctx.moveTo(p.x, p.y);
+        ctx.lineTo(q.x, q.y);
+        ctx.stroke();
+      });
+      ctx.setLineDash([]);
     });
     ctx.globalAlpha = 1;
     var linked = new Set();

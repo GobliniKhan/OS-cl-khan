@@ -110,6 +110,7 @@
     this.sentences = [];        // most recent sentences, as word arrays (for patterns)
     this.totalTokens = 0;
     this.totalSentences = 0;
+    this.links = { synonym: new Map(), antonym: new Map() }; // word -> Set(word), both directions
     this._analysis = null;
   };
 
@@ -179,6 +180,7 @@
       m.delete(word);
       if (!m.size) self.next2.delete(key);
     });
+    this.unlinkAll(word);
     this.sentences = this.sentences
       .map(function (s) { return s.filter(function (w) { return w !== word; }); })
       .filter(function (s) { return s.length; });
@@ -263,6 +265,126 @@
     var s = this.next.get(START);
     var e = this.next.get(word);
     return { starts: (s && s.get(word)) || 0, ends: (e && e.get(END)) || 0 };
+  };
+
+  // ---- manual links: synonyms and antonyms ---------------------------------------------------
+
+  function addPair(map, a, b) {
+    (map.get(a) || map.set(a, new Set()).get(a)).add(b);
+    (map.get(b) || map.set(b, new Set()).get(b)).add(a);
+  }
+
+  function removePair(map, a, b) {
+    var had = false;
+    [[a, b], [b, a]].forEach(function (p) {
+      var set = map.get(p[0]);
+      if (set && set.delete(p[1])) had = true;
+      if (set && !set.size) map.delete(p[0]);
+    });
+    return had;
+  }
+
+  /** Every word reachable through synonym links (synonymy is treated as transitive), the word included. */
+  Lexicon.prototype.synonymGroup = function (word) {
+    word = normalize(word);
+    var seen = new Set([word]), queue = [word], syn = this.links.synonym;
+    while (queue.length) {
+      (syn.get(queue.shift()) || new Set()).forEach(function (w) {
+        if (!seen.has(w)) { seen.add(w); queue.push(w); }
+      });
+    }
+    return Array.from(seen);
+  };
+
+  /**
+   * Antonyms of a word. direct: linked to it by hand. inferred: the opposite of a synonym, or a synonym of an
+   * opposite (if hot = warm and hot <> cold, then warm <> cold), with `via` naming the hand-made link it follows.
+   */
+  Lexicon.prototype.antonymsOf = function (word) {
+    word = normalize(word);
+    var self = this, ant = this.links.antonym;
+    var direct = Array.from(ant.get(word) || []).sort();
+    var seen = new Set(direct.concat([word]));
+    var inferred = [];
+    this.synonymGroup(word).forEach(function (g) {
+      (ant.get(g) || new Set()).forEach(function (a) {
+        self.synonymGroup(a).forEach(function (x) {
+          if (!seen.has(x)) { seen.add(x); inferred.push({ word: x, via: [g, a] }); }
+        });
+      });
+    });
+    inferred.sort(function (x, y) { return x.word < y.word ? -1 : 1; });
+    return { direct: direct, inferred: inferred };
+  };
+
+  Lexicon.prototype.areAntonyms = function (a, b) {
+    b = normalize(b);
+    var r = this.antonymsOf(a);
+    return r.direct.indexOf(b) >= 0 || r.inferred.some(function (x) { return x.word === b; });
+  };
+
+  /**
+   * Link two learned words as 'synonym' or 'antonym'. Returns {ok: true} or {ok: false, error}.
+   * Refuses links that contradict existing ones (e.g. making two opposites synonyms).
+   */
+  Lexicon.prototype.link = function (a, b, type) {
+    a = normalize(String(a || '').trim());
+    b = normalize(String(b || '').trim());
+    if (type !== 'synonym' && type !== 'antonym') return { ok: false, error: 'Choose synonym or antonym.' };
+    if (!a || !b) return { ok: false, error: 'Enter two words.' };
+    if (a === b) return { ok: false, error: 'A word can\u2019t be linked to itself.' };
+    var missing = [a, b].filter(function (w) { return !this.words.has(w); }, this);
+    if (missing.length) {
+      return { ok: false, error: '\u201c' + missing.join('\u201d and \u201c') + '\u201d ' +
+        (missing.length > 1 ? 'haven\u2019t' : 'hasn\u2019t') + ' been learned yet. Use ' +
+        (missing.length > 1 ? 'them' : 'it') + ' in a sentence first.' };
+    }
+    if (this.links[type].has(a) && this.links[type].get(a).has(b)) {
+      return { ok: false, error: '\u201c' + a + '\u201d and \u201c' + b + '\u201d are already linked as ' + type + 's.' };
+    }
+    // Inference covers whole groups: if any synonym of a is opposite to any synonym of b, then a and b are opposites.
+    if (type === 'synonym' && this.areAntonyms(a, b)) {
+      return { ok: false, error: '\u201c' + a + '\u201d and \u201c' + b + '\u201d are opposites, so they can\u2019t be synonyms. Remove that link first.' };
+    }
+    if (type === 'antonym' && this.synonymGroup(a).indexOf(b) >= 0) {
+      return { ok: false, error: '\u201c' + a + '\u201d and \u201c' + b + '\u201d are synonyms, so they can\u2019t be opposites. Remove that link first.' };
+    }
+    addPair(this.links[type], a, b);
+    return { ok: true };
+  };
+
+  Lexicon.prototype.unlink = function (a, b, type) {
+    return removePair(this.links[type], normalize(a), normalize(b));
+  };
+
+  /** Remove every link a word has, of one type or both. */
+  Lexicon.prototype.unlinkAll = function (word, type) {
+    word = normalize(word);
+    var self = this;
+    (type ? [type] : ['synonym', 'antonym']).forEach(function (t) {
+      Array.from(self.links[t].get(word) || []).forEach(function (o) { removePair(self.links[t], word, o); });
+    });
+  };
+
+  /** All hand-made links of one type as sorted, de-duplicated [a, b] pairs. */
+  Lexicon.prototype.linkPairs = function (type) {
+    var out = [];
+    this.links[type].forEach(function (set, a) {
+      set.forEach(function (b) { if (a < b) out.push([a, b]); });
+    });
+    return out.sort(function (x, y) { return x[0] < y[0] ? -1 : x[0] > y[0] ? 1 : x[1] < y[1] ? -1 : 1; });
+  };
+
+  /** Synonym groups (2+ words), each with the groups it is opposite to. */
+  Lexicon.prototype.linkGroups = function () {
+    var self = this, seen = new Set(), groups = [];
+    Array.from(this.links.synonym.keys()).sort().forEach(function (w) {
+      if (seen.has(w)) return;
+      var g = self.synonymGroup(w).sort();
+      g.forEach(function (x) { seen.add(x); });
+      groups.push(g);
+    });
+    return groups;
   };
 
   // ---- structure analysis ---------------------------------------------------------------------
@@ -515,7 +637,8 @@
       next2: nestedToJSON(this.next2),
       sentences: this.sentences,
       totalTokens: this.totalTokens,
-      totalSentences: this.totalSentences
+      totalSentences: this.totalSentences,
+      links: { synonym: this.linkPairs('synonym'), antonym: this.linkPairs('antonym') }
     };
   };
 
@@ -528,6 +651,12 @@
     lex.sentences = data.sentences || [];
     lex.totalTokens = data.totalTokens || 0;
     lex.totalSentences = data.totalSentences || 0;
+    var links = data.links || {};
+    ['synonym', 'antonym'].forEach(function (t) {
+      (links[t] || []).forEach(function (p) {
+        if (lex.words.has(p[0]) && lex.words.has(p[1]) && p[0] !== p[1]) addPair(lex.links[t], p[0], p[1]);
+      });
+    });
     return lex;
   };
 

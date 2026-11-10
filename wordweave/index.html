@@ -45,10 +45,12 @@
         <button role="tab" data-tab="classes">Classes</button>
         <button role="tab" data-tab="patterns">Patterns</button>
         <button role="tab" data-tab="forms">Forms</button>
+        <button role="tab" data-tab="links">Links</button>
       </nav>
       <div class="tab-body" data-body="map">
         <canvas id="graph" aria-label="Map of words and the words that follow them"></canvas>
-        <p class="caption">The most-used words; arrows run from a word to the words that follow it. Colour is the word's class. Drag to rearrange, click to inspect.</p>
+        <p class="caption">The most-used words; arrows run from a word to the words that follow it. Colour is the word's class.
+          <span class="legend syn">synonyms</span> <span class="legend ant">opposites</span> are links you made. Drag to rearrange, click to inspect.</p>
       </div>
       <div class="tab-body" data-body="words" hidden>
         <div class="toolbar">
@@ -69,6 +71,20 @@
         <p class="caption">Your sentences rewritten as sequences of classes. Repeated patterns are the grammar WordWeave has inferred. <code>*</code> is a word not yet in any class.</p>
         <div id="pattern-list"></div>
       </div>
+      <div class="tab-body" data-body="links" hidden>
+        <p class="caption">Link words by hand. Synonyms chain together into groups (if <em>big</em> = <em>large</em> and <em>large</em> = <em>huge</em>, all three are one group).
+          Opposites carry across groups: if <em>hot</em> = <em>warm</em> and <em>hot</em> is the opposite of <em>cold</em>, then <em>warm</em> is too. Contradictions are refused.</p>
+        <form class="link-form" id="links-form" autocomplete="off">
+          <input id="links-a" list="vocab" placeholder="word" aria-label="First word" required>
+          <select id="links-type" aria-label="Link type">
+            <option value="synonym">is a synonym of</option>
+            <option value="antonym">is the opposite of</option>
+          </select>
+          <input id="links-b" list="vocab" placeholder="word" aria-label="Second word" required>
+          <button type="submit" class="primary">Link</button>
+        </form>
+        <div id="links-list"></div>
+      </div>
       <div class="tab-body" data-body="forms" hidden>
         <p class="caption">Endings and beginnings that turn one known word into another. An affix counts once it works on at least two different words.</p>
         <div id="forms-list"></div>
@@ -84,6 +100,7 @@
   <!-- Off-screen rather than display:none: some browsers (iOS Safari, in-app browsers) won't open a picker for a hidden input. -->
   <input type="file" id="file-upload" class="offscreen" multiple tabindex="-1" aria-hidden="true">
   <input type="file" id="file-import" class="offscreen" accept=".json,application/json" tabindex="-1" aria-hidden="true">
+  <datalist id="vocab"></datalist>
   <div class="toasts" id="toasts" aria-live="polite"></div>
   <div class="drop-overlay" aria-hidden="true"><div>Drop documents to teach WordWeave<small>Text, Markdown, HTML, CSV, subtitles, Word, OpenDocument, EPUB, PDF</small></div></div>
 

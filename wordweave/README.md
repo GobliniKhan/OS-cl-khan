@@ -10,6 +10,7 @@ Every word you type adds to its vocabulary, and as you keep typing it works out 
 | **Word classes** | Words that appear in similar surroundings are clustered into classes (`C1`, `C2`, …). It clusters repeatedly, replacing neighbours with their classes each time, so *the cat* and *a dog* end up grouped once *the* and *a* are. Roughly, these are parts of speech it has worked out for itself. |
 | **Class grammar** | For each class, which classes usually come before and after it (e.g. `C1 → C3 93%`). |
 | **Sentence patterns** | Every sentence rewritten as a class sequence (`C1 C3 C4 C1 C2`). Repeated sequences are the grammar it has inferred. |
+| **Synonyms & opposites** | Linked by you rather than learned, because opposites like *hot* / *cold* turn up in the same places as synonyms do. The app infers the rest: synonym groups, and opposites implied through them. |
 | **Word forms** | Suffixes and prefixes that turn one known word into another (`walk → walked`, `play → played` gives `-ed`), including dropped *e* (*make → making*) and doubled consonants (*run → running*). A rule only counts once it works for two different words. Related words are grouped into families. |
 
 Words are split using Unicode letter rules, so it works for any language that separates words with spaces.
@@ -32,6 +33,10 @@ open wordweave/index.html         # macOS
   Files are read in your browser and never sent anywhere. The one exception: the first time you open a PDF,
   the PDF reader ([pdf.js](https://mozilla.github.io/pdf.js/)) is downloaded from cdnjs. Scanned PDFs with no
   text layer and old `.doc` files can't be read.
+- **Links** lets you mark words as synonyms or opposites by hand, from the Links tab or from any word's panel.
+  Synonyms chain into groups, opposites carry across them (*hot* = *warm* and *hot* ↔ *cold* implies
+  *warm* ↔ *cold*), and links that contradict each other are refused. Links show as dashed lines on the map
+  and are saved and exported with everything else.
 - **Map** draws the most-used words with arrows to the words that follow them, coloured by class.
 - Everything is saved in the browser's `localStorage`. **Export** and **Import** move a learned language
   between browsers as JSON. Browsers allow roughly 5 MB, about one full-length book. Past that, the app warns
