@@ -76,6 +76,7 @@ button:focus-visible, .button:focus-within, textarea:focus-visible, input:focus-
   outline-offset: 1px;
 }
 .danger { color: var(--danger); }
+.danger.armed { background: var(--danger); border-color: var(--danger); color: var(--panel); }
 .primary { background: var(--accent); border-color: var(--accent); color: var(--panel); }
 .primary:hover { filter: brightness(1.08); }
 

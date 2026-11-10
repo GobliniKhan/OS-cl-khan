@@ -618,8 +618,25 @@
     });
     e.target.value = '';
   });
+  // Two-step confirmation inside the page. Browser confirm() dialogs are blocked in sandboxed
+  // frames (as when the app is embedded), where they silently answer "no".
+  var resetArmed = null;
+  function disarmReset() {
+    clearTimeout(resetArmed);
+    resetArmed = null;
+    $('btn-reset').textContent = 'Reset';
+    $('btn-reset').classList.remove('armed');
+  }
+  $('btn-reset').addEventListener('blur', disarmReset);
   $('btn-reset').addEventListener('click', function () {
-    if (!confirm('Forget every word and pattern learned so far?')) return;
+    if (!resetArmed) {
+      $('btn-reset').textContent = 'Click again to forget everything';
+      $('btn-reset').classList.add('armed');
+      resetArmed = setTimeout(disarmReset, 4000);
+      return;
+    }
+    disarmReset();
+    var words = lex.size();
     lex = new WW.Lexicon();
     history = [];
     graph.nodes = new Map();
@@ -627,6 +644,7 @@
     closeDrawer();
     renderAll(false);
     renderLive();
+    toast('Forgot ' + words + ' word' + (words === 1 ? '' : 's') + '. Starting fresh.');
   });
 
   // ---- word map (force-directed graph) --------------------------------------------------------
