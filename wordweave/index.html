@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WordWeave</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <span class="logo" aria-hidden="true">◈</span>
+      <div>
+        <h1>WordWeave</h1>
+        <p class="tagline">A language that grows from what you type</p>
+      </div>
+    </div>
+    <dl class="stats" id="stats"></dl>
+    <div class="actions">
+      <button id="btn-babble" title="Make up a sentence from what has been learned">Babble</button>
+      <button id="btn-sample" title="Teach a short sample text">Sample text</button>
+      <button id="btn-export" title="Download the learned language as JSON">Export</button>
+      <label class="button" title="Load a language exported earlier">Import<input type="file" id="file-import" accept=".json,application/json" hidden></label>
+      <button id="btn-reset" class="danger" title="Forget everything">Reset</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="teach panel" aria-label="Teach">
+      <div class="transcript" id="transcript" aria-live="polite"></div>
+      <div class="composer">
+        <div class="live" id="live" aria-live="polite"></div>
+        <textarea id="input" rows="3" autocomplete="off" spellcheck="false"
+          placeholder="Type anything. Words are learned as you finish them; a sentence is woven in when you press Enter or end it with . ! ?"></textarea>
+        <div class="suggest" id="suggest" aria-label="Suggestions"></div>
+        <p class="hint"><kbd>Enter</kbd> learn · <kbd>Shift</kbd>+<kbd>Enter</kbd> new line · <kbd>Tab</kbd> accept top suggestion · click any word to inspect it</p>
+      </div>
+    </section>
+
+    <section class="structure panel" aria-label="Language structure">
+      <nav class="tabs" role="tablist">
+        <button role="tab" data-tab="map" aria-selected="true">Map</button>
+        <button role="tab" data-tab="words">Words</button>
+        <button role="tab" data-tab="classes">Classes</button>
+        <button role="tab" data-tab="patterns">Patterns</button>
+        <button role="tab" data-tab="forms">Forms</button>
+      </nav>
+      <div class="tab-body" data-body="map">
+        <canvas id="graph" aria-label="Map of words and the words that follow them"></canvas>
+        <p class="caption">The most-used words; arrows run from a word to the words that follow it. Colour is the word's class. Drag to rearrange, click to inspect.</p>
+      </div>
+      <div class="tab-body" data-body="words" hidden>
+        <div class="toolbar">
+          <input type="search" id="word-filter" placeholder="Filter words…">
+          <select id="word-sort">
+            <option value="count">Most used</option>
+            <option value="new">Newest</option>
+            <option value="alpha">A–Z</option>
+          </select>
+        </div>
+        <div id="word-list" class="word-list"></div>
+      </div>
+      <div class="tab-body" data-body="classes" hidden>
+        <p class="caption">Words that turn up in the same surroundings are grouped into a class. No grammar is built in: these are discovered from your sentences and regrouped every time you teach more.</p>
+        <div id="class-list"></div>
+      </div>
+      <div class="tab-body" data-body="patterns" hidden>
+        <p class="caption">Your sentences rewritten as sequences of classes. Repeated patterns are the grammar WordWeave has inferred. <code>*</code> is a word not yet in any class.</p>
+        <div id="pattern-list"></div>
+      </div>
+      <div class="tab-body" data-body="forms" hidden>
+        <p class="caption">Endings and beginnings that turn one known word into another. An affix counts once it works on at least two different words.</p>
+        <div id="forms-list"></div>
+      </div>
+    </section>
+  </main>
+
+  <aside class="drawer" id="drawer" hidden aria-label="Word details">
+    <button class="close" id="drawer-close" aria-label="Close">×</button>
+    <div id="drawer-body"></div>
+  </aside>
+
+  <div class="toasts" id="toasts" aria-live="polite"></div>
+
+  <script src="lexicon.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
