@@ -18,10 +18,10 @@
     <dl class="stats" id="stats"></dl>
     <div class="actions">
       <button id="btn-babble" title="Make up a sentence from what has been learned">Babble</button>
-      <label class="button primary" title="Teach it from documents: text, Markdown, HTML, CSV, subtitles, Word, OpenDocument, EPUB or PDF">Upload<input type="file" id="file-upload" multiple hidden></label>
+      <button id="btn-upload" class="primary" title="Teach it from documents: text, Markdown, HTML, CSV, subtitles, Word, OpenDocument, EPUB or PDF">Upload</button>
       <button id="btn-sample" title="Teach a short sample text">Sample text</button>
       <button id="btn-export" title="Download the learned language as JSON">Export</button>
-      <label class="button" title="Load a language exported earlier">Import<input type="file" id="file-import" accept=".json,application/json" hidden></label>
+      <button id="btn-import" title="Load a language exported earlier">Import</button>
       <button id="btn-reset" class="danger" title="Forget everything">Reset</button>
     </div>
   </header>
@@ -81,6 +81,9 @@
     <div id="drawer-body"></div>
   </aside>
 
+  <!-- Off-screen rather than display:none: some browsers (iOS Safari, in-app browsers) won't open a picker for a hidden input. -->
+  <input type="file" id="file-upload" class="offscreen" multiple tabindex="-1" aria-hidden="true">
+  <input type="file" id="file-import" class="offscreen" accept=".json,application/json" tabindex="-1" aria-hidden="true">
   <div class="toasts" id="toasts" aria-live="polite"></div>
   <div class="drop-overlay" aria-hidden="true"><div>Drop documents to teach WordWeave<small>Text, Markdown, HTML, CSV, subtitles, Word, OpenDocument, EPUB, PDF</small></div></div>
 

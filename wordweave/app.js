@@ -104,7 +104,10 @@
       // Storage full or blocked: keep working in memory, and say so once.
       if (!storageWarned) {
         storageWarned = true;
-        toast('This browser has no room left to save everything. It will be lost on reload unless you use Export.');
+        var full = e && (e.name === 'QuotaExceededError' || e.code === 22 || e.code === 1014);
+        toast(full
+          ? 'This browser has no room left to save everything. It will be lost on reload unless you use Export.'
+          : 'This browser isn\u2019t letting the page save, so what it learns will be lost on reload. Use Export to keep it.');
       }
     }
   }
@@ -563,6 +566,8 @@
 
   $('btn-babble').addEventListener('click', babble);
   $('file-upload').accept = DOCS.ACCEPT;
+  $('btn-upload').addEventListener('click', function () { $('file-upload').click(); });
+  $('btn-import').addEventListener('click', function () { $('file-import').click(); });
   $('file-upload').addEventListener('change', function (e) {
     learnFiles(e.target.files);
     e.target.value = '';
