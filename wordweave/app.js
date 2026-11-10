@@ -81,12 +81,14 @@
     return new Date(ts).toLocaleDateString();
   }
 
-  function toast(msg) {
+  /** Show a message. A sticky toast stays until the caller removes it (used for progress). */
+  function toast(msg, sticky) {
     var el = document.createElement('div');
     el.className = 'toast';
     el.textContent = msg;
     $('toasts').appendChild(el);
-    setTimeout(function () { el.remove(); }, 3200);
+    if (!sticky) setTimeout(function () { el.remove(); }, 3200);
+    return el;
   }
 
   function capitalize(s) {
@@ -98,8 +100,15 @@
   function save() {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify({ lexicon: lex.toJSON(), history: history }));
-    } catch (e) { /* storage full or blocked: keep working in memory */ }
+    } catch (e) {
+      // Storage full or blocked: keep working in memory, and say so once.
+      if (!storageWarned) {
+        storageWarned = true;
+        toast('This browser has no room left to save everything. It will be lost on reload unless you use Export.');
+      }
+    }
   }
+  var storageWarned = false;
 
   function load() {
     try {
@@ -152,6 +161,71 @@
     history.push({ text: capitalize(words.join(' ')) + '.', fresh: [], generated: true });
     save();
     renderTranscript(true);
+  }
+
+  // ---- documents ------------------------------------------------------------------------------
+
+  var DOCS = window.WordWeaveDocs;
+  var docQueue = Promise.resolve();
+
+  function learnFiles(files) {
+    Array.from(files || []).forEach(function (file) {
+      docQueue = docQueue.then(function () { return learnFile(file); });
+    });
+  }
+
+  function learnFile(file) {
+    var status = toast('Reading ' + file.name + '…', true);
+    return file.arrayBuffer()
+      .then(function (buf) {
+        return DOCS.extractText(file.name, new Uint8Array(buf), function (f) {
+          status.textContent = 'Reading ' + file.name + '… ' + Math.round(f * 100) + '%';
+        });
+      })
+      .then(function (res) {
+        if (!/\p{L}/u.test(res.text)) throw new Error('No words found in it.');
+        return learnDocument(file.name, res.text, status);
+      })
+      .catch(function (err) {
+        toast('Couldn’t learn from ' + file.name + ': ' + (err && err.message ? err.message : err));
+      })
+      .then(function () { status.remove(); });
+  }
+
+  /** Learn a whole document in small batches so the page stays responsive. */
+  function learnDocument(name, text, status) {
+    return new Promise(function (resolve) {
+      var parts = text.split(/(?<=[.!?\u2026]["')\]\u201d\u2019]*)\s+|\n+/);
+      var classesBefore = lex.analyze().classes.length;
+      var newWords = [], tokens = 0, sentences = 0, i = 0;
+      function tick() {
+        var end = Math.min(parts.length, i + 400);
+        var res = lex.learn(parts.slice(i, end).join('\n'));
+        newWords = newWords.concat(res.newWords);
+        tokens += res.tokens;
+        sentences += res.sentences;
+        i = end;
+        status.textContent = 'Learning ' + name + '… ' + Math.round(i / parts.length * 100) + '% · ' +
+          newWords.length + ' new words';
+        if (i < parts.length) { setTimeout(tick, 0); return; }
+        history.forEach(function (h) { h.fresh = []; });
+        var excerpt = text.replace(/\s+/g, ' ').trim();
+        history.push({
+          doc: { name: name, sentences: sentences, tokens: tokens, newWords: newWords.length },
+          text: excerpt.length > 220 ? excerpt.slice(0, 220).replace(/\s\S*$/, '') + '…' : excerpt,
+          fresh: newWords.slice(0, 60)
+        });
+        if (history.length > MAX_HISTORY) history.splice(0, history.length - MAX_HISTORY);
+        save();
+        renderAll(true);
+        toast('Learned ' + name + ': ' + sentences.toLocaleString() + ' sentences, ' +
+          tokens.toLocaleString() + ' words, ' + newWords.length.toLocaleString() + ' new');
+        var classesAfter = lex.analyze().classes.length;
+        if (classesAfter > classesBefore) toast('Word classes: ' + classesBefore + ' → ' + classesAfter);
+        resolve();
+      }
+      tick();
+    });
   }
 
   // ---- composer -------------------------------------------------------------------------------
@@ -276,10 +350,22 @@
       el.innerHTML = '<p class="empty"><strong>Nothing learned yet.</strong> Start typing below in any language. ' +
         'Every word you finish is new to WordWeave the first time, then it starts to notice which words follow which, ' +
         'groups words that behave alike into classes, and spots patterns in your sentences and word endings. ' +
-        'Or press <em>Sample text</em> to see it work.</p>';
+        'You can also <em>Upload</em> documents (or drop them here) to teach it a lot at once, ' +
+        'or press <em>Sample text</em> to see it work.</p>';
       return;
     }
     el.innerHTML = history.map(function (h) {
+      if (h.doc) {
+        var learnedHere = (h.fresh || []).filter(function (w) { return lex.has(w); });
+        return '<div class="line doc"><div class="doc-head"><span class="badge">Document</span> <b>' + esc(h.doc.name) +
+          '</b></div><div class="doc-meta">' + h.doc.sentences.toLocaleString() + ' sentences · ' +
+          h.doc.tokens.toLocaleString() + ' words · ' + h.doc.newWords.toLocaleString() + ' new</div>' +
+          '<p class="doc-excerpt">' + esc(h.text) + '</p>' +
+          (learnedHere.length ? '<div class="doc-new">' + learnedHere.map(function (w) { return wordSpan(w, 'fresh'); }).join(' ') +
+            (h.doc.newWords > learnedHere.length ? ' <span class="more">+' + (h.doc.newWords - learnedHere.length).toLocaleString() + ' more</span>' : '') +
+            '</div>' : '') +
+          '</div>';
+      }
       var fresh = new Set(h.fresh || []);
       var body = '';
       var last = 0;
@@ -476,6 +562,36 @@
   // ---- header actions -------------------------------------------------------------------------
 
   $('btn-babble').addEventListener('click', babble);
+  $('file-upload').accept = DOCS.ACCEPT;
+  $('file-upload').addEventListener('change', function (e) {
+    learnFiles(e.target.files);
+    e.target.value = '';
+  });
+
+  // Drag documents anywhere onto the page.
+  var dragDepth = 0;
+  function hasFiles(e) {
+    return e.dataTransfer && Array.prototype.indexOf.call(e.dataTransfer.types || [], 'Files') >= 0;
+  }
+  document.addEventListener('dragenter', function (e) {
+    if (!hasFiles(e)) return;
+    dragDepth++;
+    document.body.classList.add('dropping');
+  });
+  document.addEventListener('dragleave', function (e) {
+    if (!hasFiles(e)) return;
+    if (--dragDepth <= 0) { dragDepth = 0; document.body.classList.remove('dropping'); }
+  });
+  document.addEventListener('dragover', function (e) {
+    if (hasFiles(e)) e.preventDefault();
+  });
+  document.addEventListener('drop', function (e) {
+    if (!hasFiles(e)) return;
+    e.preventDefault();
+    dragDepth = 0;
+    document.body.classList.remove('dropping');
+    learnFiles(e.dataTransfer.files);
+  });
   $('btn-sample').addEventListener('click', function () { commit(SAMPLE.join('\n')); });
   $('btn-export').addEventListener('click', function () {
     var blob = new Blob([JSON.stringify({ lexicon: lex.toJSON(), history: history }, null, 1)], { type: 'application/json' });

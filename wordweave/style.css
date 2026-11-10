@@ -76,6 +76,8 @@ button:focus-visible, .button:focus-within, textarea:focus-visible, input:focus-
   outline-offset: 1px;
 }
 .danger { color: var(--danger); }
+.primary { background: var(--accent); border-color: var(--accent); color: var(--panel); }
+.primary:hover { filter: brightness(1.08); }
 
 kbd {
   font: 12px ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -279,6 +281,56 @@ textarea {
 .drawer .row { display: flex; flex-wrap: wrap; gap: 6px; }
 .drawer .forget { margin-top: 22px; }
 .pill { display: inline-block; font-size: 12px; padding: 1px 8px; border-radius: 999px; background: var(--accent-soft); margin-right: 4px; }
+
+/* ---- documents ---- */
+.line.doc {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin: 4px 0 12px;
+  background: var(--bg);
+}
+.doc-head { display: flex; align-items: center; gap: 8px; overflow-wrap: anywhere; }
+.badge {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  flex: none;
+}
+.doc-meta { font-size: 13px; color: var(--muted); }
+.doc-excerpt { margin: 6px 0; font-size: 13px; color: var(--muted); font-style: italic; }
+.doc-new { display: flex; flex-wrap: wrap; gap: 4px 8px; font-size: 14px; }
+.doc-new .more { color: var(--muted); font-size: 12px; align-self: center; }
+
+.drop-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  background: color-mix(in srgb, var(--bg) 80%, transparent);
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  pointer-events: none;
+}
+.drop-overlay div {
+  border: 2px dashed var(--accent);
+  border-radius: 16px;
+  padding: 40px 48px;
+  background: var(--panel);
+  font-size: 20px;
+  font-weight: 600;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.drop-overlay small { font-size: 13px; font-weight: 400; color: var(--muted); }
+body.dropping .drop-overlay { display: flex; }
 
 /* ---- toasts ---- */
 .toasts { position: fixed; right: 20px; top: 84px; display: flex; align-items: flex-end; flex-direction: column; gap: 8px; z-index: 20; pointer-events: none; }

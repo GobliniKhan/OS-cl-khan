@@ -27,13 +27,20 @@ open wordweave/index.html         # macOS
   is learned when it ends with `.` `!` `?` or when you press <kbd>Enter</kbd>.
 - Click any word, in the transcript, the lists or on the map, to see what has been learned about it:
   its class, the words around it, words used the same way, and its word family. Use **Forget** to remove typos.
+- **Upload** (or drag files anywhere onto the page) teaches it from whole documents at once. Supported:
+  plain text, Markdown, HTML, CSV/TSV, JSON, SRT/VTT subtitles, Word `.docx`, OpenDocument `.odt`, EPUB and PDF.
+  Files are read in your browser and never sent anywhere. The one exception: the first time you open a PDF,
+  the PDF reader ([pdf.js](https://mozilla.github.io/pdf.js/)) is downloaded from cdnjs. Scanned PDFs with no
+  text layer and old `.doc` files can't be read.
 - **Map** draws the most-used words with arrows to the words that follow them, coloured by class.
 - Everything is saved in the browser's `localStorage`. **Export** and **Import** move a learned language
-  between browsers as JSON.
+  between browsers as JSON. Browsers allow roughly 5 MB, about one full-length book. Past that, the app warns
+  you, keeps working in memory, and you can use **Export** to keep what it learned.
 
 ## Files
 
 - `lexicon.js`: the learning engine (no DOM). Runs in the browser and in Node.
+- `documents.js`: turns uploaded files into plain text, including a small zip reader for `.docx`/`.odt`/`.epub`.
 - `app.js`, `index.html`, `style.css`: the interface.
 - `test/`: engine tests.
 
